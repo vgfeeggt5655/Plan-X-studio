@@ -1,14 +1,12 @@
 {
   "name": "Plan X",
   "short_name": "PlanX",
-  "start_url": "https://planxtest.netlify.app/#/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "display": "standalone",
-"display_override": ["standalone", "fullscreen"],
-"scope": "/",
-"start_url": "/",
-  "background_color": "#000000",
+  "background_color": "#ffffff",
   "theme_color": "#000000",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/images/icon-192.png",
