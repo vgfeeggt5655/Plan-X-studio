@@ -59,6 +59,7 @@ const Header: React.FC = () => {
     <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-border-color">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         <NavLink to="/" className="text-xl font-bold text-text-primary flex items-center gap-2">
+          <img src="./images/logo.png" alt="Logo" className="h-9 w-9" />
            <span>Plan X</span>
         </NavLink>
         
