@@ -3,7 +3,11 @@
   "short_name": "PlanX",
   "start_url": "https://planxtest.netlify.app/#/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "display": "standalone",
+"display_override": ["standalone", "fullscreen"],
+"scope": "/",
+"start_url": "/",
+  "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
     {
