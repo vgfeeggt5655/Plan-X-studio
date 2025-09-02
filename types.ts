@@ -25,6 +25,7 @@ export interface Subject {
   id: string;
   Subject_Name: string;
   number: number;
+  message?: string;
 }
 
 export interface MCQ {
