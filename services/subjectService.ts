@@ -1,4 +1,3 @@
-
 import { Subject } from '../types';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycby23phjhXwfM8N_5YTgQsKGehhPp7Tw3pa-KFHt1O0IWlKqmIUZv2lekltLhOe-OjeVMg/exec';
@@ -31,7 +30,7 @@ export const addSubject = async (subjectName: string): Promise<void> => {
   });
 };
 
-export const updateSubject = async (id: string, subjectName: string, number?: number, message?: string): Promise<void> => {
+export const updateSubject = async (id: string, subjectName: string, number?: number): Promise<void> => {
     const formData = new FormData();
     formData.append('action', 'update');
     formData.append('id', id);
@@ -39,10 +38,6 @@ export const updateSubject = async (id: string, subjectName: string, number?: nu
     if (number !== undefined) {
         formData.append('number', String(number));
     }
-    if (message !== undefined) {
-        formData.append('message', message);
-    }
-
 
     await fetch(API_URL, {
         method: 'POST',
