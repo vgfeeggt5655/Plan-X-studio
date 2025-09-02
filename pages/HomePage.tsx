@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'https://esm.sh/react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getResources, deleteResource } from '../services/googleSheetService';
 import { getSubjects } from '../services/subjectService';
 import { Resource, Subject } from '../types';
@@ -56,7 +55,6 @@ const HomePage: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [isFilterOpen, setFilterOpen] = useState(false);
   const [heroMessage, setHeroMessage] = useState('');
-  const [globalMessage, setGlobalMessage] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -71,13 +69,6 @@ const HomePage: React.FC = () => {
       setResources(resourcesData.reverse()); // Show newest first
       // Sort subjects by the number property
       const sortedSubjects = subjectsData.sort((a, b) => a.number - b.number);
-      
-      // Find the global message from any subject
-      const subjectWithMessage = sortedSubjects.find(s => s.message && s.message.trim() !== '');
-      if (subjectWithMessage) {
-        setGlobalMessage(subjectWithMessage.message);
-      }
-
       setSubjects(sortedSubjects);
     } catch (err) {
       setError('Failed to load content. Please try again later.');
@@ -183,7 +174,7 @@ const HomePage: React.FC = () => {
              Welcome back, <span className="text-primary">{user?.name || 'Explorer'}</span>!
           </h1>
           <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8 animate-fade-in-up" style={{animationDelay: '0.1s'}}>
-            {globalMessage || heroMessage}
+            {heroMessage}
           </p>
           <div className="max-w-2xl mx-auto bg-surface p-2 rounded-full shadow-lg flex items-center gap-1 sm:gap-2 animate-fade-in-up border border-border-color" style={{animationDelay: '0.2s'}}>
             <SearchIcon className="ml-4 h-5 w-5 sm:h-6 sm:w-6 text-gray-400 flex-shrink-0" />
