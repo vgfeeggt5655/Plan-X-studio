@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Resource, User, Subject } from '../types';
@@ -7,34 +6,19 @@ import * as resourceService from '../services/googleSheetService';
 import * as authService from '../services/authService';
 import * as subjectService from '../services/subjectService';
 
-import { generateImage } from '../services/geminiService';
 import { uploadFile } from '../services/archiveService';
 import Spinner from '../components/Spinner';
 import ConfirmDialog from '../components/ConfirmDialog';
 import ProgressBar from '../components/ProgressBar';
 import SubjectSelectionDialog from '../components/SubjectSelectionDialog';
-import { ChevronDownIcon, EditIcon, TrashIcon, PlusCircleIcon, UserGroupIcon, ClipboardListIcon, VideoIcon, ArrowUpIcon, ArrowDownIcon, SearchIcon, MegaphoneIcon } from '../components/Icons';
+import { ChevronDownIcon, EditIcon, TrashIcon, PlusCircleIcon, UserGroupIcon, ClipboardListIcon, VideoIcon, ArrowUpIcon, ArrowDownIcon, SearchIcon } from '../components/Icons';
 
 
-type AdminTab = 'content' | 'users' | 'subjects' | 'message';
+type AdminTab = 'content' | 'users' | 'subjects';
 
 // ====================================================================================
 // Resource Form Modal (extracted from the old ResourceFormPage)
 // ====================================================================================
-
-// Helper function to convert a data URL to a File object
-const dataURLtoFile = (dataurl: string, filename: string): File => {
-    const arr = dataurl.split(',');
-    if (arr.length < 2) throw new Error("Invalid data URL");
-    const mimeMatch = arr[0].match(/:(.*?);/);
-    if (!mimeMatch) throw new Error("Could not determine MIME type from data URL");
-    const mime = mimeMatch[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) { u8arr[n] = bstr.charCodeAt(n); }
-    return new File([u8arr], filename, { type: mime });
-}
 
 interface ResourceFormModalProps {
     isOpen: boolean;
@@ -64,6 +48,10 @@ const ResourceFormModal: React.FC<ResourceFormModalProps> = ({ isOpen, onClose, 
     const [newVideoFile, setNewVideoFile] = useState<File | null>(null);
     const [newPdfFile, setNewPdfFile] = useState<File | null>(null);
     const [newImageFile, setNewImageFile] = useState<File | null>(null);
+    
+    // States for interactive image handling in create mode
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
 
     const [loading, setLoading] = useState(false);
@@ -114,6 +102,9 @@ const ResourceFormModal: React.FC<ResourceFormModalProps> = ({ isOpen, onClose, 
                 setPdfLink('');
                 setImageUrl('');
                 setVideoInputMethod('upload');
+                // Reset interactive image states
+                setImageFile(null);
+                setImagePreview(null);
             }
             setNewVideoFile(null);
             setNewPdfFile(null);
@@ -123,12 +114,35 @@ const ResourceFormModal: React.FC<ResourceFormModalProps> = ({ isOpen, onClose, 
         }
     }, [isOpen, resourceToEdit]);
     
+    // Effect to create a preview URL for the selected image file
+    useEffect(() => {
+        if (!imageFile) {
+            setImagePreview(null);
+            return;
+        }
+        const objectUrl = URL.createObjectURL(imageFile);
+        setImagePreview(objectUrl);
+
+        // Clean up the object URL when the component unmounts or the file changes
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [imageFile]);
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setFile: React.Dispatch<React.SetStateAction<File | null>>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0]);
         }
     };
+    
+    const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setImageFile(e.target.files[0]);
+        }
+    };
 
+    const handleRemoveImage = () => {
+        setImageFile(null);
+    };
+    
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -148,6 +162,10 @@ const ResourceFormModal: React.FC<ResourceFormModalProps> = ({ isOpen, onClose, 
             }
             if (!pdfFile) {
                 setError('A PDF file is required for new resources.');
+                return;
+            }
+            if (!imageFile) {
+                setError('A cover image is required. Please upload one.');
                 return;
             }
         }
@@ -189,7 +207,7 @@ const ResourceFormModal: React.FC<ResourceFormModalProps> = ({ isOpen, onClose, 
                 setProgress({ stage: 'Update complete!', percentage: 100 });
 
             } else {
-                if (!pdfFile) throw new Error("PDF file is missing.");
+                if (!pdfFile || !imageFile) throw new Error("PDF file is missing.");
                 const baseName = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
                 // Max identifier length is 100. Timestamp is 13 chars. Let's cap baseName at 80.
                 const safeBaseName = (baseName || 'item').substring(0, 80);
@@ -198,22 +216,17 @@ const ResourceFormModal: React.FC<ResourceFormModalProps> = ({ isOpen, onClose, 
                 let finalVideoUrl = '';
                 if (videoInputMethod === 'upload') {
                     if (!videoFile) throw new Error("Video file is missing.");
-                    finalVideoUrl = await uploadFile(videoFile, itemName, (p) => setProgress({ stage: `Uploading Video: ${videoFile.name}`, percentage: p }));
+                    finalVideoUrl = await uploadFile(videoFile, itemName, (p) => setProgress({ stage: `1/3: Uploading Video...`, percentage: p }));
                 } else {
                     if (!videoLink.trim()) throw new Error("YouTube link is missing.");
                     finalVideoUrl = videoLink;
                 }
                 
-                const pdfUrl = await uploadFile(pdfFile, itemName, (p) => setProgress({ stage: `Uploading PDF: ${pdfFile.name}`, percentage: p }));
+                const pdfUrl = await uploadFile(pdfFile, itemName, (p) => setProgress({ stage: `2/3: Uploading PDF...`, percentage: p }));
                 
-                setProgress({ stage: 'Generating AI cover image...', percentage: 25 });
-                const imagePrompt = `Educational content for subject: "${subjectName}", with the title: "${title}"`;
-                const base64Image = await generateImage(imagePrompt);
-                setProgress({ stage: 'Uploading AI cover image...', percentage: 75 });
-                const aiImageFile = dataURLtoFile(base64Image, 'cover.jpg');
-                const imageUrl = await uploadFile(aiImageFile, itemName, (p) => setProgress({ stage: `Uploading AI cover image...`, percentage: p }));
+                const imageUrl = await uploadFile(imageFile, itemName, (p) => setProgress({ stage: `3/3: Uploading Cover Image...`, percentage: p }));
 
-                setProgress({ stage: 'Finalizing resource...', percentage: 50 });
+                setProgress({ stage: 'Finalizing resource...', percentage: 95 });
                 await resourceService.createResource({ title, Subject_Name: subjectName, video_link: finalVideoUrl, pdf_link: pdfUrl, image_url: imageUrl });
                 setProgress({ stage: 'Resource created!', percentage: 100 });
             }
@@ -243,7 +256,7 @@ const ResourceFormModal: React.FC<ResourceFormModalProps> = ({ isOpen, onClose, 
 
     return (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
-            <div className="bg-surface border border-border-color rounded-lg shadow-2xl p-6 w-full max-w-2xl transform transition-all animate-fade-in-up">
+            <div className="bg-surface border border-border-color rounded-lg shadow-2xl p-6 w-full max-w-2xl transform transition-all animate-fade-in-up max-h-[90vh] overflow-y-auto scrollbar-thin">
                 <h2 className="text-xl font-bold text-text-primary mb-4">{isEditMode ? 'Edit Resource' : 'Add New Resource'}</h2>
                 {loading ? (
                     <ProgressBar text={progress.stage} progress={progress.percentage} />
@@ -317,6 +330,32 @@ const ResourceFormModal: React.FC<ResourceFormModalProps> = ({ isOpen, onClose, 
                                     <label className="block text-sm font-medium text-text-secondary">PDF Document</label>
                                     <input type="file" onChange={(e) => handleFileChange(e, setPdfFile)} required accept="application/pdf" className={fileInputClass} />
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary">Cover Image</label>
+                                    <div className="mt-1 p-3 bg-background/50 rounded-md space-y-3 border border-border-color">
+                                        {imagePreview ? (
+                                            <div className="relative group">
+                                                <img src={imagePreview} alt="Cover preview" className="w-full aspect-video object-cover rounded-md" />
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                                                    <button type="button" onClick={handleRemoveImage} className="text-white bg-red-600/80 rounded-full p-2 hover:bg-red-500" aria-label="Remove image">
+                                                        <TrashIcon className="h-5 w-5"/>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="w-full aspect-video bg-surface rounded-md flex items-center justify-center border-2 border-dashed border-border-color">
+                                                <p className="text-text-secondary text-sm">Select an image</p>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="flex gap-2">
+                                            <label className="flex-1 cursor-pointer text-center bg-slate-600 text-text-primary font-bold py-2 px-4 rounded-md hover:bg-slate-500 transition">
+                                                Upload Cover Image
+                                                <input type="file" className="hidden" accept="image/*" onChange={handleImageFileChange} />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
                             </>
                         )}
                         <div className="flex justify-end pt-4 gap-4">
@@ -364,11 +403,6 @@ const AdminDashboardPage: React.FC = () => {
     const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isOrderChanged, setIsOrderChanged] = useState(false);
-    
-    // Message State
-    const [currentMessage, setCurrentMessage] = useState('');
-    const [messageSubjectId, setMessageSubjectId] = useState<string | null>(null);
-    const [originalMessage, setOriginalMessage] = useState('');
 
     
     const fetchData = useCallback(async (tab: AdminTab) => {
@@ -381,23 +415,9 @@ const AdminDashboardPage: React.FC = () => {
             } else if (tab === 'users' && user?.role === 'super_admin') {
                 const data = await authService.getUsers();
                 setUsers(data.filter(u => u.id !== user?.id)); // Exclude self
-            } else if (tab === 'subjects' || tab === 'message') {
+            } else if (tab === 'subjects') {
                 const data = await subjectService.getSubjects();
-                const sortedData = data.sort((a, b) => a.number - b.number);
-                
-                // Find and set the current global message
-                const subjectWithMessage = sortedData.find(s => s.message && s.message.trim() !== '');
-                if (subjectWithMessage) {
-                    setCurrentMessage(subjectWithMessage.message);
-                    setOriginalMessage(subjectWithMessage.message);
-                    setMessageSubjectId(subjectWithMessage.id);
-                } else {
-                    setCurrentMessage('');
-                    setOriginalMessage('');
-                    setMessageSubjectId(null);
-                }
-
-                setSubjects(sortedData);
+                setSubjects(data.sort((a, b) => a.number - b.number));
                 setIsOrderChanged(false);
             }
         } catch (err) {
@@ -506,47 +526,6 @@ const AdminDashboardPage: React.FC = () => {
         }
     };
     
-    // Message Actions
-    const handleSaveMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        try {
-            let targetSubject = subjects.find(s => s.id === messageSubjectId);
-            // If no subject previously had a message, or that subject was deleted, use the first subject.
-            if (!targetSubject && subjects.length > 0) {
-                targetSubject = subjects[0];
-            }
-
-            if (!targetSubject) {
-                throw new Error("Cannot save message. No subjects exist in the system.");
-            }
-            
-            // Create promises to update subjects.
-            const updatePromises = subjects.map(s => {
-                if (s.id === targetSubject.id) {
-                    // This is the subject that should hold the new message.
-                    // Only update if the message is actually different to avoid unnecessary writes.
-                    if (s.message !== currentMessage) {
-                        return subjectService.updateSubject(s.id, s.Subject_Name, s.number, currentMessage);
-                    }
-                } else if (s.message && s.message.trim() !== '') {
-                    // This subject has an old message that needs to be cleared.
-                    return subjectService.updateSubject(s.id, s.Subject_Name, s.number, '');
-                }
-                return Promise.resolve(); // No update needed for this subject.
-            });
-
-            await Promise.all(updatePromises);
-            setOriginalMessage(currentMessage);
-            await fetchData('message'); // Refresh data from the source
-
-        } catch (err: any) {
-            setError(err.message || 'Failed to save the message.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-    
     const TabButton: React.FC<{tab: AdminTab, label: string, icon: React.ReactNode}> = ({ tab, label, icon }) => (
         <button
             onClick={() => setActiveTab(tab)}
@@ -572,7 +551,6 @@ const AdminDashboardPage: React.FC = () => {
             <div className="border-b border-border-color flex gap-1 sm:gap-4">
                 <TabButton tab="content" label="Content" icon={<VideoIcon className="h-5 w-5"/>} />
                 <TabButton tab="subjects" label="Subjects" icon={<ClipboardListIcon className="h-5 w-5"/>} />
-                <TabButton tab="message" label="Homepage Message" icon={<MegaphoneIcon className="h-5 w-5"/>} />
                 {user?.role === 'super_admin' && <TabButton tab="users" label="Users" icon={<UserGroupIcon className="h-5 w-5"/>} />}
             </div>
 
@@ -710,33 +688,6 @@ const AdminDashboardPage: React.FC = () => {
                                         ))}
                                     </ul>
                                 </div>
-                            </div>
-                        )}
-                        
-                        {/* MESSAGE TAB */}
-                        {activeTab === 'message' && (
-                             <div className="bg-surface border border-border-color rounded-lg shadow-md p-4 sm:p-6 relative">
-                                 {isSubmitting && <div className="absolute inset-0 bg-surface/80 z-10 flex items-center justify-center"><Spinner text="Saving..." /></div>}
-                                 <h2 className="text-xl font-bold mb-2">Homepage Message</h2>
-                                 <p className="text-text-secondary mb-4 text-sm">This message will be displayed on the homepage hero section. Leave it blank to show the default greeting.</p>
-                                <form onSubmit={handleSaveMessage}>
-                                    <textarea
-                                        value={currentMessage}
-                                        onChange={e => setCurrentMessage(e.target.value)}
-                                        placeholder="Enter your message here..."
-                                        className={`${inputClass} h-32 w-full`}
-                                        rows={4}
-                                    />
-                                    <div className="mt-4 flex justify-end">
-                                        <button
-                                            type="submit"
-                                            disabled={isSubmitting || currentMessage === originalMessage}
-                                            className="bg-primary text-background font-bold py-2 px-6 rounded-md hover:bg-cyan-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {isSubmitting ? <Spinner text='' /> : 'Save Message'}
-                                        </button>
-                                    </div>
-                                </form>
                             </div>
                         )}
                     </>
