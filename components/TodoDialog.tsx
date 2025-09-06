@@ -41,7 +41,9 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   const getEncouragement = () => {
     if (!todos.length) return encouragements[0];
-    const progress = todos.filter(t => t.done).length / todos.length;
+    const doneCount = todos.filter(t => t.done).length;
+    if (doneCount === todos.length) return "Egypt is proud of you! 🇪🇬😂";
+    const progress = doneCount / todos.length;
     return encouragements[Math.floor(progress * 10)];
   };
 
