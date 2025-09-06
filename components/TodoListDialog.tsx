@@ -1,150 +1,143 @@
-// src/components/TodoListDialog.tsx
-import React, { useEffect, useState, useMemo } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Todo } from '../types';
-import { getUserTodos, updateUserTodos } from '../services/authService';
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
-type Props = {
-  isOpen: boolean;
-  onClose: () => void;
-};
+export default function TaskDialog({ tasks }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [currentDayIndex, setCurrentDayIndex] = useState(0);
+  const [filteredTasks, setFilteredTasks] = useState([]);
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
-
-const groupByDate = (todos: Todo[]) => {
-  const map: Record<string, Todo[]> = {};
-  todos.forEach(t => {
-    const key = t.date ? t.date.slice(0, 10) : 'No date';
-    if (!map[key]) map[key] = [];
-    map[key].push(t);
-  });
-  return Object.keys(map)
-    .sort((a, b) => (a > b ? -1 : 1))
-    .reduce((acc, k) => ({ ...acc, [k]: map[k] }), {});
-};
-
-const TodoListDialog: React.FC<Props> = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDate, setNewDate] = useState(todayISO());
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDate, setEditDate] = useState(todayISO());
+  const today = new Date().toISOString().split("T")[0];
+  const uniqueDays = [...new Set(tasks.map((task) => task.date))].sort();
 
   useEffect(() => {
-    if (isOpen && user?.id) {
-      getUserTodos(user.id).then(setTodos).catch(console.error);
+    if (!tasks) return;
+    const todayTasks = tasks.filter((t) => t.date === today);
+    const pastUnfinished = tasks.filter(
+      (t) => t.date < today && !t.completed
+    ).map((t) => ({ ...t, warning: true }));
+
+    setFilteredTasks([...todayTasks, ...pastUnfinished]);
+  }, [tasks]);
+
+  const nextDay = () => {
+    if (currentDayIndex < uniqueDays.length - 1) {
+      setCurrentDayIndex((prev) => prev + 1);
     }
-  }, [isOpen, user]);
+  };
 
-  const grouped = useMemo(() => groupByDate(todos), [todos]);
-
-  const persist = async (next: Todo[]) => {
-    setTodos(next);
-    if (user?.id) {
-      await updateUserTodos(user.id, next);
+  const prevDay = () => {
+    if (currentDayIndex > 0) {
+      setCurrentDayIndex((prev) => prev - 1);
     }
   };
 
-  const addTodo = async () => {
-    if (!newTitle.trim()) return;
-    const item: Todo = {
-      id: Date.now().toString(),
-      title: newTitle.trim(),
-      date: newDate,
-      status: 'pending',
-      rating: 0,
-      createdAt: new Date().toISOString(),
-    };
-    setNewTitle('');
-    setNewDate(todayISO());
-    await persist([item, ...todos]);
-  };
+  const progress =
+    filteredTasks.length === 0
+      ? 0
+      : (filteredTasks.filter((t) => t.completed).length /
+          filteredTasks.length) *
+        100;
 
-  const saveEdit = async () => {
-    if (!editingId) return;
-    const next = todos.map(t =>
-      t.id === editingId ? { ...t, title: editTitle, date: editDate } : t
-    );
-    setEditingId(null);
-    await persist(next);
+  const handleOpen = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setOpen(true);
+    }, 600); // محاكاة loading
   };
-
-  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4">
-      <div className="fixed inset-0 bg-black/40" onClick={onClose}></div>
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl p-6 z-10">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold">My Todo</h3>
-          <button onClick={onClose} className="text-sm">Close</button>
-        </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-5 py-2 shadow-md"
+          onClick={handleOpen}
+        >
+          مهامي
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg w-[90%] rounded-2xl p-4">
+        {loading ? (
+          <div className="flex items-center justify-center h-40">
+            <Loader2 className="animate-spin text-blue-600 w-8 h-8" />
+          </div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-gray-800 flex justify-between items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={prevDay}
+                  disabled={currentDayIndex === 0}
+                >
+                  <ChevronLeft />
+                </Button>
+                {uniqueDays[currentDayIndex] || "اليوم"}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={nextDay}
+                  disabled={currentDayIndex === uniqueDays.length - 1}
+                >
+                  <ChevronRight />
+                </Button>
+              </DialogTitle>
+            </DialogHeader>
 
-        <div className="mb-4 flex gap-2">
-          <input
-            value={newTitle}
-            onChange={e => setNewTitle(e.target.value)}
-            placeholder="عنوان المهمة"
-            className="flex-1 p-2 border rounded"
-          />
-          <input
-            type="date"
-            value={newDate}
-            onChange={e => setNewDate(e.target.value)}
-            className="p-2 border rounded"
-          />
-          <button onClick={addTodo} className="px-4 py-2 bg-green-500 text-white rounded">
-            Add
-          </button>
-        </div>
+            <Progress
+              value={progress}
+              className="h-2 rounded-full my-3 bg-gray-200"
+            />
 
-        <div className="max-h-80 overflow-y-auto space-y-4">
-          {Object.entries(grouped).map(([date, items]) => (
-            <div key={date}>
-              <div className="font-semibold mb-2">{date}</div>
-              {items.map(t => (
-                <div key={t.id} className="flex items-center justify-between p-2 border rounded mb-1">
-                  {editingId === t.id ? (
-                    <div className="flex-1 flex gap-2">
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+              {filteredTasks.length > 0 ? (
+                filteredTasks.map((task, i) => (
+                  <Card
+                    key={i}
+                    className={`shadow-sm rounded-xl ${
+                      task.warning
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-200 bg-white"
+                    }`}
+                  >
+                    <CardContent className="p-3 flex justify-between items-center">
+                      <span
+                        className={`font-medium ${
+                          task.warning ? "text-red-600" : "text-gray-700"
+                        }`}
+                      >
+                        {task.title}
+                      </span>
                       <input
-                        className="flex-1 p-1 border rounded"
-                        value={editTitle}
-                        onChange={e => setEditTitle(e.target.value)}
+                        type="checkbox"
+                        checked={task.completed}
+                        readOnly
+                        className="w-5 h-5 accent-blue-600"
                       />
-                      <input
-                        type="date"
-                        className="p-1 border rounded"
-                        value={editDate}
-                        onChange={e => setEditDate(e.target.value)}
-                      />
-                      <button onClick={saveEdit} className="px-2 bg-blue-500 text-white rounded">
-                        Save
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className={t.status === 'done' ? 'line-through' : ''}>
-                        {t.title}
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => persist(
-                          todos.map(td => td.id === t.id ? { ...td, status: td.status === 'done' ? 'pending' : 'done' } : td)
-                        )}>✔</button>
-                        <button onClick={() => { setEditingId(t.id!); setEditTitle(t.title); setEditDate(t.date); }}>✏</button>
-                        <button onClick={() => persist(todos.filter(td => td.id !== t.id))}>🗑</button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-6">
+                  لا توجد مهام لهذا اليوم 🎉
+                </p>
+              )}
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
-};
-
-export default TodoListDialog;
+}
