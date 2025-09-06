@@ -3,6 +3,10 @@ import React from 'react';
 interface IconProps {
   className?: string;
 }
+import { X, Plus } from "lucide-react";
+export const XIcon = (props: any) => <X {...props} />;
+export const PlusIcon = (props: any) => <Plus {...props} />;
+
 
 export const PlanXIcon: React.FC<IconProps> = (props) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
