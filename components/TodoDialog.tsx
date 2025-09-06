@@ -17,11 +17,8 @@ interface TodoDialogProps {
 const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [localTodos, setLocalTodos] = useState<TodoItem[]>([]);
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
@@ -40,65 +37,36 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       });
 
       setTodos(todayTasks);
-      setLocalTodos(todayTasks);
       setLoading(false);
     })();
   }, [isOpen, user, todayStr]);
 
-  // حفظ التعديلات دفعة واحدة عند الإغلاق أو غلق التاب
-  const saveTodos = async () => {
+  const saveTodos = async (updatedTodos: TodoItem[]) => {
     if (!user) return;
-    setSaving(true);
-    await updateUserTodoList(user.id, { [todayStr]: localTodos });
-    setTodos(localTodos);
-    setSaving(false);
+    setTodos(updatedTodos);
+    await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
   };
 
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (JSON.stringify(localTodos) !== JSON.stringify(todos)) {
-        e.preventDefault();
-        e.returnValue = '';
-        saveTodos();
-      }
-    };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && JSON.stringify(localTodos) !== JSON.stringify(todos)) {
-        saveTodos();
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [localTodos, todos, user]);
-
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!newTask.trim()) return;
     const task: TodoItem = { id: Date.now().toString(), text: newTask.trim(), done: false, createdAt: new Date().toISOString() };
-    setLocalTodos([...localTodos, task]);
+    const updated = [...todos, task];
     setNewTask('');
+    await saveTodos(updated);
   };
 
-  const handleToggleDone = (taskId: string) => {
-    const updated = localTodos.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
-    setLocalTodos(updated);
+  const handleToggleDone = async (taskId: string) => {
+    const updated = todos.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
+    await saveTodos(updated);
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    const updated = localTodos.filter(t => t.id !== taskId);
-    setLocalTodos(updated);
+  const handleDeleteTask = async (taskId: string) => {
+    const updated = todos.filter(t => t.id !== taskId);
+    await saveTodos(updated);
   };
 
-  const handleClose = async () => {
-    await saveTodos();
-    onClose();
-  };
-
-  const doneCount = localTodos.filter(t => t.done).length;
-  const progress = localTodos.length ? (doneCount / localTodos.length) * 100 : 0;
+  const doneCount = todos.filter(t => t.done).length;
+  const progress = todos.length ? (doneCount / todos.length) * 100 : 0;
   const showProgress = doneCount > 0;
 
   if (!isOpen) return null;
@@ -116,12 +84,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {saving && (
-          <div className="text-center text-sm font-semibold text-primary mb-2">
-            Saving your changes... 💾
-          </div>
-        )}
-
         <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-center text-primary mb-4">
           Today's Tasks
         </h2>
@@ -129,7 +91,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text-primary">Tasks</h3>
           <button
-            onClick={handleClose}
+            onClick={onClose}
             className="text-red-500 font-bold text-3xl hover:text-red-600 transition"
           >
             ×
@@ -146,9 +108,9 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         )}
 
         <ul className="space-y-3 mb-4">
-          {localTodos.map(task => {
+          {todos.map(task => {
             const taskDate = new Date(task.createdAt).toISOString().split('T')[0];
-            const showWarning = !task.done && taskDate < todayStr; // التحذير فقط للمهام القديمة وغير المنجزة
+            const showWarning = !task.done && taskDate < todayStr;
 
             return (
               <li
