@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getUserTodoList, updateUserTodoList } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
+import Confetti from 'react-confetti'; // لازم تنزل الباكيج: npm install react-confetti
 
 interface TodoItem {
   id: string;
@@ -14,13 +15,13 @@ interface TodoDialogProps {
   onClose: () => void;
 }
 
-const encouragements = [
-  "Keep going, you got this! 💪",
-  "One step at a time, superstar! 🌟",
+const baseEncouragements = [
+  "Keep going! 💪",
+  "You're doing great! 🌟",
   "Crush your tasks today! 🚀",
-  "Don't stop, the finish line is near! 🏁",
-  "Stay awesome and productive! 😎",
-  "Every task counts, let's do it! ✅",
+  "Almost there! 🏁",
+  "Stay awesome! 😎",
+  "Every task counts! ✅",
   "Make today amazing! 🌈"
 ];
 
@@ -30,11 +31,19 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [animatedIds, setAnimatedIds] = useState<string[]>([]);
+  const [celebrate, setCelebrate] = useState(false);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
-  const encouragement = encouragements[today.getDate() % encouragements.length];
+
+  // اختيار الجملة التشجيعية حسب التقدم
+  const getEncouragement = () => {
+    if (!todos.length) return baseEncouragements[today.getDate() % baseEncouragements.length];
+    const progress = todos.filter(t => t.done).length / todos.length;
+    if (progress === 1) return "All tasks done! 🎉 Amazing job!";
+    if (progress > 0.5) return "Halfway there! Keep it up! 😎";
+    return "Let's get started! 💪";
+  };
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -50,34 +59,29 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     })();
   }, [isOpen, user, todayStr]);
 
-  const saveTodos = async (updatedTodos: TodoItem[], animateId?: string) => {
+  const saveTodos = async (updatedTodos: TodoItem[], taskChangedId?: string) => {
     if (!user) return;
+    const prevDoneCount = todos.filter(t => t.done).length;
+    const newDoneCount = updatedTodos.filter(t => t.done).length;
+
+    // effect celebration عند اكتمال مهمة
+    if (newDoneCount > prevDoneCount) setCelebrate(true);
+
     setTodos(updatedTodos);
     setSaving(true);
-
-    if (animateId) {
-      setAnimatedIds(prev => [...prev, animateId]);
-      setTimeout(() => setAnimatedIds(prev => prev.filter(id => id !== animateId)), 400);
-    }
-
     await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
     setSaving(false);
   };
 
   const handleAddTask = () => {
     if (!newTask.trim()) return;
-    const task: TodoItem = {
-      id: Date.now().toString(),
-      text: newTask.trim(),
-      done: false,
-      createdAt: new Date().toISOString(),
-    };
+    const task: TodoItem = { id: Date.now().toString(), text: newTask.trim(), done: false, createdAt: new Date().toISOString() };
     saveTodos([...todos, task], task.id);
     setNewTask('');
   };
 
   const handleToggleDone = (taskId: string) => {
-    const updated = todos.map(t => (t.id === taskId ? { ...t, done: !t.done } : t));
+    const updated = todos.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
     saveTodos(updated, taskId);
   };
 
@@ -88,30 +92,33 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const doneCount = todos.filter(t => t.done).length;
-  const progress = todos.length ? (doneCount / todos.length) * 100 : 0;
-  const showProgress = doneCount > 0;
-  const canClose = !saving;
-
   const isTaskOverdue = (task: TodoItem) => {
     const taskDate = new Date(task.createdAt);
     const diff = today.getTime() - taskDate.getTime();
     return !task.done && diff > 24 * 60 * 60 * 1000; // أكثر من يوم
   };
 
+  const doneCount = todos.filter(t => t.done).length;
+  const progress = todos.length ? (doneCount / todos.length) * 100 : 0;
+  const showProgress = doneCount > 0;
+  const canClose = !saving;
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
-      <div className="relative w-full max-w-2xl p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]
-        bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 transition-transform scale-100 animate-fade-in-up">
+    <div className="fixed inset-0 z-50">
+      {/* الخلفية */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+      <div className="relative mx-auto w-full max-w-2xl p-6 rounded-3xl shadow-2xl max-h-[90vh]
+        bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 flex flex-col">
+
+        {celebrate && <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} numberOfPieces={200} />}
 
         {/* عبارة تشجيعية */}
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-primary mb-4">{encouragement}</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-center text-primary mb-4">{getEncouragement()}</h2>
 
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold text-text-primary">Today's Tasks</h3>
-          {!canClose && (
-            <p className="text-sm text-gray-600 dark:text-gray-300 ml-4">Saving tasks… please wait!</p>
-          )}
+          {!canClose && <p className="text-sm text-gray-600 dark:text-gray-300 ml-4">Saving tasks… please wait!</p>}
           <button
             onClick={() => canClose && onClose()}
             disabled={!canClose}
@@ -121,20 +128,25 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Loading Bar */}
-        {loading && (
-          <div className="relative w-full h-3 rounded-full overflow-hidden mb-4">
-            <div className="absolute w-full h-full bg-gray-200 dark:bg-gray-700 rounded-full" />
-            <div className="absolute h-full w-1/3 bg-gradient-to-r from-primary to-cyan-400 rounded-full animate-loading"></div>
+        {/* Progress bar حديث */}
+        {showProgress && (
+          <div className="w-full h-3 rounded-full mb-4 overflow-hidden bg-gray-200 dark:bg-gray-700">
+            <div
+              className="h-3 rounded-full transition-all duration-700"
+              style={{
+                width: `${progress}%`,
+                background: `linear-gradient(90deg, #4ade80, #06b6d4)`,
+              }}
+            />
           </div>
         )}
 
-        {/* قائمة المهام */}
+        {/* المهام */}
         <ul className="space-y-3 mb-4">
           {todos.map(task => (
             <li
               key={task.id}
-              className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-300
+              className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-200
                 hover:shadow-xl hover:ring-2 hover:ring-primary hover:ring-opacity-50 hover:bg-white/70 dark:hover:bg-gray-700/70`}
             >
               <div className="flex items-center gap-4 w-full">
@@ -148,7 +160,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                   {task.text}
                 </span>
                 {isTaskOverdue(task) && (
-                  <span className="ml-2 text-red-600 font-bold text-sm animate-pulse">⚠ Overdue!</span>
+                  <span className="ml-2 text-red-600 font-bold text-sm px-2 py-1 rounded bg-red-100 dark:bg-red-900 animate-pulse">⚠ Overdue!</span>
                 )}
               </div>
               <button
@@ -161,20 +173,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           ))}
         </ul>
 
-        {/* Progress Bar عصري */}
-        {showProgress && (
-          <div className="w-full h-3 rounded-full mb-4 overflow-hidden bg-gray-200 dark:bg-gray-700">
-            <div
-              className="h-3 rounded-full transition-all duration-700"
-              style={{
-                width: `${progress}%`,
-                background: `linear-gradient(90deg, #4ade80, #06b6d4)`,
-              }}
-            />
-          </div>
-        )}
-
-        {/* إضافة مهمة حديثة */}
+        {/* إضافة مهمة */}
         <div className="flex gap-3 flex-col sm:flex-row mt-4">
           <input
             type="text"
@@ -190,17 +189,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
             Add
           </button>
         </div>
-
-        <style>{`
-          @keyframes loading {
-            0% { transform: translateX(-100%); }
-            50% { transform: translateX(50%); }
-            100% { transform: translateX(100%); }
-          }
-          .animate-loading {
-            animation: loading 1.5s linear infinite;
-          }
-        `}</style>
       </div>
     </div>
   );
