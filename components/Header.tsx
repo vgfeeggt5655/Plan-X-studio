@@ -3,7 +3,6 @@ import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LogoutIcon, TachometerIcon, UserCircleIcon, ChevronDownIcon, MenuIcon, XIcon } from './Icons';
 import TodoDialog from './TodoDialog';
-import { getUserTodoList } from '../services/authService'; // لازم تجيب المهام
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
@@ -11,7 +10,7 @@ const Header: React.FC = () => {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isTodoOpen, setTodoOpen] = useState(false);
-  const [progress, setProgress] = useState(0); // نسبة التقدم
+  const [progress, setProgress] = useState(0);
   const [totalTasks, setTotalTasks] = useState(0);
   const [remainingTasks, setRemainingTasks] = useState(0);
 
@@ -35,22 +34,25 @@ const Header: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch progress when user changes
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const todos = await getUserTodoList(user.id);
-      let total = 0;
-      let remaining = 0;
-      for (const day in todos) {
-        total += todos[day].length;
-        remaining += todos[day].filter(t => !t.done).length;
-      }
+  // Load progress from localStorage
+  const loadProgressFromLocal = () => {
+    const saved = localStorage.getItem('todoProgress');
+    if (saved) {
+      const { total, remaining } = JSON.parse(saved);
       setTotalTasks(total);
       setRemainingTasks(remaining);
       setProgress(total ? Math.round(((total - remaining) / total) * 100) : 0);
-    })();
-  }, [user, isTodoOpen]); // نعيد الحساب لما نفتح الديالوج أو المستخدم يتغير
+    }
+  };
+
+  useEffect(() => {
+    loadProgressFromLocal();
+  }, []);
+
+  // Update progress in localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('todoProgress', JSON.stringify({ total: totalTasks, remaining: remainingTasks }));
+  }, [totalTasks, remainingTasks]);
 
   const activeLinkClass = "text-primary font-semibold bg-primary/10";
   const inactiveLinkClass = "text-text-secondary hover:text-primary hover:bg-surface";
@@ -67,22 +69,25 @@ const Header: React.FC = () => {
         All Content
       </NavLink>
 
-      {/* Tasks tab with progress */}
-      <div className="relative flex items-center">
-        <NavLink
-          to="#"
-          onClick={(e) => { e.preventDefault(); setTodoOpen(true); setMenuOpen(false); }}
-          className={({ isActive }) => `${linkBaseClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
+      {/* Tasks tab with proper hover and modern progress */}
+      <div className="relative flex items-center group">
+        <button
+          onClick={() => setTodoOpen(true)}
+          className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
         >
           📝 Tasks
-        </NavLink>
+        </button>
+
         {totalTasks > 0 && (
-          <div className="absolute -top-2 -right-2 w-12 h-2 bg-gray-200 rounded overflow-hidden">
-            <div className="h-2 bg-primary transition-all" style={{ width: `${progress}%` }}></div>
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-24 h-3 bg-gray-200 rounded overflow-hidden mt-1">
+            <div className="h-3 bg-gradient-to-r from-green-400 to-blue-500 transition-all" style={{ width: `${progress}%` }}></div>
           </div>
         )}
+
         {totalTasks > 0 && (
-          <span className="ml-1 text-xs text-text-secondary">{remainingTasks}/{totalTasks}</span>
+          <span className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs font-medium text-text-secondary">
+            {remainingTasks}/{totalTasks} left
+          </span>
         )}
       </div>
 
@@ -161,7 +166,7 @@ const Header: React.FC = () => {
       </header>
 
       {/* Todo Dialog */}
-      {user && <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} />}
+      {user && <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} updateProgress={loadProgressFromLocal} />}
     </>
   );
 };
