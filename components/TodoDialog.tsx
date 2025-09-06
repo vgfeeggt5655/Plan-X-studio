@@ -110,6 +110,9 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold text-text-primary">Today's Tasks</h3>
+          { !canClose && (
+            <p className="text-sm text-gray-600 dark:text-gray-300 ml-4">Saving tasks… please wait!</p>
+          )}
           <button
             onClick={() => canClose && onClose()}
             disabled={!canClose}
@@ -118,9 +121,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
             ×
           </button>
         </div>
-        {!canClose && (
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 text-center">Saving tasks… please wait!</p>
-        )}
 
         {/* Loading Bar */}
         {loading && (
