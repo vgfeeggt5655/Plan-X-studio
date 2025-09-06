@@ -31,7 +31,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [animatedIds, setAnimatedIds] = useState<string[]>([]);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -110,7 +109,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold text-text-primary">Today's Tasks</h3>
-          { !canClose && (
+          {!canClose && (
             <p className="text-sm text-gray-600 dark:text-gray-300 ml-4">Saving tasks… please wait!</p>
           )}
           <button
@@ -135,11 +134,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           {todos.map(task => (
             <li
               key={task.id}
-              onMouseEnter={() => setHoveredId(task.id)}
-              onMouseLeave={() => setHoveredId(null)}
-              className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-300 transform
-              ${animatedIds.includes(task.id) ? 'scale-105 opacity-80' : hoveredId === task.id ? 'scale-105' : 'scale-100'}
-              `}
+              className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-300
+                hover:shadow-xl hover:ring-2 hover:ring-primary hover:ring-opacity-50 hover:bg-white/70 dark:hover:bg-gray-700/70`}
             >
               <div className="flex items-center gap-4 w-full">
                 <input
@@ -165,11 +161,11 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           ))}
         </ul>
 
-        {/* Progress Bar */}
+        {/* Progress Bar عصري */}
         {showProgress && (
           <div className="w-full h-3 rounded-full mb-4 overflow-hidden bg-gray-200 dark:bg-gray-700">
             <div
-              className="h-3 rounded-full transition-all duration-500"
+              className="h-3 rounded-full transition-all duration-700"
               style={{
                 width: `${progress}%`,
                 background: `linear-gradient(90deg, #4ade80, #06b6d4)`,
@@ -185,7 +181,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
             placeholder="Add a new task..."
             value={newTask}
             onChange={e => setNewTask(e.target.value)}
-            className="flex-1 p-4 rounded-3xl border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-700/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary w-full text-lg font-medium shadow-md transition-transform hover:scale-105"
+            className="flex-1 p-4 rounded-3xl border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-700/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary w-full text-lg font-medium shadow-md transition-all hover:shadow-xl hover:ring-2 hover:ring-primary hover:ring-opacity-50"
           />
           <button
             onClick={handleAddTask}
