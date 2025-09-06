@@ -7,12 +7,13 @@ export interface Resource {
   image_url: string;
 }
 
-export interface Task {
-  id: string;
-  title: string;
-  date: string; // ISO date YYYY-MM-DD
-  completed: boolean;
+export interface ToDoItem {
+  id: string;          // unique id
+  task: string;        // نص المهمة
+  date: string;        // YYYY-MM-DD
+  completed: boolean;  // حالة الإنجاز
 }
+
 
 export interface User {
   id: string;
