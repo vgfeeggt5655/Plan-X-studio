@@ -179,17 +179,7 @@ const HomePage: React.FC = () => {
             </button>
           </div>
 
-          {/* Todo List Button */}
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => setTodoOpen(true)}
-              className="px-6 py-3 bg-primary text-white font-semibold rounded-full shadow-lg hover:bg-cyan-400 transition-all"
-            >
-              Open My Todo List
-            </button>
-          </div>
-        </div>
-      </div>
+         
 
       {/* Content Sections Wrapper */}
       <div className="container mx-auto px-4">
