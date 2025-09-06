@@ -21,34 +21,9 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [animateNewId, setAnimateNewId] = useState<string | null>(null);
-  const [animateRemoveId, setAnimateRemoveId] = useState<string | null>(null);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
-
-  const encouragements = [
-    "Let's get started! 💪",
-    "Don't give up! 🌈",
-    "Keep moving! 🏃‍♂️",
-    "Nice start! ✨",
-    "Halfway there! 😎",
-    "Keep it going! 💪",
-    "You're on fire! 🔥",
-    "Great work! Keep pushing! 🚀",
-    "Almost there! You're a star! 🌟",
-    "All tasks done! 🎉 Amazing job!"
-  ];
-
-  const encouragement = (() => {
-    if (!localTodos.length) return encouragements[0];
-    const doneCount = localTodos.filter(t => t.done).length;
-    if (doneCount === localTodos.length && localTodos.length > 0) {
-      return "Egypt is proud of you! 🇪🇬😂";
-    }
-    const progress = doneCount / localTodos.length;
-    return encouragements[Math.floor(progress * 10)];
-  })();
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -57,10 +32,10 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       const data = await getUserTodoList(user.id);
       let todayTasks = data[todayStr] || [];
 
+      // حذف المهام المنجزة والقديمة تلقائيًا
       todayTasks = todayTasks.filter(task => {
-        const taskDate = new Date(task.createdAt);
-        const taskDay = taskDate.toISOString().split('T')[0];
-        if (task.done && taskDay !== todayStr) return false;
+        const taskDate = new Date(task.createdAt).toISOString().split('T')[0];
+        if (task.done && taskDate !== todayStr) return false;
         return true;
       });
 
@@ -70,7 +45,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     })();
   }, [isOpen, user, todayStr]);
 
-  // حفظ التعديلات
+  // حفظ التعديلات دفعة واحدة عند الإغلاق أو غلق التاب
   const saveTodos = async () => {
     if (!user) return;
     setSaving(true);
@@ -79,7 +54,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     setSaving(false);
   };
 
-  // تأكيد عند غلق التاب أو المتصفح
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (JSON.stringify(localTodos) !== JSON.stringify(todos)) {
@@ -88,16 +62,13 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         saveTodos();
       }
     };
-
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && JSON.stringify(localTodos) !== JSON.stringify(todos)) {
         saveTodos();
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -107,10 +78,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const handleAddTask = () => {
     if (!newTask.trim()) return;
     const task: TodoItem = { id: Date.now().toString(), text: newTask.trim(), done: false, createdAt: new Date().toISOString() };
-    setAnimateNewId(task.id);
     setLocalTodos([...localTodos, task]);
     setNewTask('');
-    setTimeout(() => setAnimateNewId(null), 500);
   };
 
   const handleToggleDone = (taskId: string) => {
@@ -119,12 +88,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    setAnimateRemoveId(taskId);
-    setTimeout(() => {
-      const updated = localTodos.filter(t => t.id !== taskId);
-      setLocalTodos(updated);
-      setAnimateRemoveId(null);
-    }, 400);
+    const updated = localTodos.filter(t => t.id !== taskId);
+    setLocalTodos(updated);
   };
 
   const handleClose = async () => {
@@ -158,11 +123,11 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         )}
 
         <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-center text-primary mb-4">
-          {encouragement}
+          Today's Tasks
         </h2>
 
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text-primary">Today's Tasks</h3>
+          <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text-primary">Tasks</h3>
           <button
             onClick={handleClose}
             className="text-red-500 font-bold text-3xl hover:text-red-600 transition"
@@ -181,39 +146,41 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         )}
 
         <ul className="space-y-3 mb-4">
-          {localTodos.map(task => (
-            <li
-              key={task.id}
-              className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-300
-                hover:shadow-xl hover:ring-2 hover:ring-primary hover:ring-opacity-50 hover:bg-white/70 dark:hover:bg-gray-700/70
-                ${animateNewId === task.id ? 'animate-from-input' : ''} ${animateRemoveId === task.id ? 'animate-to-input' : ''}`}
-            >
-              <div className="flex items-center gap-4 w-full">
-                <input
-                  type="checkbox"
-                  checked={task.done}
-                  onChange={() => handleToggleDone(task.id)}
-                  className="w-8 h-8 transform transition-all duration-300"
-                />
-                <span className={`flex-1 text-sm sm:text-base md:text-lg lg:text-xl ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
-                  {task.text}
-                </span>
+          {localTodos.map(task => {
+            const taskDate = new Date(task.createdAt).toISOString().split('T')[0];
+            const showWarning = !task.done && taskDate < todayStr; // التحذير فقط للمهام القديمة وغير المنجزة
 
-                {!task.done && (
-                  <span className="ml-2 text-red-600 font-bold text-xs sm:text-sm md:text-base px-2 py-1 rounded bg-red-100 dark:bg-red-900 animate-pulse">
-                    ⚠ Overdue! 😡
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => handleDeleteTask(task.id)}
-                className="text-gray-500 hover:text-red-600 transition text-2xl"
-                title="Delete Task"
+            return (
+              <li
+                key={task.id}
+                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-300 hover:shadow-xl hover:ring-2 hover:ring-primary hover:ring-opacity-50 hover:bg-white/70 dark:hover:bg-gray-700/70"
               >
-                🗑️
-              </button>
-            </li>
-          ))}
+                <div className="flex items-center gap-4 w-full">
+                  <input
+                    type="checkbox"
+                    checked={task.done}
+                    onChange={() => handleToggleDone(task.id)}
+                    className="w-8 h-8 transform transition-all duration-300"
+                  />
+                  <span className={`flex-1 text-sm sm:text-base md:text-lg lg:text-xl ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
+                    {task.text}
+                  </span>
+                  {showWarning && (
+                    <span className="ml-2 text-red-600 font-bold text-xs sm:text-sm md:text-base px-2 py-1 rounded bg-red-100 dark:bg-red-900 animate-pulse">
+                      ⚠ Overdue! 😡
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleDeleteTask(task.id)}
+                  className="text-gray-500 hover:text-red-600 transition text-2xl"
+                  title="Delete Task"
+                >
+                  🗑️
+                </button>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="flex gap-2 mt-auto">
@@ -233,11 +200,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         </div>
 
         <style>{`
-          @keyframes from-input { 0% { opacity:0; transform: translateY(20px) scale(0.8);} 100% {opacity:1; transform: translateY(0) scale(1);} }
-          @keyframes to-input { 0% { opacity:1; transform: translateY(0) scale(1);} 100% { opacity:0; transform: translateY(20px) scale(0.8);} }
           @keyframes loading-bar { 0% { transform: translateX(-100%);} 50% { transform: translateX(0);} 100% { transform: translateX(100%);} }
-          .animate-from-input { animation: from-input 0.4s ease-out; }
-          .animate-to-input { animation: to-input 0.4s ease-in forwards; }
+          .animate-[loading-bar_1.5s_ease-in-out_infinite] { animation: loading-bar 1.5s ease-in-out infinite; }
         `}</style>
       </div>
     </div>
