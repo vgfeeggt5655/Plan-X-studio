@@ -1,7 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { ToDoItem, User } from '../types';
-import { getUserTodos, updateUserTodos } from '../services/googleSheetService';
+// components/TodoDialog.tsx
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { User } from '../types';
+
+interface Task {
+  day: string;
+  task: string;
+  done: boolean;
+}
 
 interface TodoDialogProps {
   isOpen: boolean;
@@ -9,90 +15,67 @@ interface TodoDialogProps {
 }
 
 const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
-  const [todos, setTodos] = useState<ToDoItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  const { user, updateUser } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    if (!isOpen || !user) return;
+    if (user && user.todo_list) {
+      try {
+        const parsed: Task[] = JSON.parse(user.todo_list);
+        setTasks(parsed.sort((a, b) => new Date(a.day).getTime() - new Date(b.day).getTime()));
+      } catch (e) {
+        console.error('Failed to parse todo_list', e);
+        setTasks([]);
+      }
+    }
+  }, [user]);
 
-    const loadTodos = async () => {
-      setLoading(true);
-      let userTodos = await getUserTodos(user.id);
-
-      // حذف المهام المنجزة من امبارح ونقل المهام غير المنجزة من امبارح لليوم
-      const updatedTodos: ToDoItem[] = [];
-      userTodos.forEach((t) => {
-        if (t.date === yesterdayStr) {
-          if (!t.completed) {
-            updatedTodos.push({ ...t, date: todayStr });
-          }
-        } else if (t.date === todayStr) {
-          updatedTodos.push(t);
-        }
-      });
-
-      setTodos(updatedTodos);
-      await updateUserTodos(user, updatedTodos);
-      setLoading(false);
-    };
-
-    loadTodos();
-  }, [isOpen, user]);
-
-  const toggleComplete = async (id: string) => {
-    const updated = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-    setTodos(updated);
-    if (user) await updateUserTodos(user, updated);
+  const toggleTaskDone = async (index: number) => {
+    const updated = [...tasks];
+    updated[index].done = !updated[index].done;
+    setTasks(updated);
+    if (user) {
+      await updateUser({ ...user, todo_list: JSON.stringify(updated) });
+    }
   };
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex justify-center items-center p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-surface border border-border-color rounded-lg shadow-2xl p-6 w-full max-w-md transform transition-all"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 className="text-xl font-bold text-text-primary mb-4">Today's Tasks</h2>
+  const today = new Date().toISOString().split('T')[0];
 
-        {loading ? (
-          <div className="text-center text-text-secondary">Loading...</div>
-        ) : todos.length === 0 ? (
-          <div className="text-text-secondary">No tasks for today!</div>
-        ) : (
-          <ul className="space-y-2 max-h-80 overflow-y-auto">
-            {todos.map((t) => (
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 overflow-y-auto max-h-[80vh]">
+        <h2 className="text-2xl font-bold mb-4 text-center">Your Todo List</h2>
+        <ul className="space-y-2">
+          {tasks.map((task, idx) => {
+            const isLate = !task.done && task.day < today;
+            return (
               <li
-                key={t.id}
-                className={`flex items-center justify-between p-2 rounded-md border ${
-                  !t.completed && t.date === todayStr && t.id.includes('yesterday') ? 'border-red-500 bg-red-100' : 'border-gray-300'
+                key={idx}
+                className={`flex justify-between items-center p-2 rounded-md ${
+                  isLate ? 'bg-red-100 text-red-800' : task.done ? 'bg-green-100 text-green-800' : 'bg-gray-100'
                 }`}
               >
-                <span className={`${t.completed ? 'line-through text-gray-400' : ''}`}>{t.task}</span>
+                <span>
+                  <strong>{task.day}:</strong> {task.task}
+                </span>
                 <button
-                  onClick={() => toggleComplete(t.id)}
-                  className={`px-2 py-1 text-sm rounded ${
-                    t.completed ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
+                  onClick={() => toggleTaskDone(idx)}
+                  className={`px-3 py-1 rounded-full font-semibold ${
+                    task.done ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-800 hover:bg-gray-400'
                   }`}
                 >
-                  {t.completed ? 'Done' : 'Mark'}
+                  {task.done ? 'Done' : 'Mark'}
                 </button>
               </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="flex justify-end mt-4">
+            );
+          })}
+        </ul>
+        <div className="mt-4 text-center">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-600 text-text-primary rounded-md hover:bg-slate-500 transition-colors"
+            className="px-4 py-2 bg-primary text-white rounded-full hover:bg-cyan-400"
           >
             Close
           </button>
