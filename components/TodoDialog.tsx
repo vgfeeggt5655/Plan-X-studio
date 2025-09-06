@@ -1,11 +1,10 @@
-// components/TodoDialog.tsx
 import React, { useState, useEffect } from 'react';
+import { getUserTodoList, updateUserTodoList } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
-import { User } from '../types';
 
-interface Task {
-  day: string;
-  task: string;
+interface TodoItem {
+  id: string;
+  text: string;
   done: boolean;
 }
 
@@ -14,72 +13,114 @@ interface TodoDialogProps {
   onClose: () => void;
 }
 
+const daysOfWeek = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
 const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
-  const { user, updateUser } = useAuth();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { user } = useAuth();
+  const [todos, setTodos] = useState<Record<string, TodoItem[]>>({});
+  const [newTask, setNewTask] = useState<Record<string, string>>({});
 
+  // Load user's todo list on open
   useEffect(() => {
-    if (user && user.todo_list) {
-      try {
-        const parsed: Task[] = JSON.parse(user.todo_list);
-        setTasks(parsed.sort((a, b) => new Date(a.day).getTime() - new Date(b.day).getTime()));
-      } catch (e) {
-        console.error('Failed to parse todo_list', e);
-        setTasks([]);
-      }
-    }
-  }, [user]);
+    if (!isOpen || !user) return;
+    (async () => {
+      const data = await getUserTodoList(user.id);
+      setTodos(data);
+    })();
+  }, [isOpen, user]);
 
-  const toggleTaskDone = async (index: number) => {
-    const updated = [...tasks];
-    updated[index].done = !updated[index].done;
-    setTasks(updated);
-    if (user) {
-      await updateUser({ ...user, todo_list: JSON.stringify(updated) });
-    }
+  // Save updated todo list to server
+  const saveTodos = async (updatedTodos: Record<string, TodoItem[]>) => {
+    if (!user) return;
+    setTodos(updatedTodos);
+    await updateUserTodoList(user.id, updatedTodos);
+  };
+
+  const handleAddTask = (day: string) => {
+    if (!newTask[day] || newTask[day].trim() === '') return;
+    const updated = { ...todos };
+    const task: TodoItem = { id: Date.now().toString(), text: newTask[day], done: false };
+    if (!updated[day]) updated[day] = [];
+    updated[day].push(task);
+    setNewTask({ ...newTask, [day]: '' });
+    saveTodos(updated);
+  };
+
+  const handleToggleDone = (day: string, taskId: string) => {
+    const updated = { ...todos };
+    const task = updated[day].find(t => t.id === taskId);
+    if (!task) return;
+    task.done = !task.done;
+    saveTodos(updated);
+  };
+
+  const handleDeleteTask = (day: string, taskId: string) => {
+    const updated = { ...todos };
+    updated[day] = updated[day].filter(t => t.id !== taskId);
+    saveTodos(updated);
   };
 
   if (!isOpen) return null;
 
-  const today = new Date().toISOString().split('T')[0];
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 overflow-y-auto max-h-[80vh]">
-        <h2 className="text-2xl font-bold mb-4 text-center">Your Todo List</h2>
-        <ul className="space-y-2">
-          {tasks.map((task, idx) => {
-            const isLate = !task.done && task.day < today;
-            return (
-              <li
-                key={idx}
-                className={`flex justify-between items-center p-2 rounded-md ${
-                  isLate ? 'bg-red-100 text-red-800' : task.done ? 'bg-green-100 text-green-800' : 'bg-gray-100'
-                }`}
-              >
-                <span>
-                  <strong>{task.day}:</strong> {task.task}
-                </span>
-                <button
-                  onClick={() => toggleTaskDone(idx)}
-                  className={`px-3 py-1 rounded-full font-semibold ${
-                    task.done ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-800 hover:bg-gray-400'
-                  }`}
-                >
-                  {task.done ? 'Done' : 'Mark'}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-        <div className="mt-4 text-center">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-primary text-white rounded-full hover:bg-cyan-400"
-          >
-            Close
-          </button>
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-start pt-20 z-50">
+      <div className="bg-white dark:bg-slate-900 w-11/12 max-w-3xl p-6 rounded-xl shadow-lg overflow-y-auto max-h-[80vh]">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-text-primary">Todo List</h2>
+          <button onClick={onClose} className="text-red-500 font-bold text-xl">×</button>
         </div>
+
+        {daysOfWeek.map(day => (
+          <div key={day} className="mb-6">
+            <h3 className="font-semibold text-lg mb-2">{day}</h3>
+
+            {/* Tasks List */}
+            <ul className="space-y-1 mb-2">
+              {todos[day]?.map(task => (
+                <li key={task.id} className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={task.done}
+                      onChange={() => handleToggleDone(day, task.id)}
+                    />
+                    <span className={task.done ? 'line-through text-gray-400' : ''}>{task.text}</span>
+                  </div>
+                  <button onClick={() => handleDeleteTask(day, task.id)} className="text-red-500 font-bold">×</button>
+                </li>
+              ))}
+            </ul>
+
+            {/* Add Task */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Add a task..."
+                value={newTask[day] || ''}
+                onChange={e => setNewTask({ ...newTask, [day]: e.target.value })}
+                className="flex-1 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+              />
+              <button
+                onClick={() => handleAddTask(day)}
+                className="px-3 py-2 bg-primary text-white rounded hover:bg-cyan-400 transition-colors"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Warning for unfinished past tasks */}
+            {todos[day]?.some(t => !t.done) && (
+              <p className="text-red-500 text-sm mt-1">⚠ Some tasks are still unfinished!</p>
+            )}
+
+            {/* Simple progress/star rating */}
+            {todos[day] && todos[day].length > 0 && (
+              <div className="flex mt-1 gap-1">
+                {todos[day].map(t => t.done ? '⭐' : '✩')}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
