@@ -2,14 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LogoutIcon, TachometerIcon, UserCircleIcon, ChevronDownIcon, MenuIcon, XIcon } from './Icons';
-import TodoDialog from './TodoDialog'; // استيراد الديالوج هنا
+import TodoDialog from './TodoDialog';
+import { getUserTodoList } from '../services/authService'; // لازم تجيب المهام
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
-  const [isTodoOpen, setTodoOpen] = useState(false); // State لفتح/إغلاق TodoDialog
+  const [isTodoOpen, setTodoOpen] = useState(false);
+  const [progress, setProgress] = useState(0); // نسبة التقدم
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [remainingTasks, setRemainingTasks] = useState(0);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
@@ -17,7 +22,8 @@ const Header: React.FC = () => {
     logout();
     navigate('/login');
   };
-  
+
+  // Close dropdown/menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
@@ -28,6 +34,23 @@ const Header: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Fetch progress when user changes
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const todos = await getUserTodoList(user.id);
+      let total = 0;
+      let remaining = 0;
+      for (const day in todos) {
+        total += todos[day].length;
+        remaining += todos[day].filter(t => !t.done).length;
+      }
+      setTotalTasks(total);
+      setRemainingTasks(remaining);
+      setProgress(total ? Math.round(((total - remaining) / total) * 100) : 0);
+    })();
+  }, [user, isTodoOpen]); // نعيد الحساب لما نفتح الديالوج أو المستخدم يتغير
 
   const activeLinkClass = "text-primary font-semibold bg-primary/10";
   const inactiveLinkClass = "text-text-secondary hover:text-primary hover:bg-surface";
@@ -43,6 +66,26 @@ const Header: React.FC = () => {
       >
         All Content
       </NavLink>
+
+      {/* Tasks tab with progress */}
+      <div className="relative flex items-center">
+        <NavLink
+          to="#"
+          onClick={(e) => { e.preventDefault(); setTodoOpen(true); setMenuOpen(false); }}
+          className={({ isActive }) => `${linkBaseClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
+        >
+          📝 Tasks
+        </NavLink>
+        {totalTasks > 0 && (
+          <div className="absolute -top-2 -right-2 w-12 h-2 bg-gray-200 rounded overflow-hidden">
+            <div className="h-2 bg-primary transition-all" style={{ width: `${progress}%` }}></div>
+          </div>
+        )}
+        {totalTasks > 0 && (
+          <span className="ml-1 text-xs text-text-secondary">{remainingTasks}/{totalTasks}</span>
+        )}
+      </div>
+
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
         <NavLink
           to="/admin"
@@ -53,13 +96,6 @@ const Header: React.FC = () => {
           Dashboard
         </NavLink>
       )}
-      {/* زر فتح TodoDialog */}
-      <button
-        onClick={() => setTodoOpen(true)}
-        className={`${linkBaseClass} bg-primary/10 text-primary hover:bg-primary/20`}
-      >
-        📝 Tasks
-      </button>
     </>
   );
 
@@ -74,44 +110,44 @@ const Header: React.FC = () => {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-2">
-            {navLinks}
+              {navLinks}
           </div>
 
           <div className="flex items-center gap-2">
-            {user && (
-               <div className="relative" ref={dropdownRef}>
-                    <button 
-                        onClick={() => setDropdownOpen(!isDropdownOpen)}
-                        className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors p-1 rounded-full hover:bg-primary/20"
-                    >
-                        {user.avatar ? (
-                            <img src={user.avatar} alt="User Avatar" className="h-8 w-8 rounded-full object-cover border-2 border-primary/50" />
-                        ) : (
-                            <UserCircleIcon className="h-8 w-8"/>
-                        )}
-                        <span className="hidden sm:inline font-medium">{user.name}</span>
-                        <ChevronDownIcon className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    {isDropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-surface border border-border-color rounded-md shadow-lg py-1 z-10 animate-fade-in-up" style={{animationDuration: '0.2s'}}>
-                            <Link to="/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-primary/20 hover:text-primary transition-colors">
-                                <UserCircleIcon className="h-5 w-5" />
-                                <span>Profile</span>
-                            </Link>
-                            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-red-500/20 hover:text-red-500 transition-colors">
-                               <LogoutIcon className="h-5 w-5" />
-                               <span>Logout</span>
-                            </button>
-                        </div>
-                    )}
-               </div>
-            )}
-            {/* Mobile Menu Button */}
-            <div className="md:hidden">
-                <button onClick={() => setMenuOpen(!isMenuOpen)} className="p-2 rounded-md text-text-secondary hover:text-primary hover:bg-primary/20">
-                    {isMenuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
-                </button>
-            </div>
+              {user && (
+                 <div className="relative" ref={dropdownRef}>
+                      <button 
+                          onClick={() => setDropdownOpen(!isDropdownOpen)}
+                          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors p-1 rounded-full hover:bg-primary/20"
+                      >
+                          {user.avatar ? (
+                              <img src={user.avatar} alt="User Avatar" className="h-8 w-8 rounded-full object-cover border-2 border-primary/50" />
+                          ) : (
+                              <UserCircleIcon className="h-8 w-8"/>
+                          )}
+                          <span className="hidden sm:inline font-medium">{user.name}</span>
+                          <ChevronDownIcon className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      {isDropdownOpen && (
+                          <div className="absolute right-0 mt-2 w-48 bg-surface border border-border-color rounded-md shadow-lg py-1 z-10 animate-fade-in-up" style={{animationDuration: '0.2s'}}>
+                              <Link to="/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-primary/20 hover:text-primary transition-colors">
+                                  <UserCircleIcon className="h-5 w-5" />
+                                  <span>Profile</span>
+                              </Link>
+                              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-red-500/20 hover:text-red-500 transition-colors">
+                                 <LogoutIcon className="h-5 w-5" />
+                                 <span>Logout</span>
+                              </button>
+                          </div>
+                      )}
+                 </div>
+              )}
+              {/* Mobile Menu Button */}
+              <div className="md:hidden">
+                  <button onClick={() => setMenuOpen(!isMenuOpen)} className="p-2 rounded-md text-text-secondary hover:text-primary hover:bg-primary/20">
+                      {isMenuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+                  </button>
+              </div>
           </div>
         </nav>
         {/* Mobile Navigation Menu */}
@@ -124,8 +160,8 @@ const Header: React.FC = () => {
         )}
       </header>
 
-      {/* TodoDialog */}
-      {isTodoOpen && <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} />}
+      {/* Todo Dialog */}
+      {user && <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} />}
     </>
   );
 };
