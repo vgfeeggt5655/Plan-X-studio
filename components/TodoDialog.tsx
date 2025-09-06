@@ -54,12 +54,21 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     (async () => {
       setLoading(true);
       const data = await getUserTodoList(user.id);
-      const todayTasks = (data[todayStr] || []).filter(task => {
-        const taskDateStr = new Date(task.createdAt).toISOString().split('T')[0];
-        return !(task.done && taskDateStr !== todayStr);
+      let todayTasks = data[todayStr] || [];
+
+      // حذف المهام اللي تم عملها ومر عليها يوم
+      todayTasks = todayTasks.filter(task => {
+        const taskDate = new Date(task.createdAt);
+        const taskDay = taskDate.toISOString().split('T')[0];
+        // خلي اللي done وحصل قبل اليوم يتم حذفه
+        if (task.done && taskDay !== todayStr) return false;
+        return true;
       });
+
       setTodos(todayTasks);
       setLoading(false);
+      // حفظ التحديث بعد حذف المهام القديمة
+      await updateUserTodoList(user.id, { [todayStr]: todayTasks });
     })();
   }, [isOpen, user, todayStr]);
 
