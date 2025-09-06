@@ -4,6 +4,7 @@ interface IconProps {
   className?: string;
 }
 import { X, Plus } from "lucide-react";
+
 export const XIcon = (props: any) => <X {...props} />;
 export const PlusIcon = (props: any) => <Plus {...props} />;
 
@@ -193,26 +194,5 @@ export const CheckIcon: React.FC<IconProps> = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
-);
-
-
-// components/Icons.tsx
-
-export const ListTodoIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    {...props}
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    className="w-5 h-5"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 5h11M9 12h11M9 19h11M4 5h.01M4 12h.01M4 19h.01"
-    />
-  </svg>
 );
 
