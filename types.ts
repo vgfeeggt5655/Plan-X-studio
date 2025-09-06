@@ -7,24 +7,17 @@ export interface Resource {
   image_url: string;
 }
 
-export interface ToDoItem {
-  id: string;          // unique id
-  task: string;        // نص المهمة
-  date: string;        // YYYY-MM-DD
-  completed: boolean;  // حالة الإنجاز
-}
-
-
 export interface User {
   id: string;
   name: string;
   email: string;
   // WARNING: Storing plain-text passwords is a major security risk.
+  // This is implemented based on the requested Google Sheets structure.
+  // In a real application, always use a secure authentication provider and password hashing.
   password: string;
   role: 'user' | 'admin' | 'super_admin';
   avatar?: string;
   watched?: string; // JSON string like '{"resourceId": seconds}'
-  todo_list?: string; // JSON string array of Task objects
 }
 
 export interface Subject {
