@@ -9,7 +9,6 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import SubjectFilterDialog from '../components/SubjectFilterDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { VideoIcon, SearchIcon, FilterIcon, ListTodoIcon } from '../components/Icons';
-import TodoListDialog from '../components/TodoListDialog';
 
 const encouragingMessages = [
   "Your next discovery is just a search away. What will you learn today?",
@@ -26,7 +25,6 @@ const parseWatchedData = (watched: string | undefined | null): Record<string, Wa
   try {
     const data = JSON.parse(watched);
     if (typeof data !== 'object' || data === null || Array.isArray(data)) return {};
-
     const normalizedData: Record<string, WatchedProgress> = {};
     for (const key in data) {
       if (typeof data[key] === 'number') {
@@ -51,7 +49,6 @@ const HomePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [isFilterOpen, setFilterOpen] = useState(false);
-  const [isTodoOpen, setTodoOpen] = useState(false);
   const [heroMessage, setHeroMessage] = useState('');
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -88,9 +85,13 @@ const HomePage: React.FC = () => {
         if (searchWords.length === 0) return true;
         const title = r.title.toLowerCase();
         const subject = r.Subject_Name.toLowerCase();
-        return searchWords.every(word => title.includes(word) || subject.includes(word));
+        return searchWords.every(word =>
+          title.includes(word) || subject.includes(word)
+        );
       })
-      .filter(r => selectedSubject ? r.Subject_Name === selectedSubject : true);
+      .filter(r =>
+        selectedSubject ? r.Subject_Name === selectedSubject : true
+      );
   }, [resources, searchTerm, selectedSubject]);
 
   const watchedData = useMemo(() => parseWatchedData(user?.watched), [user]);
@@ -161,24 +162,24 @@ const HomePage: React.FC = () => {
           <h1 className="text-4xl md:text-5xl font-extrabold text-text-primary mb-4 animate-fade-in-up">
             Welcome back, <span className="text-primary">{user?.name || 'Explorer'}</span>!
           </h1>
-          <p
-            className="text-lg text-text-secondary max-w-2xl mx-auto mb-8 animate-fade-in-up"
-            style={{ animationDelay: '0.1s' }}
-          >
+          <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             {heroMessage}
           </p>
+          <div
+            className="max-w-2xl mx-auto bg-surface p-2 rounded-full shadow-lg flex items-center gap-2 sm:gap-3 animate-fade-in-up border border-border-color"
+            style={{ animationDelay: '0.2s' }}
+          >
+            <SearchIcon className="ml-4 h-5 w-5 sm:h-6 sm:w-6 text-gray-400 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Search courses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-transparent focus:outline-none text-base sm:text-lg text-text-primary placeholder-text-secondary"
+            />
 
-          {/* Search & Tasks Button */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <div className="max-w-2xl mx-auto bg-surface p-2 rounded-full shadow-lg flex items-center gap-1 sm:gap-2 animate-fade-in-up border border-border-color">
-              <SearchIcon className="ml-4 h-5 w-5 sm:h-6 sm:w-6 text-gray-400 flex-shrink-0" />
-              <input
-                type="text"
-                placeholder="Search courses..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-transparent focus:outline-none text-base sm:text-lg text-text-primary placeholder-text-secondary"
-              />
+            <div className="flex gap-2">
+              {/* Filter Button */}
               <button
                 onClick={() => setFilterOpen(true)}
                 className="flex-shrink-0 inline-flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-full text-white bg-primary hover:bg-cyan-400 transition-colors shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/40"
@@ -191,23 +192,74 @@ const HomePage: React.FC = () => {
                   </span>
                 )}
               </button>
-            </div>
 
-            {/* Tasks Button */}
-            <button
-              onClick={() => setTodoOpen(true)}
-              className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-primary to-cyan-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
-            >
-              <ListTodoIcon className="h-5 w-5" />
-              My Tasks
-            </button>
+              {/* Tasks Button */}
+              <button
+                onClick={() => alert("Tasks dialog here")}
+                className="flex-shrink-0 inline-flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-full text-white bg-primary hover:bg-cyan-400 transition-colors shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/40"
+              >
+                <ListTodoIcon className="h-5 w-5" />
+                <span className="hidden md:inline">Tasks</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Rest of homepage sections (unchanged) */}
-      {/* ... Continue Watching + Subjects */}
-      
+      {/* Content Sections Wrapper */}
+      <div className="container mx-auto px-4">
+        {continueWatchingResources.length > 0 && (
+          <section className="-mt-12">
+            <h2 className="text-2xl font-bold text-text-primary mb-4">Continue Watching</h2>
+            <div className="relative">
+              <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-thin overscroll-x-contain">
+                {continueWatchingResources.map(({ resource, progress }, index) => (
+                  <div key={resource.id} className="flex-shrink-0 w-72 sm:w-80">
+                    <ResourceCard
+                      resource={resource}
+                      onDelete={handleDeleteRequest}
+                      userRole={user?.role}
+                      animationDelay={`${index * 50}ms`}
+                      watchProgress={progress}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-l from-background pointer-events-none md:hidden"></div>
+            </div>
+          </section>
+        )}
+
+        <div className={`space-y-10 ${continueWatchingResources.length > 0 ? 'mt-16' : '-mt-8'}`}>
+          {filteredResources.length === 0 && searchTerm.length > 0 ? (
+            <p className="text-center text-text-secondary text-lg pt-10">
+              No courses found matching your criteria.
+            </p>
+          ) : (
+            orderedSubjects.map((subject) => (
+              <section key={subject.id}>
+                <h2 className="text-2xl font-bold text-text-primary mb-4">{subject.Subject_Name}</h2>
+                <div className="relative">
+                  <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-thin overscroll-x-contain">
+                    {groupedResources[subject.Subject_Name].map((resource, index) => (
+                      <div key={resource.id} className="flex-shrink-0 w-72 sm:w-80">
+                        <ResourceCard
+                          resource={resource}
+                          onDelete={handleDeleteRequest}
+                          userRole={user?.role}
+                          animationDelay={`${index * 50}ms`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-l from-background pointer-events-none md:hidden"></div>
+                </div>
+              </section>
+            ))
+          )}
+        </div>
+      </div>
+
       <ConfirmDialog
         isOpen={dialogState.isOpen}
         onClose={() => setDialogState({ isOpen: false, resourceId: null })}
@@ -215,8 +267,10 @@ const HomePage: React.FC = () => {
         title="Delete Resource"
         message={
           <>
-            Are you sure you want to delete this resource? <br />
-            <strong>{targetedResource?.title}</strong> <br />
+            Are you sure you want to delete this resource?
+            <br />
+            <strong>{targetedResource?.title}</strong>
+            <br />
             This action cannot be undone.
           </>
         }
@@ -230,11 +284,6 @@ const HomePage: React.FC = () => {
         subjects={subjects}
         selectedSubject={selectedSubject}
         onSelectSubject={setSelectedSubject}
-      />
-
-      <TodoListDialog
-        isOpen={isTodoOpen}
-        onClose={() => setTodoOpen(false)}
       />
     </div>
   );
