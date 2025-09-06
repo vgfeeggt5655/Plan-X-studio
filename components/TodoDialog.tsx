@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getUserTodoList, updateUserTodoList } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
 
 interface TodoItem {
   id: string;
@@ -30,8 +29,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false); // لمتابعة ارسال البيانات للـ API
-  const [animatedTasks, setAnimatedTasks] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [animatedIds, setAnimatedIds] = useState<string[]>([]);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -41,14 +40,11 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     if (!isOpen || !user) return;
     (async () => {
       setLoading(true);
-      let data = await getUserTodoList(user.id);
-
+      const data = await getUserTodoList(user.id);
       const todayTasks = (data[todayStr] || []).filter(task => {
-        const taskDate = new Date(task.createdAt);
-        const taskDateStr = taskDate.toISOString().split('T')[0];
+        const taskDateStr = new Date(task.createdAt).toISOString().split('T')[0];
         return !(task.done && taskDateStr !== todayStr);
       });
-
       setTodos(todayTasks);
       setLoading(false);
     })();
@@ -60,8 +56,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     setSaving(true);
 
     if (animateId) {
-      setAnimatedTasks(prev => [...prev, animateId]);
-      setTimeout(() => setAnimatedTasks(prev => prev.filter(id => id !== animateId)), 500);
+      setAnimatedIds(prev => [...prev, animateId]);
+      setTimeout(() => setAnimatedIds(prev => prev.filter(id => id !== animateId)), 400);
     }
 
     await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
@@ -81,9 +77,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   };
 
   const handleToggleDone = (taskId: string) => {
-    const updated = todos.map(t =>
-      t.id === taskId ? { ...t, done: !t.done } : t
-    );
+    const updated = todos.map(t => (t.id === taskId ? { ...t, done: !t.done } : t));
     saveTodos(updated, taskId);
   };
 
@@ -97,14 +91,13 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const doneCount = todos.filter(t => t.done).length;
   const progress = todos.length ? (doneCount / todos.length) * 100 : 0;
   const showProgress = doneCount > 0;
-
-  const canClose = !saving; // يمنع الإغلاق أثناء الحفظ
+  const canClose = !saving;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
       <div className="relative w-full max-w-2xl p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]
-        bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 transition-transform scale-100 animate-fade-in-up"
-      >
+        bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 transition-transform scale-100 animate-fade-in-up">
+
         {/* عبارة تشجيعية */}
         <h2 className="text-2xl md:text-3xl font-bold text-center text-primary mb-4">{encouragement}</h2>
 
@@ -131,31 +124,32 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         )}
 
         {/* قائمة المهام مع تأثير الإضافة/الحذف */}
-        <TransitionGroup className="space-y-3 mb-4">
+        <ul className="space-y-3 mb-4">
           {todos.map(task => (
-            <CSSTransition key={task.id} timeout={400} classNames="task">
-              <li className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
-                <div className="flex items-center gap-4 w-full">
-                  <input
-                    type="checkbox"
-                    checked={task.done}
-                    onChange={() => handleToggleDone(task.id)}
-                    className={`w-8 h-8 transform transition-all duration-300 ${animatedTasks.includes(task.id) ? 'scale-125 shadow-lg shadow-cyan-400/50' : ''}`}
-                  />
-                  <span className={`flex-1 text-lg ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
-                    {task.text}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleDeleteTask(task.id)}
-                  className="text-red-500 font-bold text-xl hover:text-red-600 transition"
-                >
-                  ×
-                </button>
-              </li>
-            </CSSTransition>
+            <li
+              key={task.id}
+              className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-400 transform ${animatedIds.includes(task.id) ? 'scale-105 opacity-80' : 'opacity-100 scale-100'}`}
+            >
+              <div className="flex items-center gap-4 w-full">
+                <input
+                  type="checkbox"
+                  checked={task.done}
+                  onChange={() => handleToggleDone(task.id)}
+                  className="w-8 h-8 transform transition-all duration-300"
+                />
+                <span className={`flex-1 text-lg ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
+                  {task.text}
+                </span>
+              </div>
+              <button
+                onClick={() => handleDeleteTask(task.id)}
+                className="text-red-500 font-bold text-xl hover:text-red-600 transition"
+              >
+                ×
+              </button>
+            </li>
           ))}
-        </TransitionGroup>
+        </ul>
 
         {/* Progress Bar */}
         {showProgress && (
@@ -197,24 +191,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
             }
             .animate-loading {
               animation: loading 1.5s linear infinite;
-            }
-            .task-enter {
-              opacity: 0;
-              transform: translateY(-10px);
-            }
-            .task-enter-active {
-              opacity: 1;
-              transform: translateY(0);
-              transition: all 400ms ease-in-out;
-            }
-            .task-exit {
-              opacity: 1;
-              transform: translateY(0);
-            }
-            .task-exit-active {
-              opacity: 0;
-              transform: translateY(-10px);
-              transition: all 400ms ease-in-out;
             }
           `}
         </style>
