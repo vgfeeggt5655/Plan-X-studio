@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getUserTodoList, updateUserTodoList } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
-import Confetti from 'react-confetti'; // لازم تنزل الباكيج: npm install react-confetti
 
 interface TodoItem {
   id: string;
@@ -15,6 +14,7 @@ interface TodoDialogProps {
   onClose: () => void;
 }
 
+// عبارات تشجيعية متغيرة حسب اليوم
 const baseEncouragements = [
   "Keep going! 💪",
   "You're doing great! 🌟",
@@ -36,7 +36,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
-  // اختيار الجملة التشجيعية حسب التقدم
   const getEncouragement = () => {
     if (!todos.length) return baseEncouragements[today.getDate() % baseEncouragements.length];
     const progress = todos.filter(t => t.done).length / todos.length;
@@ -64,7 +63,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     const prevDoneCount = todos.filter(t => t.done).length;
     const newDoneCount = updatedTodos.filter(t => t.done).length;
 
-    // effect celebration عند اكتمال مهمة
     if (newDoneCount > prevDoneCount) setCelebrate(true);
 
     setTodos(updatedTodos);
@@ -95,7 +93,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const isTaskOverdue = (task: TodoItem) => {
     const taskDate = new Date(task.createdAt);
     const diff = today.getTime() - taskDate.getTime();
-    return !task.done && diff > 24 * 60 * 60 * 1000; // أكثر من يوم
+    return !task.done && diff > 24 * 60 * 60 * 1000;
   };
 
   const doneCount = todos.filter(t => t.done).length;
@@ -104,16 +102,17 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const canClose = !saving;
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* الخلفية */}
+    <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
 
-      <div className="relative mx-auto w-full max-w-2xl p-6 rounded-3xl shadow-2xl max-h-[90vh]
-        bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 flex flex-col">
+      <div className="relative w-full max-w-2xl p-6 rounded-3xl shadow-2xl max-h-[90vh]
+        bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 flex flex-col overflow-y-auto">
 
-        {celebrate && <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} numberOfPieces={200} />}
+        {/* Sparkle effect عند اكتمال المهمة */}
+        {celebrate && doneCount === todos.length && todos.length > 0 && (
+          <div className="absolute inset-0 pointer-events-none animate-pulse-sparkle"></div>
+        )}
 
-        {/* عبارة تشجيعية */}
         <h2 className="text-2xl md:text-3xl font-bold text-center text-primary mb-4">{getEncouragement()}</h2>
 
         <div className="flex justify-between items-center mb-4">
@@ -128,7 +127,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Progress bar حديث */}
         {showProgress && (
           <div className="w-full h-3 rounded-full mb-4 overflow-hidden bg-gray-200 dark:bg-gray-700">
             <div
@@ -141,7 +139,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {/* المهام */}
         <ul className="space-y-3 mb-4">
           {todos.map(task => (
             <li
@@ -159,8 +156,17 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                 <span className={`flex-1 text-lg ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
                   {task.text}
                 </span>
+
+                {/* Emojis التفاعلية */}
                 {isTaskOverdue(task) && (
-                  <span className="ml-2 text-red-600 font-bold text-sm px-2 py-1 rounded bg-red-100 dark:bg-red-900 animate-pulse">⚠ Overdue!</span>
+                  <span className="ml-2 text-red-600 font-bold text-sm px-2 py-1 rounded bg-red-100 dark:bg-red-900 animate-pulse">
+                    ⚠ Overdue! 😡
+                  </span>
+                )}
+                {task.done && !isTaskOverdue(task) && (
+                  <span className="ml-2 text-green-600 font-bold text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 animate-pulse">
+                    ✅ Good job! 🎉
+                  </span>
                 )}
               </div>
               <button
@@ -173,7 +179,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           ))}
         </ul>
 
-        {/* إضافة مهمة */}
         <div className="flex gap-3 flex-col sm:flex-row mt-4">
           <input
             type="text"
