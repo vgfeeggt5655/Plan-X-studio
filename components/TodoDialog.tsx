@@ -22,7 +22,7 @@ const baseEncouragements = [
   "Almost there! 🏁",
   "Stay awesome! 😎",
   "Every task counts! ✅",
-  "Make today amazing! 🌈"
+  "Make today amazing! 😍"
 ];
 
 const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
@@ -36,13 +36,24 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
-  const getEncouragement = () => {
-    if (!todos.length) return baseEncouragements[today.getDate() % baseEncouragements.length];
-    const progress = todos.filter(t => t.done).length / todos.length;
-    if (progress === 1) return "All tasks done! 🎉 Amazing job!";
-    if (progress > 0.5) return "Halfway there! Keep it up! 😎";
-    return "Let's get started! 💪";
-  };
+  // مثال على 10 عبارات حسب التقدم
+const getEncouragement = () => {
+  if (!todos.length) return "Let's get started! 💪";
+
+  const progress = todos.filter(t => t.done).length / todos.length;
+
+  if (progress === 1) return "All tasks done! 🎉 Amazing job!";
+  if (progress >= 0.9) return "Almost there! You're a star! 🌟";
+  if (progress >= 0.8) return "Great work! Keep pushing! 🚀";
+  if (progress >= 0.7) return "You're on fire! 🔥";
+  if (progress >= 0.6) return "Keep it going! 💪";
+  if (progress >= 0.5) return "Halfway there! 😎";
+  if (progress >= 0.4) return "Nice start! ✨";
+  if (progress >= 0.3) return "Keep moving! 🏃‍♂️";
+  if (progress >= 0.2) return "Don't give up! 💡";
+  return "Let's get started! 🌈";
+};
+
 
   useEffect(() => {
     if (!isOpen || !user) return;
