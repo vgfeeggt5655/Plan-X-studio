@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LogoutIcon, TachometerIcon, UserCircleIcon, ChevronDownIcon, MenuIcon, XIcon } from './Icons';
+import TodoDialog from './TodoDialog'; // استيراد الديالوج هنا
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [isMenuOpen, setMenuOpen] = useState(false); // State for mobile menu
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const [isTodoOpen, setTodoOpen] = useState(false); // State لفتح/إغلاق TodoDialog
   const dropdownRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
@@ -16,7 +18,6 @@ const Header: React.FC = () => {
     navigate('/login');
   };
   
-  // Close dropdown/menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
@@ -52,23 +53,31 @@ const Header: React.FC = () => {
           Dashboard
         </NavLink>
       )}
+      {/* زر فتح TodoDialog */}
+      <button
+        onClick={() => setTodoOpen(true)}
+        className={`${linkBaseClass} bg-primary/10 text-primary hover:bg-primary/20`}
+      >
+        📝 Tasks
+      </button>
     </>
   );
 
   return (
-    <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-border-color">
-      <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <NavLink to="/" className="text-xl font-bold text-text-primary flex items-center gap-2">
-          <img src="./images/logo.png" alt="Logo" className="h-9 w-9" />
-           <span>Plan X</span>
-        </NavLink>
-        
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-2">
+    <>
+      <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-border-color">
+        <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <NavLink to="/" className="text-xl font-bold text-text-primary flex items-center gap-2">
+            <img src="./images/logo.png" alt="Logo" className="h-9 w-9" />
+             <span>Plan X</span>
+          </NavLink>
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-2">
             {navLinks}
-        </div>
+          </div>
 
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {user && (
                <div className="relative" ref={dropdownRef}>
                     <button 
@@ -103,17 +112,21 @@ const Header: React.FC = () => {
                     {isMenuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
                 </button>
             </div>
-        </div>
-      </nav>
-      {/* Mobile Navigation Menu */}
-      {isMenuOpen && (
-         <div className="md:hidden bg-surface border-t border-border-color animate-fade-in-up" style={{animationDuration: '0.2s'}}>
-            <div className="container mx-auto px-4 py-2 flex flex-col gap-1">
-                {navLinks}
-            </div>
-         </div>
-      )}
-    </header>
+          </div>
+        </nav>
+        {/* Mobile Navigation Menu */}
+        {isMenuOpen && (
+           <div className="md:hidden bg-surface border-t border-border-color animate-fade-in-up" style={{animationDuration: '0.2s'}}>
+              <div className="container mx-auto px-4 py-2 flex flex-col gap-1">
+                  {navLinks}
+              </div>
+           </div>
+        )}
+      </header>
+
+      {/* TodoDialog */}
+      {isTodoOpen && <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} />}
+    </>
   );
 };
 
