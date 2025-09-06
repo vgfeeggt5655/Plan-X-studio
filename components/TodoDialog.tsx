@@ -16,10 +16,11 @@ interface TodoDialogProps {
 
 const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const [todos, setTodos] = useState<TodoItem[]>([]); // النسخة الأصلية من الشيت
-  const [localTodos, setLocalTodos] = useState<TodoItem[]>([]); // النسخة المحلية للتعديل
+  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [localTodos, setLocalTodos] = useState<TodoItem[]>([]);
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [animateNewId, setAnimateNewId] = useState<string | null>(null);
   const [animateRemoveId, setAnimateRemoveId] = useState<string | null>(null);
 
@@ -56,7 +57,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       const data = await getUserTodoList(user.id);
       let todayTasks = data[todayStr] || [];
 
-      // حذف المهام اللي تم عملها ومر عليها يوم (من النسخة الأصلية فقط)
       todayTasks = todayTasks.filter(task => {
         const taskDate = new Date(task.createdAt);
         const taskDay = taskDate.toISOString().split('T')[0];
@@ -65,10 +65,44 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       });
 
       setTodos(todayTasks);
-      setLocalTodos(todayTasks); // النسخة المحلية للتعديل
+      setLocalTodos(todayTasks);
       setLoading(false);
     })();
   }, [isOpen, user, todayStr]);
+
+  // حفظ التعديلات
+  const saveTodos = async () => {
+    if (!user) return;
+    setSaving(true);
+    await updateUserTodoList(user.id, { [todayStr]: localTodos });
+    setTodos(localTodos);
+    setSaving(false);
+  };
+
+  // تأكيد عند غلق التاب أو المتصفح
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (JSON.stringify(localTodos) !== JSON.stringify(todos)) {
+        e.preventDefault();
+        e.returnValue = '';
+        saveTodos();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && JSON.stringify(localTodos) !== JSON.stringify(todos)) {
+        saveTodos();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [localTodos, todos, user]);
 
   const handleAddTask = () => {
     if (!newTask.trim()) return;
@@ -93,24 +127,14 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     }, 400);
   };
 
-  const isTaskOverdue = (task: TodoItem) => {
-    const taskDate = new Date(task.createdAt);
-    const diff = today.getTime() - taskDate.getTime();
-    return !task.done && diff > 24 * 60 * 60 * 1000;
+  const handleClose = async () => {
+    await saveTodos();
+    onClose();
   };
 
   const doneCount = localTodos.filter(t => t.done).length;
   const progress = localTodos.length ? (doneCount / localTodos.length) * 100 : 0;
   const showProgress = doneCount > 0;
-
-  // عند غلق الديالوج، نحفظ كل التغييرات مرة واحدة في الشيت
-  const handleClose = async () => {
-    if (user) {
-      await updateUserTodoList(user.id, { [todayStr]: localTodos });
-      setTodos(localTodos);
-    }
-    onClose();
-  };
 
   if (!isOpen) return null;
 
@@ -124,6 +148,12 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         {loading && (
           <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-4">
             <div className="h-2 bg-primary rounded animate-[loading-bar_1.5s_ease-in-out_infinite]" />
+          </div>
+        )}
+
+        {saving && (
+          <div className="text-center text-sm font-semibold text-primary mb-2">
+            Saving your changes... 💾
           </div>
         )}
 
@@ -169,7 +199,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                   {task.text}
                 </span>
 
-                {isTaskOverdue(task) && (
+                {!task.done && (
                   <span className="ml-2 text-red-600 font-bold text-xs sm:text-sm md:text-base px-2 py-1 rounded bg-red-100 dark:bg-red-900 animate-pulse">
                     ⚠ Overdue! 😡
                   </span>
