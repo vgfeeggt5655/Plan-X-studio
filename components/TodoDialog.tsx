@@ -32,8 +32,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
-
-  // اختيار عبارة تشجيعية بناءً على اليوم
   const encouragement = encouragements[today.getDate() % encouragements.length];
 
   useEffect(() => {
@@ -42,7 +40,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       setLoading(true);
       let data = await getUserTodoList(user.id);
 
-      // جلب مهام اليوم الحالي فقط وحذف المهام المنجزة بعد يوم كامل
       const todayTasks = (data[todayStr] || []).filter(task => {
         const taskDate = new Date(task.createdAt);
         const taskDateStr = taskDate.toISOString().split('T')[0];
@@ -94,8 +91,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const progress = todos.length ? (todos.filter(t => t.done).length / todos.length) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex justify-center items-start pt-12 z-50">
-      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md w-11/12 max-w-2xl p-6 rounded-2xl shadow-xl overflow-y-auto max-h-[80vh] transition-transform scale-100 animate-fade-in-up">
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md w-full max-w-2xl p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh] transition-transform scale-100 animate-fade-in-up">
         
         {/* عبارة تشجيعية */}
         <h2 className="text-2xl md:text-3xl font-bold text-center text-primary mb-4">{encouragement}</h2>
@@ -105,9 +102,11 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           <button onClick={onClose} className="text-red-500 font-bold text-3xl hover:text-red-600 transition">×</button>
         </div>
 
+        {/* Loading Bar جديد */}
         {loading && (
-          <div className="mb-4 w-full bg-gray-200 dark:bg-gray-700 h-2 rounded-full overflow-hidden">
-            <div className="bg-primary h-2 w-full animate-pulse" />
+          <div className="relative w-full h-3 rounded-full overflow-hidden mb-4">
+            <div className="absolute w-full h-full bg-gray-200 dark:bg-gray-700 rounded-full" />
+            <div className="absolute h-full w-1/3 bg-gradient-to-r from-primary to-cyan-400 rounded-full animate-loading"></div>
           </div>
         )}
 
@@ -119,7 +118,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                   type="checkbox"
                   checked={task.done}
                   onChange={() => handleToggleDone(task.id)}
-                  className="w-7 h-7 accent-primary"
+                  className="w-8 h-8 accent-primary"
                 />
                 <span className={`flex-1 text-lg ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
                   {task.text}
@@ -127,35 +126,49 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
                 {/* التحذير للمهام المتأخرة */}
                 {isOverdue(task) && (
-                  <span className="ml-2 text-red-600 font-bold text-lg animate-pulse">⚠️ Oops! Overdue!</span>
+                  <span className="ml-2 text-red-600 font-bold text-lg animate-pulse">⚠️ Overdue! Quick! ⏰</span>
                 )}
               </div>
             </li>
           ))}
         </ul>
 
-        {/* Progress bar */}
+        {/* Progress bar صغير */}
         <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mb-4">
-          <div className="h-2 bg-primary rounded-full" style={{ width: `${progress}%` }}></div>
+          <div className="h-2 bg-primary rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
         </div>
 
         {/* إضافة مهمة */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-col sm:flex-row">
           <input
             type="text"
             placeholder="Add a new task..."
             value={newTask}
             onChange={e => setNewTask(e.target.value)}
-            className="flex-1 p-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex-1 p-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary w-full"
           />
           <button
             onClick={handleAddTask}
-            className="px-5 py-3 bg-primary text-white rounded-2xl hover:bg-cyan-400 transition-colors font-semibold"
+            className="px-5 py-3 bg-primary text-white rounded-2xl hover:bg-cyan-400 transition-colors font-semibold w-full sm:w-auto"
           >
             Add
           </button>
         </div>
       </div>
+
+      {/* Tailwind Animation */}
+      <style>
+        {`
+          @keyframes loading {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(50%); }
+            100% { transform: translateX(100%); }
+          }
+          .animate-loading {
+            animation: loading 1.5s linear infinite;
+          }
+        `}
+      </style>
     </div>
   );
 };
