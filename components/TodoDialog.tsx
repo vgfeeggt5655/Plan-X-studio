@@ -31,6 +31,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [animatedIds, setAnimatedIds] = useState<string[]>([]);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -93,6 +94,12 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const showProgress = doneCount > 0;
   const canClose = !saving;
 
+  const isTaskOverdue = (task: TodoItem) => {
+    const taskDate = new Date(task.createdAt);
+    const diff = today.getTime() - taskDate.getTime();
+    return !task.done && diff > 24 * 60 * 60 * 1000; // أكثر من يوم
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
       <div className="relative w-full max-w-2xl p-6 rounded-3xl shadow-2xl overflow-y-auto max-h-[90vh]
@@ -123,12 +130,16 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {/* قائمة المهام مع تأثير الإضافة/الحذف */}
+        {/* قائمة المهام */}
         <ul className="space-y-3 mb-4">
           {todos.map(task => (
             <li
               key={task.id}
-              className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-400 transform ${animatedIds.includes(task.id) ? 'scale-105 opacity-80' : 'opacity-100 scale-100'}`}
+              onMouseEnter={() => setHoveredId(task.id)}
+              onMouseLeave={() => setHoveredId(null)}
+              className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-300 transform
+              ${animatedIds.includes(task.id) ? 'scale-105 opacity-80' : hoveredId === task.id ? 'scale-105' : 'scale-100'}
+              `}
             >
               <div className="flex items-center gap-4 w-full">
                 <input
@@ -140,6 +151,9 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                 <span className={`flex-1 text-lg ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
                   {task.text}
                 </span>
+                {isTaskOverdue(task) && (
+                  <span className="ml-2 text-red-600 font-bold text-sm animate-pulse">⚠ Overdue!</span>
+                )}
               </div>
               <button
                 onClick={() => handleDeleteTask(task.id)}
@@ -164,36 +178,33 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {/* إضافة مهمة */}
-        <div className="flex gap-3 flex-col sm:flex-row">
+        {/* إضافة مهمة حديثة */}
+        <div className="flex gap-3 flex-col sm:flex-row mt-4">
           <input
             type="text"
             placeholder="Add a new task..."
             value={newTask}
             onChange={e => setNewTask(e.target.value)}
-            className="flex-1 p-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-700/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary w-full transition"
+            className="flex-1 p-4 rounded-3xl border border-gray-300 dark:border-gray-600 bg-white/60 dark:bg-gray-700/60 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary w-full text-lg font-medium shadow-md transition-transform hover:scale-105"
           />
           <button
             onClick={handleAddTask}
-            className="px-5 py-3 bg-primary text-white rounded-2xl hover:bg-cyan-400 transition-colors font-semibold w-full sm:w-auto"
+            className="px-6 py-4 bg-primary text-white rounded-3xl hover:bg-cyan-400 transition-colors font-semibold text-lg shadow-md w-full sm:w-auto"
           >
             Add
           </button>
         </div>
 
-        {/* CSS animations */}
-        <style>
-          {`
-            @keyframes loading {
-              0% { transform: translateX(-100%); }
-              50% { transform: translateX(50%); }
-              100% { transform: translateX(100%); }
-            }
-            .animate-loading {
-              animation: loading 1.5s linear infinite;
-            }
-          `}
-        </style>
+        <style>{`
+          @keyframes loading {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(50%); }
+            100% { transform: translateX(100%); }
+          }
+          .animate-loading {
+            animation: loading 1.5s linear infinite;
+          }
+        `}</style>
       </div>
     </div>
   );
