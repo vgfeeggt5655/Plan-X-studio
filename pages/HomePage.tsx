@@ -1,3 +1,4 @@
+// pages/HomePage.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getResources, deleteResource } from '../services/googleSheetService';
@@ -9,6 +10,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import SubjectFilterDialog from '../components/SubjectFilterDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { VideoIcon, SearchIcon, FilterIcon } from '../components/Icons';
+import TodoDialog from '../components/TodoDialog';
 
 const encouragingMessages = [
     "Your next discovery is just a search away. What will you learn today?",
@@ -25,15 +27,11 @@ const parseWatchedData = (watched: string | undefined | null): Record<string, Wa
     try {
         const data = JSON.parse(watched);
         if (typeof data !== 'object' || data === null || Array.isArray(data)) return {};
-        
-        // Normalize data to new format for backward compatibility
         const normalizedData: Record<string, WatchedProgress> = {};
         for (const key in data) {
             if (typeof data[key] === 'number') {
-                // Old format: just seconds. Duration is unknown.
-                normalizedData[key] = { time: data[key], duration: 0 }; // duration 0 means we can't show a bar
+                normalizedData[key] = { time: data[key], duration: 0 };
             } else if (typeof data[key] === 'object' && 'time' in data[key] && 'duration' in data[key]) {
-                // New format
                 normalizedData[key] = data[key];
             }
         }
@@ -43,7 +41,6 @@ const parseWatchedData = (watched: string | undefined | null): Record<string, Wa
         return {};
     }
 };
-
 
 const HomePage: React.FC = () => {
   const [resources, setResources] = useState<Resource[]>([]);
@@ -55,6 +52,8 @@ const HomePage: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [isFilterOpen, setFilterOpen] = useState(false);
   const [heroMessage, setHeroMessage] = useState('');
+  const [isTodoOpen, setTodoOpen] = useState(false);
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -66,8 +65,7 @@ const HomePage: React.FC = () => {
         getResources(),
         getSubjects()
       ]);
-      setResources(resourcesData.reverse()); // Show newest first
-      // Sort subjects by the number property
+      setResources(resourcesData.reverse());
       const sortedSubjects = subjectsData.sort((a, b) => a.number - b.number);
       setSubjects(sortedSubjects);
     } catch (err) {
@@ -95,9 +93,7 @@ const HomePage: React.FC = () => {
           title.includes(word) || subject.includes(word)
         );
       })
-      .filter(r => 
-        selectedSubject ? r.Subject_Name === selectedSubject : true
-      );
+      .filter(r => selectedSubject ? r.Subject_Name === selectedSubject : true);
   }, [resources, searchTerm, selectedSubject]);
   
   const watchedData = useMemo(() => parseWatchedData(user?.watched), [user]);
@@ -105,9 +101,7 @@ const HomePage: React.FC = () => {
   const continueWatchingResources = useMemo(() => {
       const watchedEntries = Object.entries(watchedData);
       if (watchedEntries.length === 0) return [];
-      
       const resourceMap = new Map(resources.map(r => [r.id, r]));
-      
       return watchedEntries
           .map(([id, progress]) => {
               const resource = resourceMap.get(id);
@@ -116,16 +110,13 @@ const HomePage: React.FC = () => {
               return { resource, progress: percentage };
           })
           .filter((item): item is { resource: Resource; progress: number } => item !== null)
-          .sort((a, b) => (watchedData[b.resource.id]?.time || 0) - (watchedData[a.resource.id]?.time || 0)); // Sort by most recently watched
+          .sort((a, b) => (watchedData[b.resource.id]?.time || 0) - (watchedData[a.resource.id]?.time || 0));
   }, [resources, watchedData]);
-
 
   const groupedResources = useMemo(() => {
     return filteredResources.reduce((acc, resource) => {
         const subject = resource.Subject_Name || 'Uncategorized';
-        if (!acc[subject]) {
-            acc[subject] = [];
-        }
+        if (!acc[subject]) acc[subject] = [];
         acc[subject].push(resource);
         return acc;
     }, {} as Record<string, Resource[]>);
@@ -136,14 +127,12 @@ const HomePage: React.FC = () => {
     return subjects.filter(s => visibleSubjects.has(s.Subject_Name));
   }, [filteredResources, subjects]);
 
-
   const handleDeleteRequest = (id: string) => {
     setDialogState({ isOpen: true, resourceId: id });
   };
 
   const handleConfirmDelete = async () => {
     if (!dialogState.resourceId) return;
-    
     try {
       await deleteResource(dialogState.resourceId);
       setResources(prev => prev.filter(r => r.id !== dialogState.resourceId));
@@ -157,13 +146,8 @@ const HomePage: React.FC = () => {
   
   const targetedResource = resources.find(r => r.id === dialogState.resourceId);
 
-  if (loading) {
-    return <div className="pt-24"><Spinner /></div>;
-  }
-
-  if (error) {
-    return <div className="pt-24 text-center text-red-500 text-xl">{error}</div>;
-  }
+  if (loading) return <div className="pt-24"><Spinner /></div>;
+  if (error) return <div className="pt-24 text-center text-red-500 text-xl">{error}</div>;
 
   return (
     <div className="space-y-12 pb-12">
@@ -192,6 +176,16 @@ const HomePage: React.FC = () => {
               <FilterIcon className="h-5 w-5" />
               <span className="hidden md:inline">Filter</span>
                {selectedSubject && <span className="hidden md:inline bg-white/20 text-white text-xs font-bold px-2 py-1 rounded-full">{selectedSubject}</span>}
+            </button>
+          </div>
+
+          {/* Todo List Button */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => setTodoOpen(true)}
+              className="px-6 py-3 bg-primary text-white font-semibold rounded-full shadow-lg hover:bg-cyan-400 transition-all"
+            >
+              Open My Todo List
             </button>
           </div>
         </div>
@@ -276,9 +270,10 @@ const HomePage: React.FC = () => {
         selectedSubject={selectedSubject}
         onSelectSubject={setSelectedSubject}
       />
+
+      <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} />
     </div>
   );
 };
 
 export default HomePage;
-
