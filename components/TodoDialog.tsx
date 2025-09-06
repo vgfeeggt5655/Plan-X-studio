@@ -20,7 +20,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [celebrate, setCelebrate] = useState(false);
   const [animateNewId, setAnimateNewId] = useState<string | null>(null);
   const [animateRemoveId, setAnimateRemoveId] = useState<string | null>(null);
 
@@ -62,11 +61,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   const saveTodos = async (updatedTodos: TodoItem[]) => {
     if (!user) return;
-    const prevDoneCount = todos.filter(t => t.done).length;
-    const newDoneCount = updatedTodos.filter(t => t.done).length;
-
-    if (newDoneCount > prevDoneCount) setCelebrate(true);
-
     setTodos(updatedTodos);
     setSaving(true);
     await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
@@ -116,17 +110,15 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       <div className="relative w-full max-w-2xl p-6 rounded-3xl shadow-2xl max-h-[90vh]
         bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 flex flex-col overflow-y-auto">
 
-        {celebrate && doneCount === todos.length && todos.length > 0 && (
-          <div className="absolute inset-0 pointer-events-none animate-[pulse_1.5s_infinite] bg-[radial-gradient(circle,rgba(255,255,255,0.4)_0%,rgba(255,255,255,0)_70%)] rounded-full"></div>
-        )}
-
         {loading && (
           <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-4">
             <div className="h-2 bg-primary rounded animate-[loading-bar_1.5s_ease-in-out_infinite]" />
           </div>
         )}
 
-        <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-center text-primary mb-4">{getEncouragement()}</h2>
+        <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-center text-primary mb-4">
+          {getEncouragement()}
+        </h2>
 
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text-primary">Today's Tasks</h3>
@@ -207,7 +199,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           @keyframes loading-bar { 0% { transform: translateX(-100%);} 50% { transform: translateX(0);} 100% { transform: translateX(100%);} }
           .animate-from-input { animation: from-input 0.4s ease-out; }
           .animate-to-input { animation: to-input 0.4s ease-in forwards; }
-          .animate-[pulse_1.5s_infinite] { animation: pulse 1.5s infinite; }
         `}</style>
       </div>
     </div>
