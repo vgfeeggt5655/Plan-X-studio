@@ -45,7 +45,6 @@ const parseWatchedData = (watched: string | undefined | null): Record<string, Wa
 const isoDate = (d = new Date()) => d.toISOString().slice(0, 10);
 
 const groupTodosByDate = (todos: Todo[]) => {
-  // returns record date -> Todo[]
   const map: Record<string, Todo[]> = {};
   todos.forEach(t => {
     const key = t.date ? t.date.slice(0, 10) : isoDate();
@@ -107,7 +106,6 @@ const HomePage: React.FC = () => {
       setLoadingTodos(true);
       try {
         const data = await getUserTodos(String(user.id));
-        // normalize fields in case sheet stored strings
         const normalized: Todo[] = (data || []).map((t: any) => ({
           id: t.id ? String(t.id) : (Date.now().toString() + Math.random().toString(36).slice(2)),
           title: String(t.title || t.task || ''),
@@ -117,9 +115,32 @@ const HomePage: React.FC = () => {
           notes: t.notes || '',
           createdAt: t.createdAt || new Date().toISOString()
         }));
-        setTodos(normalized);
-        // set currentDay to today if none
-        setCurrentDay(prev => prev || isoDate());
+
+        // migrate logic:
+        const today = isoDate();
+        // remove tasks that are done and their date is before today
+        let migrated = normalized.filter(t => !(t.status === 'done' && t.date < today));
+        // move pending overdue tasks to today (they will appear with overdue flag on UI)
+        migrated = migrated.map(t => {
+          if (t.status === 'pending' && t.date < today) {
+            return { ...t, date: today };
+          }
+          return t;
+        });
+
+        // set currentDay to today
+        setCurrentDay(today);
+
+        setTodos(migrated);
+
+        // if changed, save back
+        if (JSON.stringify(migrated) !== JSON.stringify(normalized)) {
+          try {
+            await updateUserTodos(String(user.id), migrated);
+          } catch (e) {
+            console.error('Failed to save migrated todos', e);
+          }
+        }
       } catch (e) {
         console.error('Failed to load todos', e);
       } finally {
@@ -296,8 +317,6 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Todo modal trigger area removed from body — modal below */}
-
       {/* Content Sections Wrapper */}
       <div className="container mx-auto px-4">
         {continueWatchingResources.length > 0 && (
@@ -382,15 +401,18 @@ const HomePage: React.FC = () => {
       {isTodoOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4">
           <div className="fixed inset-0 bg-black/50" onClick={() => setTodoOpen(false)}></div>
-          <div className="relative w-full max-w-4xl bg-surface rounded-2xl shadow-xl p-6 z-10">
-            <div className="flex items-center justify-between mb-4">
+
+          <div className="relative w-full max-w-2xl md:max-w-3xl bg-surface rounded-2xl shadow-2xl p-6 z-10 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4 border-b pb-3">
               <div className="flex items-center gap-3">
-                <button onClick={() => changeDay(-1)} className="px-3 py-2 rounded bg-background">◀</button>
+                <button onClick={() => changeDay(-1)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10">◀</button>
                 <div>
                   <div className="text-sm text-text-secondary">My Day</div>
-                  <div className="font-semibold">{new Date(currentDay).toLocaleDateString()}</div>
+                  <div className="font-semibold text-lg">{new Date(currentDay).toLocaleDateString()}</div>
                 </div>
-                <button onClick={() => changeDay(1)} className="px-3 py-2 rounded bg-background">▶</button>
+                <button onClick={() => changeDay(1)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10">▶</button>
+                <div className="ml-4 text-xs text-text-secondary hidden sm:block">Showing tasks assigned for the selected day.</div>
               </div>
 
               <div className="text-right">
@@ -402,19 +424,21 @@ const HomePage: React.FC = () => {
               </div>
             </div>
 
+            {/* Add task */}
             <div className="mb-4">
               <div className="flex gap-2">
                 <input
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="Add new task for selected day..."
-                  className="flex-1 p-2 rounded border border-border-color bg-white/5"
+                  className="flex-1 p-3 rounded-xl border border-border-color bg-white/5 focus:outline-none"
                 />
-                <button onClick={() => addTask(newTaskTitle, currentDay)} className="px-4 py-2 bg-primary text-white rounded">Add</button>
+                <button onClick={() => addTask(newTaskTitle, currentDay)} className="px-5 py-3 bg-primary text-white rounded-xl">Add</button>
               </div>
             </div>
 
-            <div className="max-h-72 overflow-y-auto space-y-3">
+            {/* Task list */}
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2">
               {loadingTodos ? (
                 <div>Loading tasks...</div>
               ) : (
@@ -425,29 +449,34 @@ const HomePage: React.FC = () => {
                     dayTasks.map(t => {
                       const overdue = t.status !== 'done' && (t.date && t.date < isoDate());
                       return (
-                        <div key={t.id} className="flex items-center justify-between p-3 bg-background rounded-lg">
+                        <div key={t.id} className={`flex items-center justify-between p-4 rounded-xl shadow-sm transition
+                          ${t.status === 'done' ? 'bg-gray-100 dark:bg-white/5 line-through text-text-secondary' : 'bg-surface'}
+                          ${overdue ? 'border border-red-400' : ''}`}>
                           <div className="flex items-start gap-3">
-                            <input type="checkbox" checked={t.status === 'done'} onChange={() => toggleTaskDone(t.id!)} />
+                            <input type="checkbox" checked={t.status === 'done'} onChange={() => toggleTaskDone(t.id!)} className="mt-1" />
                             <div>
                               {editingId === t.id ? (
-                                <input className="p-1 border rounded" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} />
+                                <input className="p-2 border rounded w-full" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} />
                               ) : (
-                                <div className={`${t.status === 'done' ? 'line-through text-text-secondary' : ''} font-medium`}>{t.title}</div>
+                                <div className={`font-medium ${t.status === 'done' ? 'text-text-secondary' : ''}`}>{t.title}</div>
                               )}
-                              <div className="text-xs text-text-secondary">{t.createdAt ? new Date(t.createdAt).toLocaleString() : ''} {overdue && <span className="text-red-400 ml-2">Overdue</span>}</div>
+                              <div className="text-xs text-text-secondary">
+                                {t.createdAt ? new Date(t.createdAt).toLocaleString() : ''}
+                                {overdue && <span className="ml-2 text-red-500 font-semibold">Overdue</span>}
+                              </div>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2">
                             {editingId === t.id ? (
                               <>
-                                <button onClick={saveEdit} className="px-2 py-1 bg-emerald-500 text-white rounded text-sm">Save</button>
-                                <button onClick={() => { setEditingId(null); setEditingTitle(''); }} className="px-2 py-1 border rounded text-sm">Cancel</button>
+                                <button onClick={saveEdit} className="px-3 py-1 bg-emerald-500 text-white rounded text-sm">Save</button>
+                                <button onClick={() => { setEditingId(null); setEditingTitle(''); }} className="px-3 py-1 border rounded text-sm">Cancel</button>
                               </>
                             ) : (
                               <>
-                                <button onClick={() => startEdit(t)} className="px-2 py-1 border rounded text-sm">Edit</button>
-                                <button onClick={() => removeTask(t.id!)} className="px-2 py-1 text-red-600 rounded text-sm">Delete</button>
+                                <button onClick={() => startEdit(t)} className="px-3 py-1 border rounded text-sm">Edit</button>
+                                <button onClick={() => removeTask(t.id!)} className="px-3 py-1 text-red-600 rounded text-sm">Delete</button>
                               </>
                             )}
                           </div>
@@ -460,7 +489,7 @@ const HomePage: React.FC = () => {
             </div>
 
             <div className="mt-4 text-right">
-              <button onClick={() => setTodoOpen(false)} className="px-4 py-2 border rounded">Close</button>
+              <button onClick={() => setTodoOpen(false)} className="px-4 py-2 border rounded-lg">Close</button>
             </div>
           </div>
         </div>
