@@ -10,7 +10,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import SubjectFilterDialog from '../components/SubjectFilterDialog';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserTodos, updateUserTodos } from '../services/authService';
-import { VideoIcon, SearchIcon, FilterIcon } from '../components/Icons';
+import { SearchIcon, FilterIcon } from '../components/Icons';
 
 const encouragingMessages = [
   "Your next discovery is just a search away. What will you learn today?",
@@ -44,17 +44,6 @@ const parseWatchedData = (watched: string | undefined | null): Record<string, Wa
 
 const isoDate = (d = new Date()) => d.toISOString().slice(0, 10);
 
-const groupTodosByDate = (todos: Todo[]) => {
-  // returns record date -> Todo[]
-  const map: Record<string, Todo[]> = {};
-  todos.forEach(t => {
-    const key = t.date ? t.date.slice(0, 10) : isoDate();
-    if (!map[key]) map[key] = [];
-    map[key].push(t);
-  });
-  return map;
-};
-
 const HomePage: React.FC = () => {
   const [resources, setResources] = useState<Resource[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -72,7 +61,7 @@ const HomePage: React.FC = () => {
   const [isTodoOpen, setTodoOpen] = useState(false);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loadingTodos, setLoadingTodos] = useState(false);
-  const [currentDay, setCurrentDay] = useState<string>(isoDate()); // YYYY-MM-DD
+  const [currentDay, setCurrentDay] = useState<string>(isoDate());
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -99,7 +88,7 @@ const HomePage: React.FC = () => {
     setHeroMessage(encouragingMessages[randomIndex]);
   }, [fetchInitialData]);
 
-  // load todos for current user when modal opens
+  // load todos
   useEffect(() => {
     if (!isTodoOpen) return;
     const load = async () => {
@@ -107,7 +96,6 @@ const HomePage: React.FC = () => {
       setLoadingTodos(true);
       try {
         const data = await getUserTodos(String(user.id));
-        // normalize fields in case sheet stored strings
         const normalized: Todo[] = (data || []).map((t: any) => ({
           id: t.id ? String(t.id) : (Date.now().toString() + Math.random().toString(36).slice(2)),
           title: String(t.title || t.task || ''),
@@ -117,9 +105,23 @@ const HomePage: React.FC = () => {
           notes: t.notes || '',
           createdAt: t.createdAt || new Date().toISOString()
         }));
-        setTodos(normalized);
-        // set currentDay to today if none
-        setCurrentDay(prev => prev || isoDate());
+
+        // ⏳ Smart logic: carry overdue tasks into today, drop old completed ones
+        const today = isoDate();
+        const processed = normalized.filter(t => {
+          if (t.status === 'done') {
+            return t.date === today; // keep today's done, drop old ones
+          }
+          if (t.date < today) {
+            // overdue → move to today
+            t.date = today;
+            return true;
+          }
+          return true;
+        });
+
+        setTodos(processed);
+        setCurrentDay(today);
       } catch (e) {
         console.error('Failed to load todos', e);
       } finally {
@@ -129,67 +131,6 @@ const HomePage: React.FC = () => {
     load();
   }, [isTodoOpen, user]);
 
-  const filteredResources = useMemo(() => {
-    const searchWords = searchTerm.toLowerCase().split(' ').filter(w => w.length > 0);
-    return resources
-      .filter(r => {
-        if (searchWords.length === 0) return true;
-        const title = r.title.toLowerCase();
-        const subject = r.Subject_Name.toLowerCase();
-        return searchWords.every(word => title.includes(word) || subject.includes(word));
-      })
-      .filter(r => (selectedSubject ? r.Subject_Name === selectedSubject : true));
-  }, [resources, searchTerm, selectedSubject]);
-
-  const watchedData = useMemo(() => parseWatchedData(user?.watched), [user]);
-
-  const continueWatchingResources = useMemo(() => {
-    const watchedEntries = Object.entries(watchedData);
-    if (watchedEntries.length === 0) return [];
-    const resourceMap = new Map(resources.map(r => [r.id, r]));
-    return watchedEntries
-      .map(([id, progress]) => {
-        const resource = resourceMap.get(id);
-        if (!resource) return null;
-        const percentage = progress.duration > 0 ? (progress.time / progress.duration) * 100 : 0;
-        return { resource, progress: percentage };
-      })
-      .filter((item): item is { resource: Resource; progress: number } => item !== null)
-      .sort((a, b) => (watchedData[b.resource.id]?.time || 0) - (watchedData[a.resource.id]?.time || 0));
-  }, [resources, watchedData]);
-
-  const groupedResources = useMemo(() => {
-    return filteredResources.reduce((acc, resource) => {
-      const subject = resource.Subject_Name || 'Uncategorized';
-      if (!acc[subject]) acc[subject] = [];
-      acc[subject].push(resource);
-      return acc;
-    }, {} as Record<string, Resource[]>);
-  }, [filteredResources]);
-
-  const orderedSubjects = useMemo(() => {
-    const visibleSubjects = new Set(filteredResources.map(r => r.Subject_Name));
-    return subjects.filter(s => visibleSubjects.has(s.Subject_Name));
-  }, [filteredResources, subjects]);
-
-  const handleDeleteRequest = (id: string) => setDialogState({ isOpen: true, resourceId: id });
-
-  const handleConfirmDelete = async () => {
-    if (!dialogState.resourceId) return;
-    try {
-      await deleteResource(dialogState.resourceId);
-      setResources(prev => prev.filter(r => r.id !== dialogState.resourceId));
-    } catch (err) {
-      alert('Failed to delete resource. Please try again.');
-      console.error(err);
-    } finally {
-      setDialogState({ isOpen: false, resourceId: null });
-    }
-  };
-
-  const targetedResource = resources.find(r => r.id === dialogState.resourceId);
-
-  // --- Todo handlers ---
   const saveTodosToSheet = async (nextTodos: Todo[]) => {
     if (!user?.id) {
       setTodos(nextTodos);
@@ -208,7 +149,7 @@ const HomePage: React.FC = () => {
     const newItem: Todo = {
       id: Date.now().toString() + Math.random().toString(36).slice(2),
       title: title.trim(),
-      date: date,
+      date,
       status: 'pending',
       rating: 0,
       notes: '',
@@ -223,7 +164,9 @@ const HomePage: React.FC = () => {
   };
 
   const toggleTaskDone = async (id: string) => {
-    await saveTodosToSheet(todos.map(t => t.id === id ? { ...t, status: t.status === 'done' ? 'pending' : 'done' } : t));
+    await saveTodosToSheet(
+      todos.map(t => t.id === id ? { ...t, status: t.status === 'done' ? 'pending' : 'done' } : t)
+    );
   };
 
   const startEdit = (t: Todo) => {
@@ -233,7 +176,9 @@ const HomePage: React.FC = () => {
 
   const saveEdit = async () => {
     if (!editingId) return;
-    await saveTodosToSheet(todos.map(t => t.id === editingId ? { ...t, title: editingTitle } : t));
+    await saveTodosToSheet(
+      todos.map(t => t.id === editingId ? { ...t, title: editingTitle } : t)
+    );
     setEditingId(null);
     setEditingTitle('');
   };
@@ -244,7 +189,7 @@ const HomePage: React.FC = () => {
     setCurrentDay(isoDate(d));
   };
 
-  const dayTasks = useMemo(() => todos.filter(t => (t.date ? t.date.slice(0, 10) : isoDate()) === currentDay), [todos, currentDay]);
+  const dayTasks = useMemo(() => todos.filter(t => t.date === currentDay), [todos, currentDay]);
 
   const dayProgressPercent = useMemo(() => {
     if (dayTasks.length === 0) return 0;
@@ -257,215 +202,145 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="space-y-12 pb-12">
-      {/* Hero Section */}
+      {/* Hero */}
       <div className="bg-gradient-to-br from-background to-slate-800 pt-36 pb-24 text-center border-b border-border-color">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-text-primary mb-4 animate-fade-in-up">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-text-primary mb-4">
             Welcome back, <span className="text-primary">{user?.name || 'Explorer'}</span>!
           </h1>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8">
             {heroMessage}
           </p>
-          <div className="max-w-2xl mx-auto bg-surface p-2 rounded-full shadow-lg flex items-center gap-1 sm:gap-2 animate-fade-in-up border border-border-color" style={{ animationDelay: '0.2s' }}>
-            <SearchIcon className="ml-4 h-5 w-5 sm:h-6 sm:w-6 text-gray-400 flex-shrink-0" />
+          <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-md p-2 rounded-full shadow-lg flex items-center gap-2 border border-white/20">
+            <SearchIcon className="ml-4 h-5 w-5 text-gray-300" />
             <input
               type="text"
               placeholder="Search courses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-transparent focus:outline-none text-base sm:text-lg text-text-primary placeholder-text-secondary"
+              className="w-full bg-transparent focus:outline-none text-base text-white placeholder-gray-300"
             />
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setFilterOpen(true)}
-                className="flex-shrink-0 inline-flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-full text-white bg-primary hover:bg-cyan-400 transition-colors shadow-md"
-              >
-                <FilterIcon className="h-5 w-5" />
-                <span className="hidden md:inline">Filter</span>
-                {selectedSubject && <span className="hidden md:inline bg-white/20 text-white text-xs font-bold px-2 py-1 rounded-full">{selectedSubject}</span>}
-              </button>
-
-              <button
-                onClick={() => setTodoOpen(true)}
-                className="ml-2 inline-flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-full text-white bg-emerald-500 hover:bg-emerald-400 transition-colors shadow-md"
-              >
-                My Tasks
-              </button>
-            </div>
+            <button
+              onClick={() => setFilterOpen(true)}
+              className="px-4 py-2 text-sm font-medium rounded-full text-white bg-primary hover:bg-cyan-400"
+            >
+              <FilterIcon className="h-5 w-5 inline" /> Filter
+            </button>
+            <button
+              onClick={() => setTodoOpen(true)}
+              className="px-4 py-2 text-sm font-medium rounded-full text-white bg-emerald-500 hover:bg-emerald-400"
+            >
+              My Tasks
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Todo modal trigger area removed from body — modal below */}
-
-      {/* Content Sections Wrapper */}
-      <div className="container mx-auto px-4">
-        {continueWatchingResources.length > 0 && (
-          <section className="-mt-12">
-            <h2 className="text-2xl font-bold text-text-primary mb-4">Continue Watching</h2>
-            <div className="relative">
-              <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-thin overscroll-x-contain">
-                {continueWatchingResources.map(({ resource, progress }, index) => (
-                  <div key={resource.id} className="flex-shrink-0 w-72 sm:w-80">
-                    <ResourceCard
-                      resource={resource}
-                      onDelete={handleDeleteRequest}
-                      userRole={user?.role}
-                      animationDelay={`${index * 50}ms`}
-                      watchProgress={progress}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-l from-background pointer-events-none md:hidden"></div>
-            </div>
-          </section>
-        )}
-
-        <div className={`space-y-10 ${continueWatchingResources.length > 0 ? 'mt-16' : '-mt-8'}`}>
-          {filteredResources.length === 0 && searchTerm.length > 0 ? (
-            <p className="text-center text-text-secondary text-lg pt-10">
-              No courses found matching your criteria.
-            </p>
-          ) : (
-            orderedSubjects.map((subject) => (
-              <section key={subject.id}>
-                <h2 className="text-2xl font-bold text-text-primary mb-4">{subject.Subject_Name}</h2>
-                <div className="relative">
-                  <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-thin overscroll-x-contain">
-                    {groupedResources[subject.Subject_Name].map((resource, index) => (
-                      <div key={resource.id} className="flex-shrink-0 w-72 sm:w-80">
-                        <ResourceCard
-                          resource={resource}
-                          onDelete={handleDeleteRequest}
-                          userRole={user?.role}
-                          animationDelay={`${index * 50}ms`}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="absolute top-0 right-0 bottom-0 w-16 bg-gradient-to-l from-background pointer-events-none md:hidden"></div>
-                </div>
-              </section>
-            ))
-          )}
-        </div>
-      </div>
-
-      <ConfirmDialog
-        isOpen={dialogState.isOpen}
-        onClose={() => setDialogState({ isOpen: false, resourceId: null })}
-        onConfirm={handleConfirmDelete}
-        title="Delete Resource"
-        message={
-          <>
-            Are you sure you want to delete this resource?
-            <br />
-            <strong>{targetedResource?.title}</strong>
-            <br />
-            This action cannot be undone.
-          </>
-        }
-        confirmButtonText="Delete"
-        confirmButtonClass="bg-red-600 hover:bg-red-700 focus:ring-red-500"
-      />
-
-      <SubjectFilterDialog
-        isOpen={isFilterOpen}
-        onClose={() => setFilterOpen(false)}
-        subjects={subjects}
-        selectedSubject={selectedSubject}
-        onSelectSubject={setSelectedSubject}
-      />
-
-      {/* ---------------- Todo Modal ---------------- */}
+      {/* -------- Todo Modal -------- */}
       {isTodoOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setTodoOpen(false)}></div>
-          <div className="relative w-full max-w-4xl bg-surface rounded-2xl shadow-xl p-6 z-10">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60" onClick={() => setTodoOpen(false)}></div>
+          <div className="relative w-full max-w-2xl bg-white/20 backdrop-blur-xl rounded-2xl shadow-2xl p-6 z-10 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <button onClick={() => changeDay(-1)} className="px-3 py-2 rounded bg-background">◀</button>
+                <button onClick={() => changeDay(-1)} className="px-3 py-2 rounded bg-white/10">◀</button>
                 <div>
-                  <div className="text-sm text-text-secondary">My Day</div>
-                  <div className="font-semibold">{new Date(currentDay).toLocaleDateString()}</div>
+                  <div className="text-sm text-gray-200">My Day</div>
+                  <div className="font-semibold text-white">{new Date(currentDay).toLocaleDateString()}</div>
                 </div>
-                <button onClick={() => changeDay(1)} className="px-3 py-2 rounded bg-background">▶</button>
+                <button onClick={() => changeDay(1)} className="px-3 py-2 rounded bg-white/10">▶</button>
               </div>
-
               <div className="text-right">
-                <div className="text-xs text-text-secondary">Progress</div>
-                <div className="w-40 bg-gray-200 rounded-full h-2 mt-1 overflow-hidden">
-                  <div style={{ width: `${dayProgressPercent}%` }} className="h-2 bg-emerald-500"></div>
+                <div className="text-xs text-gray-300">Progress</div>
+                <div className="w-40 bg-gray-700 rounded-full h-2 mt-1 overflow-hidden">
+                  <div style={{ width: `${dayProgressPercent}%` }} className="h-2 bg-emerald-400"></div>
                 </div>
-                <div className="text-sm mt-1">{dayProgressPercent}%</div>
+                <div className="text-sm text-gray-200 mt-1">{dayProgressPercent}%</div>
               </div>
             </div>
 
-            <div className="mb-4">
-              <div className="flex gap-2">
-                <input
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Add new task for selected day..."
-                  className="flex-1 p-2 rounded border border-border-color bg-white/5"
-                />
-                <button onClick={() => addTask(newTaskTitle, currentDay)} className="px-4 py-2 bg-primary text-white rounded">Add</button>
-              </div>
+            {/* Input */}
+            <div className="flex gap-2 mb-6">
+              <input
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                placeholder="Add new task..."
+                className="flex-1 p-2 rounded-lg border border-gray-500 bg-white/20 text-white placeholder-gray-300"
+              />
+              <button
+                onClick={() => addTask(newTaskTitle, currentDay)}
+                className="px-4 py-2 bg-primary text-white rounded-lg"
+              >
+                Add
+              </button>
             </div>
 
-            <div className="max-h-72 overflow-y-auto space-y-3">
+            {/* Tasks */}
+            <div className="max-h-80 overflow-y-auto space-y-3 pr-2">
               {loadingTodos ? (
-                <div>Loading tasks...</div>
+                <div className="text-gray-200">Loading tasks...</div>
+              ) : dayTasks.length === 0 ? (
+                <div className="text-gray-400">No tasks for this day.</div>
               ) : (
-                <>
-                  {dayTasks.length === 0 ? (
-                    <div className="text-text-secondary">No tasks for this day.</div>
-                  ) : (
-                    dayTasks.map(t => {
-                      const overdue = t.status !== 'done' && (t.date && t.date < isoDate());
-                      return (
-                        <div key={t.id} className="flex items-center justify-between p-3 bg-background rounded-lg">
-                          <div className="flex items-start gap-3">
-                            <input type="checkbox" checked={t.status === 'done'} onChange={() => toggleTaskDone(t.id!)} />
-                            <div>
-                              {editingId === t.id ? (
-                                <input className="p-1 border rounded" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} />
-                              ) : (
-                                <div className={`${t.status === 'done' ? 'line-through text-text-secondary' : ''} font-medium`}>{t.title}</div>
-                              )}
-                              <div className="text-xs text-text-secondary">{t.createdAt ? new Date(t.createdAt).toLocaleString() : ''} {overdue && <span className="text-red-400 ml-2">Overdue</span>}</div>
+                dayTasks.map(t => {
+                  const overdue = t.status !== 'done' && t.date < isoDate();
+                  return (
+                    <div
+                      key={t.id}
+                      className={`flex items-center justify-between p-3 rounded-xl shadow-md ${
+                        overdue ? 'bg-red-500/20 border border-red-400' : 'bg-white/10'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={t.status === 'done'}
+                          onChange={() => toggleTaskDone(t.id!)}
+                        />
+                        <div>
+                          {editingId === t.id ? (
+                            <input
+                              className="p-1 border rounded"
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                            />
+                          ) : (
+                            <div className={`${t.status === 'done' ? 'line-through text-gray-400' : 'text-white'} font-medium`}>
+                              {t.title}
                             </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {editingId === t.id ? (
-                              <>
-                                <button onClick={saveEdit} className="px-2 py-1 bg-emerald-500 text-white rounded text-sm">Save</button>
-                                <button onClick={() => { setEditingId(null); setEditingTitle(''); }} className="px-2 py-1 border rounded text-sm">Cancel</button>
-                              </>
-                            ) : (
-                              <>
-                                <button onClick={() => startEdit(t)} className="px-2 py-1 border rounded text-sm">Edit</button>
-                                <button onClick={() => removeTask(t.id!)} className="px-2 py-1 text-red-600 rounded text-sm">Delete</button>
-                              </>
-                            )}
+                          )}
+                          <div className="text-xs text-gray-300">
+                            {new Date(t.createdAt).toLocaleString()}
+                            {overdue && <span className="text-red-400 ml-2">⚠ Overdue</span>}
                           </div>
                         </div>
-                      );
-                    })
-                  )}
-                </>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {editingId === t.id ? (
+                          <>
+                            <button onClick={saveEdit} className="px-2 py-1 bg-emerald-500 text-white rounded text-sm">Save</button>
+                            <button onClick={() => { setEditingId(null); setEditingTitle(''); }} className="px-2 py-1 border rounded text-sm">Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => startEdit(t)} className="px-2 py-1 border rounded text-sm text-white">Edit</button>
+                            <button onClick={() => removeTask(t.id!)} className="px-2 py-1 text-red-400 rounded text-sm">Delete</button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
 
-            <div className="mt-4 text-right">
-              <button onClick={() => setTodoOpen(false)} className="px-4 py-2 border rounded">Close</button>
+            <div className="mt-6 text-right">
+              <button onClick={() => setTodoOpen(false)} className="px-4 py-2 border rounded text-white">Close</button>
             </div>
           </div>
         </div>
       )}
-      {/* -------------- end Todo Modal -------------- */}
     </div>
   );
 };
