@@ -7,17 +7,23 @@ export interface Resource {
   image_url: string;
 }
 
+export interface Task {
+  id: string;
+  title: string;
+  date: string; // ISO date YYYY-MM-DD
+  completed: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   // WARNING: Storing plain-text passwords is a major security risk.
-  // This is implemented based on the requested Google Sheets structure.
-  // In a real application, always use a secure authentication provider and password hashing.
   password: string;
   role: 'user' | 'admin' | 'super_admin';
   avatar?: string;
   watched?: string; // JSON string like '{"resourceId": seconds}'
+  todo_list?: string; // JSON string array of Task objects
 }
 
 export interface Subject {
@@ -35,10 +41,4 @@ export interface MCQ {
 export interface Flashcard {
   front: string;
   back: string;
-}
-export interface Task {
-  id: string;
-  title: string;
-  date: string; // ISO date string: "2025-09-06"
-  completed: boolean;
 }
