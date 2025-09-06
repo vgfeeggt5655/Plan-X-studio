@@ -39,13 +39,15 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     "All tasks done! 🎉 Amazing job!"
   ];
 
-  const getEncouragement = () => {
+  const encouragement = (() => {
     if (!todos.length) return encouragements[0];
     const doneCount = todos.filter(t => t.done).length;
-    if (doneCount === todos.length) return "Egypt is proud of you! 🇪🇬😂";
+    if (doneCount === todos.length && todos.length > 0) {
+      return "Egypt is proud of you! 🇪🇬😂";
+    }
     const progress = doneCount / todos.length;
     return encouragements[Math.floor(progress * 10)];
-  };
+  })();
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -119,7 +121,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         )}
 
         <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-center text-primary mb-4">
-          {getEncouragement()}
+          {encouragement}
         </h2>
 
         <div className="flex justify-between items-center mb-4">
