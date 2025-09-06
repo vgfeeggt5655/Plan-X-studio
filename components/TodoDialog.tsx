@@ -79,7 +79,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     setAnimateNewId(task.id);
     saveTodos([...todos, task]);
     setNewTask('');
-    setTimeout(() => setAnimateNewId(null), 500); // إزالة animation flag بعد الانتهاء
+    setTimeout(() => setAnimateNewId(null), 500);
   };
 
   const handleToggleDone = (taskId: string) => {
@@ -111,7 +111,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
-      {/* خلفية غامقة */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
       <div className="relative w-full max-w-2xl p-6 rounded-3xl shadow-2xl max-h-[90vh]
@@ -127,11 +126,11 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        <h2 className="text-2xl md:text-3xl font-bold text-center text-primary mb-4">{getEncouragement()}</h2>
+        <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-center text-primary mb-4">{getEncouragement()}</h2>
 
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-text-primary">Today's Tasks</h3>
-          {!canClose && <p className="text-sm text-gray-600 dark:text-gray-300 ml-4">Saving tasks… please wait!</p>}
+          <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text-primary">Today's Tasks</h3>
+          {!canClose && <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 ml-4">Saving tasks… please wait!</p>}
           <button
             onClick={() => canClose && onClose()}
             disabled={!canClose}
@@ -165,26 +164,22 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                   onChange={() => handleToggleDone(task.id)}
                   className="w-8 h-8 transform transition-all duration-300"
                 />
-                <span className={`flex-1 text-lg ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
+                <span className={`flex-1 text-sm sm:text-base md:text-lg lg:text-xl ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
                   {task.text}
                 </span>
 
                 {isTaskOverdue(task) && (
-                  <span className="ml-2 text-red-600 font-bold text-sm px-2 py-1 rounded bg-red-100 dark:bg-red-900 animate-pulse">
+                  <span className="ml-2 text-red-600 font-bold text-xs sm:text-sm md:text-base px-2 py-1 rounded bg-red-100 dark:bg-red-900 animate-pulse">
                     ⚠ Overdue! 😡
-                  </span>
-                )}
-                {task.done && !isTaskOverdue(task) && (
-                  <span className="ml-2 text-green-600 font-bold text-sm px-2 py-1 rounded bg-green-100 dark:bg-green-900 animate-pulse">
-                    ✅ Good job! 🎉
                   </span>
                 )}
               </div>
               <button
                 onClick={() => handleDeleteTask(task.id)}
-                className="text-red-500 font-bold text-xl hover:text-red-600 transition"
+                className="text-gray-500 hover:text-red-600 transition text-2xl"
+                title="Delete Task"
               >
-                ×
+                🗑️
               </button>
             </li>
           ))}
@@ -206,7 +201,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Inline animations */}
         <style>{`
           @keyframes from-input { 0% { opacity:0; transform: translateY(20px) scale(0.8);} 100% {opacity:1; transform: translateY(0) scale(1);} }
           @keyframes to-input { 0% { opacity:1; transform: translateY(0) scale(1);} 100% {opacity:0; transform: translateY(20px) scale(0.8);} }
