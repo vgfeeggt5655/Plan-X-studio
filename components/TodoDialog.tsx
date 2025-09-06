@@ -14,11 +14,27 @@ interface TodoDialogProps {
   onClose: () => void;
 }
 
+const encouragements = [
+  "Keep going, you got this! 💪",
+  "One step at a time, superstar! 🌟",
+  "Crush your tasks today! 🚀",
+  "Don't stop, the finish line is near! 🏁",
+  "Stay awesome and productive! 😎",
+  "Every task counts, let's do it! ✅",
+  "Make today amazing! 🌈"
+];
+
 const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  // اختيار عبارة تشجيعية بناءً على اليوم
+  const encouragement = encouragements[today.getDate() % encouragements.length];
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -26,31 +42,22 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       setLoading(true);
       let data = await getUserTodoList(user.id);
 
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
-
-      // جلب مهام اليوم الحالي فقط
+      // جلب مهام اليوم الحالي فقط وحذف المهام المنجزة بعد يوم كامل
       const todayTasks = (data[todayStr] || []).filter(task => {
         const taskDate = new Date(task.createdAt);
         const taskDateStr = taskDate.toISOString().split('T')[0];
-
-        // حذف المهام المنجزة بعد يوم كامل
-        if (task.done && taskDateStr !== todayStr) return false;
-
-        return true;
+        return !(task.done && taskDateStr !== todayStr);
       });
 
       setTodos(todayTasks);
       setLoading(false);
     })();
-  }, [isOpen, user]);
+  }, [isOpen, user, todayStr]);
 
   const saveTodos = async (updatedTodos: TodoItem[]) => {
     if (!user) return;
     setTodos(updatedTodos);
-
-    const today = new Date().toISOString().split('T')[0];
-    await updateUserTodoList(user.id, { [today]: updatedTodos });
+    await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
   };
 
   const handleAddTask = () => {
@@ -80,13 +87,21 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const hasOverdueTasks = todos.some(t => !t.done && new Date(t.createdAt) < new Date(new Date().setDate(new Date().getDate() - 1)));
+  const isOverdue = (task: TodoItem) => {
+    return !task.done && new Date(task.createdAt) < new Date(new Date().setDate(today.getDate() - 1));
+  };
+
+  const progress = todos.length ? (todos.filter(t => t.done).length / todos.length) * 100 : 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-start pt-12 z-50">
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md w-11/12 max-w-2xl p-6 rounded-2xl shadow-xl overflow-y-auto max-h-[80vh] transition-transform scale-100 animate-fade-in-up">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-text-primary">Today's Tasks</h2>
+        
+        {/* عبارة تشجيعية */}
+        <h2 className="text-2xl md:text-3xl font-bold text-center text-primary mb-4">{encouragement}</h2>
+
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold text-text-primary">Today's Tasks</h3>
           <button onClick={onClose} className="text-red-500 font-bold text-3xl hover:text-red-600 transition">×</button>
         </div>
 
@@ -96,46 +111,50 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        <ul className="space-y-2 mb-4">
+        <ul className="space-y-3 mb-4">
           {todos.map(task => (
-            <li key={task.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-              <div className="flex items-center gap-3">
+            <li key={task.id} className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
+              <div className="flex items-center gap-4 w-full">
                 <input
                   type="checkbox"
                   checked={task.done}
                   onChange={() => handleToggleDone(task.id)}
-                  className="w-5 h-5 accent-primary"
+                  className="w-7 h-7 accent-primary"
                 />
-                <span className={task.done ? 'line-through text-gray-400' : 'text-text-primary'}>
+                <span className={`flex-1 text-lg ${task.done ? 'line-through text-gray-400' : 'text-text-primary'}`}>
                   {task.text}
                 </span>
+
+                {/* التحذير للمهام المتأخرة */}
+                {isOverdue(task) && (
+                  <span className="ml-2 text-red-600 font-bold text-lg animate-pulse">⚠️ Oops! Overdue!</span>
+                )}
               </div>
-              <button onClick={() => handleDeleteTask(task.id)} className="text-red-500 font-bold hover:text-red-600 transition">×</button>
             </li>
           ))}
         </ul>
 
-        <div className="flex gap-2">
+        {/* Progress bar */}
+        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mb-4">
+          <div className="h-2 bg-primary rounded-full" style={{ width: `${progress}%` }}></div>
+        </div>
+
+        {/* إضافة مهمة */}
+        <div className="flex gap-3">
           <input
             type="text"
             placeholder="Add a new task..."
             value={newTask}
             onChange={e => setNewTask(e.target.value)}
-            className="flex-1 p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="flex-1 p-3 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <button
             onClick={handleAddTask}
-            className="px-5 py-3 bg-primary text-white rounded-xl hover:bg-cyan-400 transition-colors"
+            className="px-5 py-3 bg-primary text-white rounded-2xl hover:bg-cyan-400 transition-colors font-semibold"
           >
             Add
           </button>
         </div>
-
-        {hasOverdueTasks && (
-          <p className="text-red-500 text-sm mt-4 font-semibold">
-            ⚠ You have overdue tasks!
-          </p>
-        )}
       </div>
     </div>
   );
