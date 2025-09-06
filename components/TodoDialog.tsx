@@ -16,10 +16,10 @@ interface TodoDialogProps {
 
 const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [todos, setTodos] = useState<TodoItem[]>([]); // النسخة الأصلية من الشيت
+  const [localTodos, setLocalTodos] = useState<TodoItem[]>([]); // النسخة المحلية للتعديل
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [animateNewId, setAnimateNewId] = useState<string | null>(null);
   const [animateRemoveId, setAnimateRemoveId] = useState<string | null>(null);
 
@@ -40,12 +40,12 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   ];
 
   const encouragement = (() => {
-    if (!todos.length) return encouragements[0];
-    const doneCount = todos.filter(t => t.done).length;
-    if (doneCount === todos.length && todos.length > 0) {
+    if (!localTodos.length) return encouragements[0];
+    const doneCount = localTodos.filter(t => t.done).length;
+    if (doneCount === localTodos.length && localTodos.length > 0) {
       return "Egypt is proud of you! 🇪🇬😂";
     }
-    const progress = doneCount / todos.length;
+    const progress = doneCount / localTodos.length;
     return encouragements[Math.floor(progress * 10)];
   })();
 
@@ -56,49 +56,39 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       const data = await getUserTodoList(user.id);
       let todayTasks = data[todayStr] || [];
 
-      // حذف المهام اللي تم عملها ومر عليها يوم
+      // حذف المهام اللي تم عملها ومر عليها يوم (من النسخة الأصلية فقط)
       todayTasks = todayTasks.filter(task => {
         const taskDate = new Date(task.createdAt);
         const taskDay = taskDate.toISOString().split('T')[0];
-        // خلي اللي done وحصل قبل اليوم يتم حذفه
         if (task.done && taskDay !== todayStr) return false;
         return true;
       });
 
       setTodos(todayTasks);
+      setLocalTodos(todayTasks); // النسخة المحلية للتعديل
       setLoading(false);
-      // حفظ التحديث بعد حذف المهام القديمة
-      await updateUserTodoList(user.id, { [todayStr]: todayTasks });
     })();
   }, [isOpen, user, todayStr]);
-
-  const saveTodos = async (updatedTodos: TodoItem[]) => {
-    if (!user) return;
-    setTodos(updatedTodos);
-    setSaving(true);
-    await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
-    setSaving(false);
-  };
 
   const handleAddTask = () => {
     if (!newTask.trim()) return;
     const task: TodoItem = { id: Date.now().toString(), text: newTask.trim(), done: false, createdAt: new Date().toISOString() };
     setAnimateNewId(task.id);
-    saveTodos([...todos, task]);
+    setLocalTodos([...localTodos, task]);
     setNewTask('');
     setTimeout(() => setAnimateNewId(null), 500);
   };
 
   const handleToggleDone = (taskId: string) => {
-    const updated = todos.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
-    saveTodos(updated);
+    const updated = localTodos.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
+    setLocalTodos(updated);
   };
 
   const handleDeleteTask = (taskId: string) => {
     setAnimateRemoveId(taskId);
     setTimeout(() => {
-      const updated = todos.filter(t => t.id !== taskId);
-      saveTodos(updated);
+      const updated = localTodos.filter(t => t.id !== taskId);
+      setLocalTodos(updated);
       setAnimateRemoveId(null);
     }, 400);
   };
@@ -109,10 +99,18 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     return !task.done && diff > 24 * 60 * 60 * 1000;
   };
 
-  const doneCount = todos.filter(t => t.done).length;
-  const progress = todos.length ? (doneCount / todos.length) * 100 : 0;
+  const doneCount = localTodos.filter(t => t.done).length;
+  const progress = localTodos.length ? (doneCount / localTodos.length) * 100 : 0;
   const showProgress = doneCount > 0;
-  const canClose = !saving;
+
+  // عند غلق الديالوج، نحفظ كل التغييرات مرة واحدة في الشيت
+  const handleClose = async () => {
+    if (user) {
+      await updateUserTodoList(user.id, { [todayStr]: localTodos });
+      setTodos(localTodos);
+    }
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -135,11 +133,9 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text-primary">Today's Tasks</h3>
-          {!canClose && <p className="text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 ml-4">Saving tasks… please wait!</p>}
           <button
-            onClick={() => canClose && onClose()}
-            disabled={!canClose}
-            className={`text-red-500 font-bold text-3xl transition ${!canClose ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-600'}`}
+            onClick={handleClose}
+            className="text-red-500 font-bold text-3xl hover:text-red-600 transition"
           >
             ×
           </button>
@@ -155,7 +151,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         )}
 
         <ul className="space-y-3 mb-4">
-          {todos.map(task => (
+          {localTodos.map(task => (
             <li
               key={task.id}
               className={`flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-300
@@ -208,7 +204,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
         <style>{`
           @keyframes from-input { 0% { opacity:0; transform: translateY(20px) scale(0.8);} 100% {opacity:1; transform: translateY(0) scale(1);} }
-          @keyframes to-input { 0% { opacity:1; transform: translateY(0) scale(1);} 100% {opacity:0; transform: translateY(20px) scale(0.8);} }
+          @keyframes to-input { 0% { opacity:1; transform: translateY(0) scale(1);} 100% { opacity:0; transform: translateY(20px) scale(0.8);} }
           @keyframes loading-bar { 0% { transform: translateX(-100%);} 50% { transform: translateX(0);} 100% { transform: translateX(100%);} }
           .animate-from-input { animation: from-input 0.4s ease-out; }
           .animate-to-input { animation: to-input 0.4s ease-in forwards; }
