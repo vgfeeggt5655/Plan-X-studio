@@ -53,20 +53,6 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     'هرمونات': ['hormones', 'endocrine', 'endocrinology']
   };
 
-  // مصادر الصور الطبية المجانية
-  const medicalImageSources = [
-    {
-      name: 'Unsplash Medical',
-      baseUrl: 'https://source.unsplash.com',
-      category: 'طبية عامة'
-    },
-    {
-      name: 'Wikimedia Commons',
-      baseUrl: 'https://upload.wikimedia.org/wikipedia/commons',
-      category: 'تعليمية'
-    }
-  ];
-
   useEffect(() => {
     if (open) {
       setQuery('');
@@ -90,55 +76,80 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     return [lowerQuery, 'medical', 'anatomy', 'health'];
   };
 
-  const generateMedicalImages = (searchTerms: string[], originalQuery: string): MedicalImageResult[] => {
+  const fetchGoogleImages = async (searchTerms: string[], originalQuery: string) => {
+    const images: MedicalImageResult[] = [];
+    const searchQuery = searchTerms.join('+');
+    
+    try {
+      // استخدام CORS proxy للوصول إلى صور جوجل
+      const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+      const targetUrl = `https://www.google.com/search?q=${searchQuery}&tbm=isch&tbs=isz:l`;
+      
+      const response = await fetch(proxyUrl + targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('فشل في جلب الصور من جوجل');
+      }
+      
+      const html = await response.text();
+      
+      // استخراج عناوين الصور من النتيجة (هذا نهج بسيط وقد يحتاج تحسين)
+      const regex = /\[1,\[0,"(?<id>[\d\w\-_]+)",\["https?:\/\/(?<url>[^"]+)"/g;
+      let match;
+      let count = 0;
+      
+      while ((match = regex.exec(html)) !== null && count < 16) {
+        const imageUrl = `https://${match.groups.url.replace(/\\u003d/g, '=')}`;
+        
+        images.push({
+          title: `${originalQuery} - صورة ${count + 1}`,
+          link: imageUrl,
+          description: `صورة طبية تعليمية متعلقة بـ ${originalQuery}`,
+          source: 'Google Images',
+          category: 'طبية',
+          thumbnailLink: imageUrl,
+          fullImageLink: imageUrl
+        });
+        
+        count++;
+      }
+      
+      // إذا لم نتمكن من استخراج الصور، نستخدم الصور الافتراضية
+      if (images.length === 0) {
+        return generateFallbackImages(searchTerms, originalQuery);
+      }
+      
+      return images;
+    } catch (error) {
+      console.error('Error fetching Google images:', error);
+      return generateFallbackImages(searchTerms, originalQuery);
+    }
+  };
+
+  const generateFallbackImages = (searchTerms: string[], originalQuery: string): MedicalImageResult[] => {
     const images: MedicalImageResult[] = [];
     const timestamp = Date.now();
     
-    // إنشاء 16 صورة من مصادر متنوعة
+    // إنشاء 16 صورة من مصادر متنوعة كبديل
     for (let i = 0; i < 16; i++) {
       const termIndex = i % searchTerms.length;
       const currentTerm = searchTerms[termIndex];
       const sig = timestamp + i;
       
-      // تناوب بين المصادر
-      const sourceIndex = i % 3;
-      let imageUrl = '';
-      let thumbnailUrl = '';
-      let source = '';
-      let category = '';
-      
-      switch (sourceIndex) {
-        case 0:
-          // Unsplash مع مصطلحات طبية
-          imageUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(currentTerm + ' medical anatomy')}&sig=${sig}`;
-          thumbnailUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(currentTerm + ' medical anatomy')}&sig=${sig}`;
-          source = 'Unsplash Medical';
-          category = 'صور طبية';
-          break;
-          
-        case 1:
-          // Unsplash مع مصطلحات تشريحية
-          imageUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(currentTerm + ' human body')}&sig=${sig}`;
-          thumbnailUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(currentTerm + ' human body')}&sig=${sig}`;
-          source = 'Unsplash Anatomy';
-          category = 'تشريح';
-          break;
-          
-        case 2:
-          // Unsplash مع مصطلحات صحية
-          imageUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(currentTerm + ' healthcare')}&sig=${sig}`;
-          thumbnailUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(currentTerm + ' healthcare')}&sig=${sig}`;
-          source = 'Unsplash Health';
-          category = 'رعاية صحية';
-          break;
-      }
+      // استخدام مصادر بديلة للصور
+      const imageUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(currentTerm + ' medical')}&sig=${sig}`;
+      const thumbnailUrl = `https://source.unsplash.com/400x300/?${encodeURIComponent(currentTerm + ' medical')}&sig=${sig}`;
       
       images.push({
         title: `${originalQuery} - ${currentTerm}`,
         link: imageUrl,
         description: `صورة طبية تعليمية متعلقة بـ ${originalQuery}`,
-        source: source,
-        category: category,
+        source: 'Unsplash (بديل)',
+        category: 'طبية',
         thumbnailLink: thumbnailUrl,
         fullImageLink: imageUrl
       });
@@ -161,14 +172,11 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
       const englishTerms = translateToEnglish(query);
       console.log('📚 المصطلحات المترجمة:', englishTerms);
       
-      // محاكاة وقت البحث الحقيقي
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // إنشاء صور طبية متخصصة
-      const medicalImages = generateMedicalImages(englishTerms, query);
+      // جلب الصور من جوجل
+      const medicalImages = await fetchGoogleImages(englishTerms, query);
       
       setImages(medicalImages);
-      console.log(`✅ تم إنشاء ${medicalImages.length} صورة طبية`);
+      console.log(`✅ تم جلب ${medicalImages.length} صورة طبية`);
       
     } catch (err) {
       console.error('💥 خطأ في البحث:', err);
@@ -199,9 +207,9 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-white flex items-center">
               <span className="text-3xl mr-3">🏥</span>
-              بحث الصور الطبية والتشريحية
+              بحث الصور الطبية من جوجل
               <span className="text-sm font-normal text-red-100 mr-3 bg-white/20 px-3 py-1 rounded-full">
-                مجاني - بدون API
+                بدون API Key
               </span>
             </h2>
             <button
@@ -264,7 +272,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
             <div className="flex items-center justify-center py-16">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-500 border-t-transparent mx-auto mb-4"></div>
-                <div className="text-gray-700 font-semibold text-lg">جارٍ البحث عن الصور الطبية...</div>
+                <div className="text-gray-700 font-semibold text-lg">جارٍ البحث في جوجل عن الصور الطبية...</div>
                 <div className="text-gray-500 text-sm mt-2">🔬 تحليل المصطلحات وجلب الصور التعليمية</div>
               </div>
             </div>
@@ -290,7 +298,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           {!loading && !query && (
             <div className="text-center py-16">
               <div className="text-6xl mb-6">🩺</div>
-              <div className="text-gray-600 text-xl font-medium mb-4">بحث متخصص في الصور الطبية</div>
+              <div className="text-gray-600 text-xl font-medium mb-4">بحث متخصص في الصور الطبية من جوجل</div>
               <div className="text-gray-500 text-base mb-6">
                 ابحث عن أي جزء من جسم الإنسان أو مرض للحصول على صور تعليمية مجانية
               </div>
@@ -350,10 +358,8 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
                         loading="lazy"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          // إذا فشلت الصورة من ويكيميديا، استخدم صورة بديلة
                           if (!target.dataset.retried) {
                             target.dataset.retried = 'true';
-                            // استخدام صورة طبية بديلة
                             target.src = `https://via.placeholder.com/300x300/dc2626/ffffff?text=%F0%9F%A9%BA+%D8%B5%D9%88%D8%B1%D8%A9+%D8%B7%D8%A8%D9%8A%D8%A9`;
                           }
                         }}
@@ -391,7 +397,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
                 <div className="text-center text-gray-600">
                   <p className="text-sm mb-2">
                     <span className="text-green-600 font-semibold">✅ مجاني تماماً</span> - 
-                    جميع الصور من مصادر مفتوحة وتعليمية
+                    جميع الصور من جوجل ومصادر مفتوحة
                   </p>
                   <p className="text-xs text-gray-500">
                     🔬 الصور مخصصة للأغراض التعليمية والبحثية - استشر طبيباً مختصاً للتشخيص الطبي
