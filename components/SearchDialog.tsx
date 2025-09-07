@@ -1,157 +1,140 @@
 import React, { useState } from 'react';
+import { X } from 'lucide-react';
 
-type WikiSummary = {
-  title: string;
-  extract: string;
-  thumbnail?: { source: string };
-  content_urls?: { desktop?: { page: string } };
-};
+interface SearchDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
 
-type SearchResultPerson = { name: string; thumbnail?: string; pageUrl?: string };
-
-export default function SearchDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [q, setQ] = useState('');
+const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState<WikiSummary | null>(null);
   const [images, setImages] = useState<string[]>([]);
-  const [people, setPeople] = useState<SearchResultPerson[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [description, setDescription] = useState<string>('');
+  const [famousPerson, setFamousPerson] = useState<{ name: string; image: string } | null>(null);
 
-  async function fetchSummary(term: string) {
-    const url = `https://ar.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('no summary');
-    return (await res.json()) as WikiSummary;
-  }
-
-  async function fetchImagesFromWikimedia(term: string, limit = 8) {
-    const api = `https://ar.wikipedia.org/w/api.php?action=query&format=json&generator=search&gsrsearch=${encodeURIComponent(
-      term,
-    )}&gsrlimit=${limit}&prop=pageimages&piprop=thumbnail&pithumbsize=600&origin=*`;
-    const res = await fetch(api);
-    if (!res.ok) throw new Error('no images');
-    const j = await res.json();
-    const pages = j.query?.pages || {};
-    return Object.values(pages)
-      .map((p: any) => p.thumbnail?.source)
-      .filter(Boolean) as string[];
-  }
-
-  async function fetchNotablePerson(term: string) {
-    const search = `${term} شخص مشهور|شخصية معروفة`;
-    const api = `https://ar.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-      search,
-    )}&srlimit=6&format=json&origin=*`;
-    const res = await fetch(api);
-    if (!res.ok) return [];
-    const j = await res.json();
-    const hits = j.query?.search || [];
-    const persons: SearchResultPerson[] = [];
-    for (const h of hits) {
-      try {
-        const title = h.title;
-        const sum = await fetchSummary(title);
-        const thumb = sum.thumbnail?.source;
-        persons.push({ name: title, thumbnail: thumb, pageUrl: sum.content_urls?.desktop?.page });
-        if (persons.length >= 3) break;
-      } catch {
-        // تجاهل أي خطأ
-      }
-    }
-    return persons;
-  }
-
-  async function doSearch() {
-    if (!q.trim()) return;
+  const handleSearch = async () => {
+    if (!query) return;
     setLoading(true);
-    setError(null);
-    setSummary(null);
     setImages([]);
-    setPeople([]);
+    setDescription('');
+    setFamousPerson(null);
+
     try {
-      const [s, imgs, ppl] = await Promise.all([
-        fetchSummary(q),
-        fetchImagesFromWikimedia(q),
-        fetchNotablePerson(q),
-      ]);
-      setSummary(s);
-      setImages(imgs);
-      setPeople(ppl);
-    } catch {
-      setError('لم أجد معلومات كافية عن هذا المصطلح.');
-    } finally {
-      setLoading(false);
+      // ✅ Fetch images (English search)
+      const imgRes = await fetch(
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
+          query
+        )}&per_page=4&client_id=YOUR_UNSPLASH_API_KEY`
+      );
+      const imgData = await imgRes.json();
+      const imgUrls = imgData.results.map((r: any) => r.urls.small);
+      setImages(imgUrls);
+
+      // ✅ Fetch summary from Wikipedia (English)
+      const wikiRes = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`
+      );
+      const wikiData = await wikiRes.json();
+      if (wikiData.extract) {
+        setDescription(wikiData.extract);
+      }
+
+      // ✅ Fetch famous person with same disease (using Wikipedia search)
+      const famousRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+          query + ' notable people'
+        )}&utf8=&format=json&origin=*`
+      );
+      const famousData = await famousRes.json();
+      if (famousData?.query?.search?.length > 0) {
+        const first = famousData.query.search[0].title;
+        // fetch image for this person
+        const personRes = await fetch(
+          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(first)}`
+        );
+        const personData = await personRes.json();
+        if (personData.thumbnail?.source) {
+          setFamousPerson({ name: first, image: personData.thumbnail.source });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
-  }
+
+    setLoading(false);
+  };
 
   if (!open) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-5xl max-h-[85vh] overflow-auto">
-        {/* شريط البحث */}
-        <div className="p-4 border-b flex items-center gap-3">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+      <div className="bg-surface rounded-2xl shadow-lg w-full max-w-4xl p-6 relative animate-fade-in">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-text-secondary hover:text-red-500"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* Search input */}
+        <div className="flex gap-2 mb-6">
           <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && doSearch()}
-            placeholder="اكتب اسم مرض أو عضو أو مكان..."
-            className="flex-1 p-2 border rounded"
-            autoFocus
+            type="text"
+            placeholder="Search for a disease, organ, or body part..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="flex-1 px-4 py-2 rounded-lg border border-border-color bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <button onClick={doSearch} className="px-4 py-2 border rounded">بحث</button>
-          <button onClick={onClose} className="px-3 py-2">إغلاق</button>
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+          >
+            {loading ? 'Loading...' : 'Search'}
+          </button>
         </div>
 
-        {/* النتائج */}
-        <div className="p-4 grid grid-cols-3 gap-4">
-          {/* صور */}
-          <div className="col-span-2">
-            {loading && <div>جارٍ البحث...</div>}
-            {error && <div className="text-red-600">{error}</div>}
-            <div className="grid grid-cols-2 gap-2">
+        {/* Results */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Images */}
+          {images.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
               {images.map((src, i) => (
-                <img key={i} src={src} alt={`result-${i}`} className="w-full h-40 object-cover rounded" />
+                <img
+                  key={i}
+                  src={src}
+                  alt="result"
+                  className="rounded-lg w-full h-32 object-cover shadow"
+                />
               ))}
             </div>
-          </div>
+          )}
 
-          {/* شرح + أشخاص */}
+          {/* Info */}
           <div>
-            <h3 className="font-semibold mb-2">الشرح</h3>
-            {summary ? (
-              <div>
-                {summary.thumbnail && (
-                  <img src={summary.thumbnail.source} className="w-full h-32 object-cover rounded mb-2" alt={summary.title} />
-                )}
-                <h4 className="font-bold">{summary.title}</h4>
-                <p className="text-sm mt-2">{summary.extract}</p>
-                {summary.content_urls?.desktop?.page && (
-                  <a href={summary.content_urls.desktop.page} target="_blank" rel="noreferrer" className="text-blue-600 block mt-2">
-                    قراءة المزيد على ويكيبيديا
-                  </a>
-                )}
-              </div>
-            ) : (
-              <div>اضغط بحث لعرض ملخص.</div>
+            {description && (
+              <p className="text-text-secondary leading-relaxed mb-4">{description}</p>
             )}
 
-            <hr className="my-3" />
-            <h4 className="font-semibold">أشخاص مشهورون مرتبطون</h4>
-            {people.length === 0 && <div className="text-sm">لا توجد بيانات.</div>}
-            <div className="mt-2 space-y-2">
-              {people.map((p, i) => (
-                <a key={i} href={p.pageUrl || '#'} target="_blank" rel="noreferrer" className="flex items-center gap-2">
-                  <img src={p.thumbnail || '/images/logo.png'} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                  <div>
-                    <div className="font-medium">{p.name}</div>
-                  </div>
-                </a>
-              ))}
-            </div>
+            {famousPerson && (
+              <div className="flex items-center gap-3 mt-4 p-3 border border-border-color rounded-lg">
+                <img
+                  src={famousPerson.image}
+                  alt={famousPerson.name}
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+                <span className="text-text-primary font-medium">
+                  Notable case: {famousPerson.name}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default SearchDialog;
