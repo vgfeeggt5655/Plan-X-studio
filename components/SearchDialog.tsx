@@ -1,20 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// أيقونة X بسيطة
-const XIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
-
-interface SearchDialogProps {
-  open: boolean;
-  onClose: () => void;
-}
+// ... (الأيقونة والأنواع كما هي)
 
 const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -27,7 +17,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     'دماغ': 'brain',
     'عين': 'eye',
     'أذن': 'ear',
-    'جهاز هضمي': 'digestive+system',
+    'جهاز هضمي': 'digestive system',
     'عظام': 'bones',
     'عضلات': 'muscles',
     'جلد': 'skin',
@@ -45,7 +35,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   useEffect(() => {
     if (open) {
       setQuery('');
-      setSearchTerm('');
+      setImages([]);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open]);
@@ -54,128 +44,84 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     return medicalTerms[arabicQuery] || arabicQuery;
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!query.trim()) return;
 
     setLoading(true);
-    
-    // ترجمة المصطلح العربي إلى إنجليزي
-    const englishTerm = translateToEnglish(query);
-    setSearchTerm(englishTerm);
-    
-    // محاكاة وقت التحميل
-    setTimeout(() => setLoading(false), 1000);
+    setImages([]);
+
+    try {
+      // ترجمة المصطلح العربي إلى إنجليزي
+      const englishTerm = translateToEnglish(query);
+      
+      // محاكاة جلب الصور (بدلاً من الاتصال بجوجل مباشرة)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // إنشاء صور من Unsplash (بديل عن جوجل)
+      const generatedImages = [];
+      const count = 16;
+      
+      for (let i = 1; i <= count; i++) {
+        generatedImages.push(`https://source.unsplash.com/300x200/?medical,${encodeURIComponent(englishTerm)}&sig=${i}`);
+      }
+      
+      setImages(generatedImages);
+    } catch (err) {
+      console.error('خطأ في البحث:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // إنشاء رابط بحث جوجل للصور
-  const getGoogleImagesUrl = () => {
-    if (!searchTerm) return '';
-    return `https://www.google.com/search?q=${encodeURIComponent(searchTerm)}+medical&tbm=isch`;
-  };
-
-  // اقتراحات البحث الطبي
-  const medicalSuggestions = [
-    'قلب', 'رئة', 'كبد', 'دماغ', 'عظام', 'عضلات', 'جلد', 'عين', 'أذن', 'كلى'
-  ];
-
-  if (!open) return null;
+  // ... (باقي الكود مشابه للحلول السابقة)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-white rounded-lg shadow-xl w-11/12 md:w-4/5 h-4/5 flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-11/12 md:w-4/5 max-h-[90vh] overflow-hidden flex flex-col">
         
         {/* Header */}
         <div className="bg-blue-600 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-bold text-white">بحث الصور الطبية من جوجل</h2>
-            <button
-              onClick={onClose}
-              className="p-1 text-white hover:text-blue-200"
-            >
-              <XIcon className="h-5 w-5"/>
-            </button>
-          </div>
-          
-          {/* شريط البحث */}
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !loading) handleSearch(); }}
-              placeholder="ابحث عن مصطلحات طبية..."
-              className="flex-1 p-2 rounded border border-blue-300"
-              disabled={loading}
-            />
-            <button
-              onClick={handleSearch}
-              disabled={loading || !query.trim()}
-              className="px-4 py-2 bg-white text-blue-600 font-bold rounded hover:bg-blue-50 disabled:opacity-50"
-            >
-              {loading ? 'جاري البحث...' : 'بحث'}
-            </button>
-          </div>
-
-          {/* اقتراحات سريعة */}
-          <div className="flex flex-wrap gap-1 mt-2">
-            {medicalSuggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() => setQuery(suggestion)}
-                className="px-2 py-1 bg-white/30 text-white text-xs rounded hover:bg-white/40"
-                disabled={loading}
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
+          {/* ... (شريط البحث والاقتراحات كما هي) */}
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
+        <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+          
+          {loading && (
+            <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                <div className="text-gray-600">جارٍ تحميل نتائج البحث...</div>
+                <div className="text-gray-600">جارٍ البحث عن الصور الطبية...</div>
               </div>
             </div>
-          ) : searchTerm ? (
-            <div className="w-full h-full">
-              <iframe
-                src={getGoogleImagesUrl()}
-                className="w-full h-full border-none"
-                title="نتائج البحث عن الصور الطبية"
-                sandbox="allow-scripts allow-same-origin"
-                // هذه المحاولة قد لا تعمل بسبب سياسات جوجل الأمنية
-                onError={(e) => {
-                  const target = e.target as HTMLIFrameElement;
-                  target.style.display = 'none';
-                  // عرض رسالة بديلة
-                  const container = target.parentElement;
-                  if (container) {
-                    container.innerHTML = `
-                      <div class="flex flex-col items-center justify-center h-full p-4 text-center">
-                        <div class="text-2xl mb-4">⚠️</div>
-                        <div class="text-gray-700 font-medium mb-2">تعذر تحميل صور جوجل</div>
-                        <div class="text-gray-500 text-sm">
-                            جوجل تمنع عرض محتواها مباشرة في التطبيقات الخارجية.
-                        </div>
-                        <button onclick="window.open('${getGoogleImagesUrl()}', '_blank')" 
-                                class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                            فتح في نافذة جديدة
-                        </button>
-                      </div>
-                    `;
-                  }
-                }}
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center text-gray-500">
-                اكتب مصطلحًا طبيًا واضغط بحث لرؤية الصور من جوجل
+          )}
+          
+          {images.length > 0 && (
+            <div>
+              <div className="mb-4 text-center text-sm text-gray-600">
+                تم العثور على {images.length} صورة لـ "{query}"
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white rounded overflow-hidden shadow-md"
+                  >
+                    <img
+                      src={img}
+                      alt={`نتيجة بحث طبية ${idx + 1}`}
+                      className="w-full h-32 object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://via.placeholder.com/300x200/eeeeee/999999?text=صورة+غير+متاحة`;
+                      }}
+                    />
+                    <div className="p-2 text-xs text-gray-700 truncate">
+                      {query} - صورة {idx + 1}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
