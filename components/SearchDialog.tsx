@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { XIcon } from './Icons';
-import Fuse from 'fuse.js';
 
 interface SearchDialogProps {
   open: boolean;
@@ -10,38 +9,35 @@ interface SearchDialogProps {
 interface Result {
   title: string;
   description: string;
-  images: string[];
+  image?: string;
   famousCases?: { name: string; image: string }[];
 }
 
-// كلمات البحث الطبية بالإنجليزية
-const medicalTerms = [
-  "Heart",
-  "Lungs",
-  "Brain",
-  "Liver",
-  "Kidney",
-  "Diabetes",
-  "Hypertension",
-  "Cancer",
-  "Stroke",
-  "Asthma",
-  "Arthritis",
-  "Migraine",
-  // ... أضف باقي المصطلحات الطبية
-];
+// بيانات ثابتة للشرح والأشخاص المشهورين
+const medicalInfo: Record<string, { description: string; famousCases: { name: string; image: string }[] }> = {
+  "Heart Disease": {
+    description: "Heart disease refers to various types of heart conditions that affect the heart’s structure and function.",
+    famousCases: [
+      { name: "Arnold Schwarzenegger", image: "https://upload.wikimedia.org/wikipedia/commons/3/3d/Arnold_Schwarzenegger_2019.jpg" },
+      { name: "Larry King", image: "https://upload.wikimedia.org/wikipedia/commons/7/74/Larry_King_2009.jpg" }
+    ]
+  },
+  "Diabetes": {
+    description: "Diabetes is a chronic health condition that affects how your body turns food into energy.",
+    famousCases: [
+      { name: "Tom Hanks", image: "https://upload.wikimedia.org/wikipedia/commons/8/87/Tom_Hanks_TIFF_2019.jpg" }
+    ]
+  },
+  // ممكن تضيف باقي الأمراض بنفس الشكل
+};
 
-const fuse = new Fuse(medicalTerms, { threshold: 0.3 });
-
-// مفتاحك من Pixabay
-const PIXABAY_API_KEY = "52176231-bd0707f83e7695350a4ae0672";
+const PIXABAY_KEY = "52176231-bd0707f83e7695350a4ae0672";
 
 const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedResult, setSelectedResult] = useState<Result | null>(null);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -49,63 +45,38 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
       setQuery('');
       setResults([]);
       setSelectedResult(null);
-      setSuggestions([]);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open]);
 
-  // تحديث الاقتراحات أثناء الكتابة
-  useEffect(() => {
-    if (!query) {
-      setSuggestions([]);
-      return;
+  const fetchImages = async (term: string) => {
+    try {
+      const res = await fetch(
+        `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(term)}&image_type=photo&category=health&per_page=20&order=latest`
+      );
+      const data = await res.json();
+      return data.hits.map((hit: any) => hit.largeImageURL);
+    } catch (err) {
+      console.error(err);
+      return [];
     }
-    const fuseResults = fuse.search(query, { limit: 5 });
-    setSuggestions(fuseResults.map(r => r.item));
-  }, [query]);
-
-  // تحويل العربي لإنجليزي لو كتب المستخدم بالعربي
-  const translateToEnglish = async (text: string) => {
-    // لو عايز حل بدون API خارجي، ممكن تعمل خريطة عربي->إنجليزي
-    // هنا نفترض النص بالفعل بالإنجليزية
-    return text;
   };
 
-  const handleSearch = async (term?: string) => {
-    const searchTermRaw = term || query;
-    if (!searchTermRaw) return;
-
+  const handleSearch = async () => {
+    if (!query) return;
     setLoading(true);
     try {
-      // تصحيح الكلمة تلقائي باستخدام fuse.js
-      const fuseResult = fuse.search(searchTermRaw);
-      const finalTerm = fuseResult.length > 0 ? fuseResult[0].item : searchTermRaw;
-
-      const searchTerm = await translateToEnglish(finalTerm);
-
-      // جلب وصف المرض/الجزء من Wikipedia
-      const wikiRes = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`
-      );
-      const wikiData = await wikiRes.json();
-      const description = wikiData.extract || "No description available.";
-
-      // جلب الصور الطبية من Pixabay
-      const pixabayRes = await fetch(
-        `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(searchTerm + " medical")}+diagram&image_type=photo&per_page=50`
-      );
-      const pixabayData = await pixabayRes.json();
-      const images: string[] = (pixabayData.hits || []).map((hit: any) => hit.largeImageURL);
-
-      setResults([{
-        title: wikiData.title,
-        description,
-        images,
-        famousCases: [] // ممكن تضيف لاحقًا
-      }]);
-      setSelectedResult(null);
-      setSuggestions([]);
-      setQuery(finalTerm);
+      const term = query; // ممكن تضيف هنا ترجمة لو العربي
+      const images = await fetchImages(term);
+      const info = medicalInfo[term] || { description: "No description available.", famousCases: [] };
+      const resultsData = images.map(img => ({
+        title: term,
+        description: info.description,
+        image: img,
+        famousCases: info.famousCases
+      }));
+      setResults(resultsData);
+      setSelectedResult(resultsData[0] || null);
     } catch (err) {
       console.error(err);
       setResults([]);
@@ -121,10 +92,10 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white/30 backdrop-blur-md rounded-xl shadow-lg w-11/12 md:w-4/5 lg:w-3/5 max-h-[90vh] overflow-hidden flex flex-col md:flex-row border border-white/20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white/30 backdrop-blur-md rounded-xl shadow-xl w-11/12 md:w-4/5 lg:w-3/5 max-h-[90vh] overflow-hidden flex flex-col md:flex-row border border-white/20">
         
-        {/* Left: Images gallery */}
+        {/* Left: Search and results */}
         <div className="flex-1 p-4 overflow-y-auto">
           <div className="relative mb-4">
             <input
@@ -133,36 +104,21 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder="Search medical parts or diseases..."
-              className="w-full p-3 rounded-md border border-white/30 bg-white/10 placeholder-white/70 text-white focus:ring-2 focus:ring-primary focus:outline-none"
+              placeholder="Search medical terms..."
+              className="w-full p-2 rounded-md border border-white/50 bg-white/20 placeholder-white text-white focus:ring-2 focus:ring-primary focus:outline-none"
             />
             <button
-              onClick={() => handleSearch()}
+              onClick={handleSearch}
               className="absolute right-2 top-2 px-3 py-1 bg-primary text-white rounded-md hover:bg-primary/90 transition"
             >
               Search
             </button>
             <button
               onClick={onClose}
-              className="absolute right-16 top-2 p-1 text-white hover:text-red-400 transition"
+              className="absolute right-16 top-2 p-1 text-white hover:text-red-500 transition"
             >
               <XIcon className="h-5 w-5" />
             </button>
-
-            {/* Suggestions */}
-            {suggestions.length > 0 && (
-              <ul className="absolute top-12 left-0 w-full bg-white/30 backdrop-blur-md border border-white/20 rounded-md shadow-lg z-10 text-white">
-                {suggestions.map((s, idx) => (
-                  <li
-                    key={idx}
-                    onClick={() => handleSearch(s)}
-                    className="px-3 py-2 hover:bg-primary/30 cursor-pointer"
-                  >
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           {loading && <div className="text-center text-white">Loading...</div>}
@@ -170,31 +126,43 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
             <div className="text-center text-white">No results found.</div>
           )}
 
-          {/* Gallery */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {results[0]?.images.map((img, idx) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {results.map((res, idx) => (
               <img
                 key={idx}
-                src={img}
-                alt={results[0].title}
-                className="w-full h-40 object-cover rounded-md hover:scale-105 transition cursor-pointer"
-                onClick={() => setSelectedResult(results[0])}
+                src={res.image}
+                alt={res.title}
+                className="w-full h-40 object-cover rounded-md cursor-pointer hover:scale-105 transition"
+                onClick={() => setSelectedResult(res)}
               />
             ))}
           </div>
         </div>
 
-        {/* Right: Description */}
-        <div className="hidden md:block w-1/3 bg-white/20 backdrop-blur-md p-4 border-l border-white/30 overflow-y-auto text-white">
+        {/* Right: Info panel */}
+        <div className="hidden md:block w-1/3 p-4 overflow-y-auto bg-white/20 backdrop-blur-md border-l border-white/20">
           {selectedResult ? (
             <>
-              <h3 className="text-xl font-semibold mb-2">{selectedResult.title}</h3>
-              <p className="text-sm">{selectedResult.description}</p>
+              <h3 className="text-lg font-semibold text-white mb-2">{selectedResult.title}</h3>
+              <p className="text-white text-sm">{selectedResult.description}</p>
+              {selectedResult.famousCases && selectedResult.famousCases.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-medium text-white">Famous cases:</h4>
+                  <div className="flex gap-2 mt-1 flex-wrap">
+                    {selectedResult.famousCases.map((person, i) => (
+                      <div key={i} className="flex flex-col items-center text-center">
+                        <img src={person.image} alt={person.name} className="w-16 h-16 object-cover rounded-full" />
+                        <span className="text-sm text-white">{person.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div>
-              <h3 className="text-xl font-semibold mb-2">Quick Info</h3>
-              <p className="text-sm">Select a medical part or disease on the left to see details here.</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Quick Info</h3>
+              <p className="text-white text-sm">Select a result on the left to see a brief description and any famous cases here.</p>
             </div>
           )}
         </div>
