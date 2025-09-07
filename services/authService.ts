@@ -1,138 +1,44 @@
 import { User } from '../types';
 
-const API_URL =
-  'https://script.google.com/macros/s/AKfycbwMCPhSKNab-CvtYfY114MdFqcuDS-SkmM3tlgfAr-Osjfxo0VJ04B76cRzgTiW9bmVUg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwMCPhSKNab-CvtYfY114MdFqcuDS-SkmM3tlgfAr-Osjfxo0VJ04B76cRzgTiW9bmVUg/exec';
 
-// Helper to send requests
-async function request(
-  method: string,
-  endpoint: string = '',
-  params: Record<string, string> = {},
-  body?: any
-) {
-  const urlParams = new URLSearchParams(params).toString();
-  const url = `${API_URL}${endpoint ? '/' + endpoint : ''}${
-    urlParams ? '?' + urlParams : ''
-  }`;
-
-  const options: RequestInit = { method };
-  if (body) {
-    options.headers = { 'Content-Type': 'application/json' };
-    options.body = JSON.stringify(body);
-  }
-
-  const res = await fetch(url, options);
-  if (!res.ok) throw new Error('API request failed');
-  return res.json();
+// Helper: POST JSON
+async function post(body: any) {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (data.error) throw new Error(data.message || 'Request failed');
+  return data;
 }
 
-// Get all users (only for super_admin)
-export const getUsers = async (currentUser: User): Promise<User[]> => {
-  const data = await request('GET', '', {
-    id: currentUser.id,
-    role: currentUser.role,
-  });
-
-  if (currentUser.role === 'super_admin') {
-    return data.users || [];
-  } else {
-    return data.user ? [data.user] : [];
-  }
-};
+// Register user
+export async function createUser(user: Omit<User, 'id'>): Promise<void> {
+  await post({ action: 'register', ...user });
+}
 
 // Login user
-export const loginUser = async (
-  email: string,
-  password: string
-): Promise<User> => {
-  // fetch all users as super_admin just for login check
-  const data = await request('GET', '', { id: '0', role: 'super_admin' });
-  const users: User[] = data.users || [];
+export async function loginUser(email: string, password: string): Promise<User> {
+  const data = await post({ action: 'login', email, password });
+  return data.user;
+}
 
-  const user = users.find(
-    (u) => u.email.toLowerCase() === email.toLowerCase()
-  );
-  if (!user) throw new Error('User not found.');
-  if (String(user.password).trim() !== String(password).trim())
-    throw new Error('Incorrect password.');
+// Get users (if super_admin → كل اليوزرز، لو عادي → نفسه فقط)
+export async function getUsers(email: string, password: string): Promise<User[]> {
+  const data = await post({ action: 'getusers', email, password });
+  if (data.users) return data.users;
+  if (data.user) return [data.user];
+  return [];
+}
 
-  return user;
-};
+// Update user
+export async function updateUser(requesterEmail: string, password: string, updates: Partial<User> & { targetEmail?: string; targetId?: string }): Promise<void> {
+  await post({ action: 'updateuser', email: requesterEmail, password, ...updates });
+}
 
-// Create user
-export const createUser = async (user: Omit<User, 'id'>): Promise<void> => {
-  await request('POST', '', {}, user);
-};
-
-// Update user (self or by super_admin)
-export const updateUser = async (
-  currentUser: User,
-  updatedUser: User
-): Promise<void> => {
-  await request(
-    'PUT',
-    '',
-    { id: currentUser.id, role: currentUser.role },
-    {
-      targetId: updatedUser.id,
-      ...updatedUser,
-    }
-  );
-};
-
-// Delete user (self or by super_admin)
-export const deleteUser = async (
-  currentUser: User,
-  targetId: string
-): Promise<void> => {
-  await request('DELETE', '', {
-    id: currentUser.id,
-    role: currentUser.role,
-    targetId,
-  });
-};
-
-/* ================== Todo List Methods ================== */
-
-// Get todo list of a user
-export const getUserTodoList = async (
-  currentUser: User,
-  userId: string
-): Promise<any> => {
-  const data = await request('GET', '', {
-    id: currentUser.id,
-    role: currentUser.role,
-  });
-
-  let targetUser: User | undefined;
-
-  if (currentUser.role === 'super_admin') {
-    targetUser = (data.users || []).find((u: User) => u.id === userId);
-  } else {
-    targetUser = data.user;
-  }
-
-  if (!targetUser) throw new Error('User not found');
-  try {
-    return targetUser.todo_list ? JSON.parse(targetUser.todo_list) : {};
-  } catch {
-    return {};
-  }
-};
-
-// Update todo list
-export const updateUserTodoList = async (
-  currentUser: User,
-  userId: string,
-  todoList: any
-): Promise<void> => {
-  await request(
-    'PUT',
-    '',
-    { id: currentUser.id, role: currentUser.role },
-    {
-      targetId: userId,
-      todo_list: JSON.stringify(todoList || {}),
-    }
-  );
-};
+// Delete user
+export async function deleteUser(requesterEmail: string, password: string, targetId?: string, targetEmail?: string): Promise<void> {
+  await post({ action: 'deleteuser', email: requesterEmail, password, targetId, targetEmail });
+}
