@@ -1,187 +1,132 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { LogoutIcon, TachometerIcon, UserCircleIcon, ChevronDownIcon, MenuIcon, XIcon } from './Icons';
-import TodoDialog from './TodoDialog';
-import SearchDialog from './SearchDialog'; // ✨ استدعاء الديالوج الجديد
+import { XIcon } from './Icons';
 
-const Header: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [isMenuOpen, setMenuOpen] = useState(false);
-  const [isTodoOpen, setTodoOpen] = useState(false);
-  const [isSearchOpen, setSearchOpen] = useState(false); // ✨ حالة الديالوج الجديد
-  const [progress, setProgress] = useState(0);
-  const [totalTasks, setTotalTasks] = useState(0);
-  const [remainingTasks, setRemainingTasks] = useState(0);
+interface SearchDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLElement>(null);
+interface SearchResult {
+  name: string;
+  description: string;
+  famousCases?: { name: string; image: string }[];
+  image: string;
+}
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Close dropdown/menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (headerRef.current && !headerRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    if (open) {
+      setQuery('');
+      setResults([]);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open]);
 
-  // Load progress from localStorage
-  const loadProgressFromLocal = () => {
-    const saved = localStorage.getItem('todoProgress');
-    if (saved) {
-      const { total, remaining } = JSON.parse(saved);
-      setTotalTasks(total);
-      setRemainingTasks(remaining);
-      setProgress(total ? Math.round(((total - remaining) / total) * 100) : 0);
+  const handleSearch = async () => {
+    if (!query) return;
+
+    setLoading(true);
+    // هنا هتستبدل الـ API بالكود بتاع البحث الطبي الحقيقي
+    try {
+      const response = await fetch(`https://api.example.com/medical-search?q=${query}&lang=en`);
+      let data: SearchResult[] = await response.json();
+
+      // Simple typo correction logic (like Google)
+      if (data.length === 0) {
+        const correctedQuery = query.split(' ').map(word => word).join(' '); // ممكن تضيف مكتبة تصحيح هنا
+        const fallbackResponse = await fetch(`https://api.example.com/medical-search?q=${correctedQuery}&lang=en`);
+        data = await fallbackResponse.json();
+      }
+
+      setResults(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadProgressFromLocal();
-  }, []);
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSearch();
+  };
 
-  // Update progress in localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('todoProgress', JSON.stringify({ total: totalTasks, remaining: remainingTasks }));
-  }, [totalTasks, remainingTasks]);
-
-  const activeLinkClass = "text-primary font-semibold bg-primary/10";
-  const inactiveLinkClass = "text-text-secondary hover:text-primary hover:bg-surface";
-  const linkBaseClass = "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors";
-
-  const navLinks = (
-    <>
-      <NavLink
-        to="/"
-        end
-        onClick={() => setMenuOpen(false)}
-        className={({ isActive }) => `${linkBaseClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
-      >
-        All Content
-      </NavLink>
-
-      {/* Tasks tab */}
-      <div className="relative flex items-center group">
-        <button
-          onClick={() => setTodoOpen(true)}
-          className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
-        >
-          📝 Tasks
-        </button>
-
-        {totalTasks > 0 && (
-          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-24 h-3 bg-gray-200 rounded overflow-hidden mt-1">
-            <div className="h-3 bg-gradient-to-r from-green-400 to-blue-500 transition-all" style={{ width: `${progress}%` }}></div>
-          </div>
-        )}
-
-        {totalTasks > 0 && (
-          <span className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs font-medium text-text-secondary">
-            {remainingTasks}/{totalTasks} left
-          </span>
-        )}
-      </div>
-
-      {/* ✨ زر البحث الطبي الجديد */}
-      <button
-        onClick={() => setSearchOpen(true)}
-        className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
-      >
-        🔍 بحث طبي
-      </button>
-
-      {(user?.role === 'admin' || user?.role === 'super_admin') && (
-        <NavLink
-          to="/admin"
-          onClick={() => setMenuOpen(false)}
-          className={({ isActive }) => `${linkBaseClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}
-        >
-          <TachometerIcon className="h-5 w-5" />
-          Dashboard
-        </NavLink>
-      )}
-    </>
-  );
+  if (!open) return null;
 
   return (
-    <>
-      <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md border-b border-border-color">
-        <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <NavLink to="/" className="text-xl font-bold text-text-primary flex items-center gap-2">
-            <img src="./images/logo.png" alt="Logo" className="h-9 w-9" />
-             <span>Plan X</span>
-          </NavLink>
-          
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-2">
-              {navLinks}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-surface rounded-xl shadow-lg w-11/12 md:w-4/5 lg:w-3/5 max-h-[90vh] overflow-hidden flex flex-col md:flex-row">
+        {/* Left: Search and results */}
+        <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Search medical terms..."
+              className="w-full p-2 rounded-md border border-border-color focus:ring-2 focus:ring-primary focus:outline-none"
+            />
+            <button
+              onClick={handleSearch}
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition"
+            >
+              Search
+            </button>
+            <button onClick={onClose} className="p-2 text-text-secondary hover:text-red-500 transition">
+              <XIcon className="h-5 w-5" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
-              {user && (
-                 <div className="relative" ref={dropdownRef}>
-                      <button 
-                          onClick={() => setDropdownOpen(!isDropdownOpen)}
-                          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors p-1 rounded-full hover:bg-primary/20"
-                      >
-                          {user.avatar ? (
-                              <img src={user.avatar} alt="User Avatar" className="h-8 w-8 rounded-full object-cover border-2 border-primary/50" />
-                          ) : (
-                              <UserCircleIcon className="h-8 w-8"/>
-                          )}
-                          <span className="hidden sm:inline font-medium">{user.name}</span>
-                          <ChevronDownIcon className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                      {isDropdownOpen && (
-                          <div className="absolute right-0 mt-2 w-48 bg-surface border border-border-color rounded-md shadow-lg py-1 z-10 animate-fade-in-up" style={{animationDuration: '0.2s'}}>
-                              <Link to="/profile" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-primary/20 hover:text-primary transition-colors">
-                                  <UserCircleIcon className="h-5 w-5" />
-                                  <span>Profile</span>
-                              </Link>
-                              <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-red-500/20 hover:text-red-500 transition-colors">
-                                 <LogoutIcon className="h-5 w-5" />
-                                 <span>Logout</span>
-                              </button>
+          {loading && <div className="text-center text-text-secondary">Loading...</div>}
+
+          {!loading && results.length === 0 && query && (
+            <div className="text-center text-text-secondary">No results found.</div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4">
+            {results.map((res, idx) => (
+              <div key={idx} className="flex flex-col md:flex-row gap-4 border border-border-color rounded-md p-3 hover:shadow-md transition">
+                <img src={res.image} alt={res.name} className="w-full md:w-40 h-40 object-cover rounded-md" />
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-text-primary">{res.name}</h3>
+                    <p className="text-text-secondary mt-1">{res.description}</p>
+                  </div>
+                  {res.famousCases && res.famousCases.length > 0 && (
+                    <div className="mt-2">
+                      <h4 className="font-medium text-text-primary">Famous cases:</h4>
+                      <div className="flex gap-2 mt-1">
+                        {res.famousCases.map((person, i) => (
+                          <div key={i} className="flex flex-col items-center text-center">
+                            <img src={person.image} alt={person.name} className="w-16 h-16 object-cover rounded-full" />
+                            <span className="text-sm text-text-secondary">{person.name}</span>
                           </div>
-                      )}
-                 </div>
-              )}
-              {/* Mobile Menu Button */}
-              <div className="md:hidden">
-                  <button onClick={() => setMenuOpen(!isMenuOpen)} className="p-2 rounded-md text-text-secondary hover:text-primary hover:bg-primary/20">
-                      {isMenuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
-                  </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+            ))}
           </div>
-        </nav>
-        {/* Mobile Navigation Menu */}
-        {isMenuOpen && (
-           <div className="md:hidden bg-surface border-t border-border-color animate-fade-in-up" style={{animationDuration: '0.2s'}}>
-              <div className="container mx-auto px-4 py-2 flex flex-col gap-1">
-                  {navLinks}
-              </div>
-           </div>
-        )}
-      </header>
+        </div>
 
-      {/* Todo Dialog */}
-      {user && <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} updateProgress={loadProgressFromLocal} />}
-
-      {/* ✨ Search Dialog */}
-      <SearchDialog open={isSearchOpen} onClose={() => setSearchOpen(false)} />
-    </>
+        {/* Right: Quick info panel */}
+        <div className="hidden md:block w-1/3 bg-gray-50 p-4 border-l border-border-color overflow-y-auto">
+          <h3 className="text-lg font-semibold mb-2">Quick Info</h3>
+          <p className="text-text-secondary text-sm">
+            When you select a search result, a brief description of the disease or organ will appear here. Images and famous cases are also displayed.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default Header;
+export default SearchDialog;
