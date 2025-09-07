@@ -20,16 +20,28 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     }
   }, [open]);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!query) return;
     setLoading(true);
-    const imgs = [];
-    // نجيب 12 صورة مختلفة من Unsplash
-    for (let i = 0; i < 12; i++) {
-      imgs.push(`https://source.unsplash.com/400x300/?${encodeURIComponent(query)}&sig=${i}`);
+    setImages([]);
+
+    try {
+      // رابط بحث Bing Images
+      const searchURL = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}&form=HDRSC2`;
+      const res = await fetch(searchURL);
+      const text = await res.text();
+
+      // نبحث عن روابط الصور باستخدام regex
+      const matches = Array.from(text.matchAll(/"murl":"(.*?)"/g));
+      const imgs = matches.map(match => match[1]).slice(0, 12); // أول 12 صورة
+
+      setImages(imgs);
+    } catch (err) {
+      console.error('Error fetching Bing images:', err);
+      setImages([]);
+    } finally {
+      setLoading(false);
     }
-    setImages(imgs);
-    setLoading(false);
   };
 
   if (!open) return null;
