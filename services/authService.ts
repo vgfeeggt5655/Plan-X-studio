@@ -3,27 +3,41 @@ import { User } from '../types';
 const API_URL =
   'https://script.google.com/macros/s/AKfycbwMCPhSKNab-CvtYfY114MdFqcuDS-SkmM3tlgfAr-Osjfxo0VJ04B76cRzgTiW9bmVUg/exec';
 
-// Get all users
-export const getUsers = async (requester?: User): Promise<User[]> => {
-  const response = await fetch(`${API_URL}?action=get`);
-  if (!response.ok) throw new Error('Failed to fetch users');
-  const data = await response.json();
-  let users: User[] = (data.data || []).map((user: any) => ({
-    ...user,
-    id: String(user.id),
-  }));
+// Helper to send requests
+async function request(
+  method: string,
+  endpoint: string = '',
+  params: Record<string, string> = {},
+  body?: any
+) {
+  const urlParams = new URLSearchParams(params).toString();
+  const url = `${API_URL}${endpoint ? '/' + endpoint : ''}${
+    urlParams ? '?' + urlParams : ''
+  }`;
 
-  // لو اللى طالب Super Admin يرجعله كل الناس
-  if (requester && requester.role === 'super_admin') {
-    return users;
+  const options: RequestInit = { method };
+  if (body) {
+    options.headers = { 'Content-Type': 'application/json' };
+    options.body = JSON.stringify(body);
   }
 
-  // لو مش Super Admin، يرجع يوزر واحد بس
-  if (requester) {
-    return users.filter((u) => u.id === requester.id);
-  }
+  const res = await fetch(url, options);
+  if (!res.ok) throw new Error('API request failed');
+  return res.json();
+}
 
-  return [];
+// Get all users (only for super_admin)
+export const getUsers = async (currentUser: User): Promise<User[]> => {
+  const data = await request('GET', '', {
+    id: currentUser.id,
+    role: currentUser.role,
+  });
+
+  if (currentUser.role === 'super_admin') {
+    return data.users || [];
+  } else {
+    return data.user ? [data.user] : [];
+  }
 };
 
 // Login user
@@ -31,13 +45,9 @@ export const loginUser = async (
   email: string,
   password: string
 ): Promise<User> => {
-  const response = await fetch(`${API_URL}?action=get`);
-  if (!response.ok) throw new Error('Failed to fetch users');
-  const data = await response.json();
-  const users: User[] = (data.data || []).map((user: any) => ({
-    ...user,
-    id: String(user.id),
-  }));
+  // fetch all users as super_admin just for login check
+  const data = await request('GET', '', { id: '0', role: 'super_admin' });
+  const users: User[] = data.users || [];
 
   const user = users.find(
     (u) => u.email.toLowerCase() === email.toLowerCase()
@@ -51,89 +61,78 @@ export const loginUser = async (
 
 // Create user
 export const createUser = async (user: Omit<User, 'id'>): Promise<void> => {
-  const formData = new FormData();
-  formData.append('action', 'create');
-  formData.append('name', user.name);
-  formData.append('email', user.email);
-  formData.append('password', user.password);
-  formData.append('role', user.role);
-  formData.append('watched', user.watched || '{}');
-  if (user.avatar) formData.append('avatar', user.avatar);
-
-  await fetch(API_URL, { method: 'POST', body: formData });
+  await request('POST', '', {}, user);
 };
 
-// Update user
-export const updateUser = async (user: User): Promise<void> => {
-  const formData = new FormData();
-  formData.append('action', 'update');
-  formData.append('id', user.id);
-  formData.append('name', user.name);
-  formData.append('email', user.email);
-  formData.append('password', user.password);
-  formData.append('role', user.role);
-  if (user.avatar) formData.append('avatar', user.avatar);
-  if (user.watched) formData.append('watched', user.watched);
-  if (user.todo_list) formData.append('todo_list', user.todo_list);
-
-  const response = await fetch(API_URL, { method: 'POST', body: formData });
-  if (!response.ok) throw new Error('Failed to update user');
+// Update user (self or by super_admin)
+export const updateUser = async (
+  currentUser: User,
+  updatedUser: User
+): Promise<void> => {
+  await request(
+    'PUT',
+    '',
+    { id: currentUser.id, role: currentUser.role },
+    {
+      targetId: updatedUser.id,
+      ...updatedUser,
+    }
+  );
 };
 
-// Delete user
-export const deleteUser = async (id: string): Promise<void> => {
-  const formData = new FormData();
-  formData.append('action', 'delete');
-  formData.append('id', id);
-
-  const response = await fetch(API_URL, { method: 'POST', body: formData });
-  if (!response.ok) throw new Error('Failed to delete user');
+// Delete user (self or by super_admin)
+export const deleteUser = async (
+  currentUser: User,
+  targetId: string
+): Promise<void> => {
+  await request('DELETE', '', {
+    id: currentUser.id,
+    role: currentUser.role,
+    targetId,
+  });
 };
 
 /* ================== Todo List Methods ================== */
 
-// Get todo list of a user by ID
-export const getUserTodoList = async (userId: string): Promise<any> => {
-  const response = await fetch(`${API_URL}?action=get`);
-  if (!response.ok) throw new Error('Failed to fetch users');
-  const data = await response.json();
-  const users: User[] = (data.data || []).map((user: any) => ({
-    ...user,
-    id: String(user.id),
-  }));
+// Get todo list of a user
+export const getUserTodoList = async (
+  currentUser: User,
+  userId: string
+): Promise<any> => {
+  const data = await request('GET', '', {
+    id: currentUser.id,
+    role: currentUser.role,
+  });
 
-  const user = users.find((u) => u.id === userId);
-  if (!user) throw new Error('User not found');
+  let targetUser: User | undefined;
+
+  if (currentUser.role === 'super_admin') {
+    targetUser = (data.users || []).find((u: User) => u.id === userId);
+  } else {
+    targetUser = data.user;
+  }
+
+  if (!targetUser) throw new Error('User not found');
   try {
-    return user.todo_list ? JSON.parse(user.todo_list) : {};
+    return targetUser.todo_list ? JSON.parse(targetUser.todo_list) : {};
   } catch {
     return {};
   }
 };
 
-// Update todo list of a user by ID
+// Update todo list
 export const updateUserTodoList = async (
+  currentUser: User,
   userId: string,
   todoList: any
 ): Promise<void> => {
-  const response = await fetch(`${API_URL}?action=get`);
-  if (!response.ok) throw new Error('Failed to fetch users');
-  const data = await response.json();
-  const users: User[] = (data.data || []).map((user: any) => ({
-    ...user,
-    id: String(user.id),
-  }));
-
-  const currentUser = users.find((u) => u.id === userId);
-  if (!currentUser) throw new Error('User not found');
-
-  currentUser.todo_list = JSON.stringify(todoList || {});
-
-  const formData = new FormData();
-  formData.append('action', 'update');
-  formData.append('id', currentUser.id);
-  formData.append('todo_list', currentUser.todo_list);
-
-  const res = await fetch(API_URL, { method: 'POST', body: formData });
-  if (!res.ok) throw new Error('Failed to update todo list');
+  await request(
+    'PUT',
+    '',
+    { id: currentUser.id, role: currentUser.role },
+    {
+      targetId: userId,
+      todo_list: JSON.stringify(todoList || {}),
+    }
+  );
 };
