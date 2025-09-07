@@ -12,9 +12,6 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const GOOGLE_API_KEY = 'AIzaSyCdXXo2NHpQJdxY4-t6ZcuCROgQRAFdznk';
-  const SEARCH_ENGINE_ID = '335e910ac021b44bf';
-
   useEffect(() => {
     if (open) {
       setQuery('');
@@ -27,21 +24,21 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     if (!query) return;
     setLoading(true);
     setImages([]);
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&searchType=image&q=${encodeURIComponent(query)}&num=10`
-      );
-      const data = await res.json();
-      
-      if (!data.items || data.items.length === 0) {
-        setImages([]);
-        return;
-      }
 
-      const imgs: string[] = data.items.map((item: any) => item.link);
-      setImages(imgs);
+    try {
+      // رابط Google Images البحث المباشر
+      const searchURL = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`;
+
+      // نستخدم fetch للـ HTML ونسحب الروابط اللي فيها الصور
+      const res = await fetch(searchURL, { method: 'GET' });
+      const text = await res.text();
+
+      // نسحب كل src من الصور باستخدام regex
+      const imgMatches = Array.from(text.matchAll(/"ou":"(.*?)"/g)).map(match => match[1]);
+      
+      setImages(imgMatches.slice(0, 12)); // نعرض أول 12 صورة
     } catch (err) {
-      console.error('Google API error:', err);
+      console.error('Error fetching images:', err);
       setImages([]);
     } finally {
       setLoading(false);
