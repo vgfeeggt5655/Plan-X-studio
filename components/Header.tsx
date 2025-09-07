@@ -3,6 +3,7 @@ import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LogoutIcon, TachometerIcon, UserCircleIcon, ChevronDownIcon, MenuIcon, XIcon } from './Icons';
 import TodoDialog from './TodoDialog';
+import SearchDialog from './SearchDialog'; // ✨ استدعاء الديالوج الجديد
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
@@ -10,6 +11,7 @@ const Header: React.FC = () => {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [isTodoOpen, setTodoOpen] = useState(false);
+  const [isSearchOpen, setSearchOpen] = useState(false); // ✨ حالة الديالوج الجديد
   const [progress, setProgress] = useState(0);
   const [totalTasks, setTotalTasks] = useState(0);
   const [remainingTasks, setRemainingTasks] = useState(0);
@@ -69,7 +71,7 @@ const Header: React.FC = () => {
         All Content
       </NavLink>
 
-      {/* Tasks tab with proper hover and modern progress */}
+      {/* Tasks tab */}
       <div className="relative flex items-center group">
         <button
           onClick={() => setTodoOpen(true)}
@@ -90,6 +92,14 @@ const Header: React.FC = () => {
           </span>
         )}
       </div>
+
+      {/* ✨ زر البحث الطبي الجديد */}
+      <button
+        onClick={() => setSearchOpen(true)}
+        className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
+      >
+        🔍 بحث طبي
+      </button>
 
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
         <NavLink
@@ -167,6 +177,9 @@ const Header: React.FC = () => {
 
       {/* Todo Dialog */}
       {user && <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} updateProgress={loadProgressFromLocal} />}
+
+      {/* ✨ Search Dialog */}
+      <SearchDialog open={isSearchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 };
