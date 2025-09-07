@@ -34,8 +34,8 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ضع هنا Google API Key و Custom Search Engine ID
-  const GOOGLE_API_KEY = 'AIzaSyCdXXo2NHpQJdxY4-t6ZcuCROgQRAFdznk';
-  const SEARCH_ENGINE_ID = '335e910ac021b44bf';
+  const GOOGLE_API_KEY = 'YOUR_GOOGLE_API_KEY';
+  const SEARCH_ENGINE_ID = 'YOUR_SEARCH_ENGINE_ID';
 
   useEffect(() => {
     if (open) {
@@ -120,7 +120,10 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">بحث صور جوجل</h2>
+            <h2 className="text-xl font-bold text-white flex items-center">
+              <span className="text-2xl mr-2">🔍</span>
+              بحث صور Google
+            </h2>
             <button
               onClick={onClose}
               className="p-2 text-white hover:text-red-300 transition-colors duration-200 hover:bg-white/20 rounded-full"
@@ -165,18 +168,13 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
               <div className="text-red-700 font-medium">{error}</div>
-              {GOOGLE_API_KEY === 'YOUR_GOOGLE_API_KEY' && (
-                <div className="text-red-600 text-sm mt-2">
-                  <p className="font-semibold mb-2">للحصول على Google API Key:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-xs">
-                    <li>اذهب إلى <span className="font-mono bg-gray-100 px-1">console.developers.google.com</span></li>
-                    <li>أنشئ مشروع جديد أو اختر مشروع موجود</li>
-                    <li>فعل Custom Search API</li>
-                    <li>أنشئ API credentials</li>
-                    <li>أنشئ Custom Search Engine من <span className="font-mono bg-gray-100 px-1">cse.google.com</span></li>
-                  </ol>
-                </div>
-              )}
+              <div className="text-red-600 text-sm mt-2">
+                <p>💡 <strong>نصيحة:</strong> للحصول على صور حقيقية من Google Images:</p>
+                <ol className="list-decimal list-inside space-y-1 text-xs mt-2">
+                  <li>احصل على Google Custom Search API key</li>
+                  <li>أو استخدم Unsplash API (مجاني) من <span className="font-mono bg-gray-100 px-1">unsplash.com/developers</span></li>
+                </ol>
+              </div>
             </div>
           )}
 
