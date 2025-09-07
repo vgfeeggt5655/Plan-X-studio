@@ -8,26 +8,35 @@ interface SearchDialogProps {
 
 const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
+  const [images, setImages] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
       setQuery('');
+      setImages([]);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open]);
 
   const handleSearch = () => {
     if (!query) return;
-    // فتح بحث Google Images في نافذة جديدة
-    window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`, '_blank');
+    setLoading(true);
+    const imgs = [];
+    // نجيب 12 صورة مختلفة من Unsplash
+    for (let i = 0; i < 12; i++) {
+      imgs.push(`https://source.unsplash.com/400x300/?${encodeURIComponent(query)}&sig=${i}`);
+    }
+    setImages(imgs);
+    setLoading(false);
   };
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
-      <div className="bg-white/30 backdrop-blur-xl rounded-xl shadow-xl w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] flex flex-col p-4">
+      <div className="bg-white/30 backdrop-blur-xl rounded-xl shadow-xl w-11/12 md:w-4/5 lg:w-3/5 max-h-[90vh] overflow-hidden flex flex-col p-4">
         
         {/* Search bar */}
         <div className="flex mb-4">
@@ -54,9 +63,14 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           </button>
         </div>
 
-        <p className="text-white text-center mt-4">
-          سيتم فتح نتائج البحث في نافذة جديدة.
-        </p>
+        {/* Images */}
+        {loading && <div className="text-center text-white">Loading...</div>}
+        {!loading && images.length === 0 && <div className="text-center text-white">No images found</div>}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto">
+          {images.map((img, idx) => (
+            <img key={idx} src={img} alt={`img-${idx}`} className="w-full h-40 object-cover rounded-md"/>
+          ))}
+        </div>
       </div>
     </div>
   );
