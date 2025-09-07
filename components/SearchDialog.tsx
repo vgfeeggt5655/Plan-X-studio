@@ -20,28 +20,19 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     }
   }, [open]);
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     if (!query) return;
     setLoading(true);
     setImages([]);
 
-    try {
-      // رابط بحث Bing Images
-      const searchURL = `https://www.bing.com/images/search?q=${encodeURIComponent(query)}&form=HDRSC2`;
-      const res = await fetch(searchURL);
-      const text = await res.text();
-
-      // نبحث عن روابط الصور باستخدام regex
-      const matches = Array.from(text.matchAll(/"murl":"(.*?)"/g));
-      const imgs = matches.map(match => match[1]).slice(0, 12); // أول 12 صورة
-
-      setImages(imgs);
-    } catch (err) {
-      console.error('Error fetching Bing images:', err);
-      setImages([]);
-    } finally {
-      setLoading(false);
+    const imgs: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      // جلب صور متنوعة من Unsplash Source
+      imgs.push(`https://source.unsplash.com/400x300/?${encodeURIComponent(query)}&sig=${i}`);
     }
+
+    setImages(imgs);
+    setLoading(false);
   };
 
   if (!open) return null;
@@ -50,7 +41,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
       <div className="bg-white/30 backdrop-blur-xl rounded-xl shadow-xl w-11/12 md:w-4/5 lg:w-3/5 max-h-[90vh] overflow-hidden flex flex-col p-4">
         
-        {/* Search bar */}
+        {/* شريط البحث */}
         <div className="flex mb-4">
           <input
             ref={inputRef}
@@ -58,14 +49,14 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-            placeholder="Search images..."
+            placeholder="اكتب كلمة للبحث عن صور..."
             className="flex-1 p-2 rounded-l-md border border-white/50 focus:ring-2 focus:ring-primary focus:outline-none"
           />
           <button
             onClick={handleSearch}
             className="px-3 py-2 bg-primary text-white rounded-r-md hover:bg-primary/90 transition"
           >
-            Search
+            بحث
           </button>
           <button
             onClick={onClose}
@@ -75,9 +66,9 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           </button>
         </div>
 
-        {/* Images */}
-        {loading && <div className="text-center text-white">Loading...</div>}
-        {!loading && images.length === 0 && <div className="text-center text-white">No images found</div>}
+        {/* عرض الصور */}
+        {loading && <div className="text-center text-white">جارٍ التحميل...</div>}
+        {!loading && images.length === 0 && <div className="text-center text-white">لا توجد صور</div>}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto">
           {images.map((img, idx) => (
             <img key={idx} src={img} alt={`img-${idx}`} className="w-full h-40 object-cover rounded-md"/>
