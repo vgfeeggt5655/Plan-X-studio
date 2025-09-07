@@ -1,139 +1,110 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState } from "react";
+import { Dialog } from "@headlessui/react";
+import { X } from "lucide-react";
 
 interface SearchDialogProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
 }
 
-const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
-  const [query, setQuery] = useState('');
+const SearchDialog: React.FC<SearchDialogProps> = ({ isOpen, onClose }) => {
+  const [query, setQuery] = useState("");
+  const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
-  const [description, setDescription] = useState<string>('');
-  const [famousPerson, setFamousPerson] = useState<{ name: string; image: string } | null>(null);
 
   const handleSearch = async () => {
     if (!query) return;
     setLoading(true);
-    setImages([]);
-    setDescription('');
-    setFamousPerson(null);
+    setResult(null);
 
     try {
-      // ✅ Fetch images (English search)
-      const imgRes = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(
+      const response = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
           query
-        )}&per_page=4&client_id=YOUR_UNSPLASH_API_KEY`
+        )}`
       );
-      const imgData = await imgRes.json();
-      const imgUrls = imgData.results.map((r: any) => r.urls.small);
-      setImages(imgUrls);
-
-      // ✅ Fetch summary from Wikipedia (English)
-      const wikiRes = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`
-      );
-      const wikiData = await wikiRes.json();
-      if (wikiData.extract) {
-        setDescription(wikiData.extract);
-      }
-
-      // ✅ Fetch famous person with same disease (using Wikipedia search)
-      const famousRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-          query + ' notable people'
-        )}&utf8=&format=json&origin=*`
-      );
-      const famousData = await famousRes.json();
-      if (famousData?.query?.search?.length > 0) {
-        const first = famousData.query.search[0].title;
-        // fetch image for this person
-        const personRes = await fetch(
-          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(first)}`
-        );
-        const personData = await personRes.json();
-        if (personData.thumbnail?.source) {
-          setFamousPerson({ name: first, image: personData.thumbnail.source });
-        }
-      }
+      const data = await response.json();
+      setResult(data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-surface rounded-2xl shadow-lg w-full max-w-4xl p-6 relative animate-fade-in">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-text-secondary hover:text-red-500"
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      {/* خلفية سوداء شفافة */}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
+
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel
+          className="relative w-full max-w-2xl rounded-2xl 
+          bg-white/10 backdrop-blur-xl border border-white/20 
+          shadow-2xl text-white p-6 space-y-4"
         >
-          <X className="w-6 h-6" />
-        </button>
-
-        {/* Search input */}
-        <div className="flex gap-2 mb-6">
-          <input
-            type="text"
-            placeholder="Search for a disease, organ, or body part..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 px-4 py-2 rounded-lg border border-border-color bg-background text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+          {/* زرار إغلاق */}
           <button
-            onClick={handleSearch}
-            disabled={loading}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+            onClick={onClose}
+            className="absolute top-3 right-3 p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
           >
-            {loading ? 'Loading...' : 'Search'}
+            <X size={20} />
           </button>
-        </div>
 
-        {/* Results */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Images */}
-          {images.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              {images.map((src, i) => (
+          <Dialog.Title className="text-2xl font-bold mb-2">
+            🔍 بحث طبي
+          </Dialog.Title>
+
+          {/* input */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="اكتب اسم المرض أو العضو (بالإنجليزي)"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 rounded-xl px-4 py-2 bg-white/20 border border-white/30 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+            <button
+              onClick={handleSearch}
+              disabled={loading}
+              className="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 transition text-white font-semibold"
+            >
+              {loading ? "جارٍ البحث..." : "بحث"}
+            </button>
+          </div>
+
+          {/* النتيجة */}
+          {result && (
+            <div className="mt-4 space-y-3 text-left">
+              <h2 className="text-xl font-semibold">{result.title}</h2>
+
+              {result.thumbnail?.source && (
                 <img
-                  key={i}
-                  src={src}
-                  alt="result"
-                  className="rounded-lg w-full h-32 object-cover shadow"
+                  src={result.thumbnail.source}
+                  alt={result.title}
+                  className="w-60 rounded-lg shadow-lg"
                 />
-              ))}
+              )}
+
+              <p className="text-sm text-gray-200 leading-relaxed">
+                {result.extract}
+              </p>
+
+              {result.content_urls?.desktop?.page && (
+                <a
+                  href={result.content_urls.desktop.page}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 text-blue-300 hover:text-blue-400 underline"
+                >
+                  اقرأ المزيد على ويكيبيديا
+                </a>
+              )}
             </div>
           )}
-
-          {/* Info */}
-          <div>
-            {description && (
-              <p className="text-text-secondary leading-relaxed mb-4">{description}</p>
-            )}
-
-            {famousPerson && (
-              <div className="flex items-center gap-3 mt-4 p-3 border border-border-color rounded-lg">
-                <img
-                  src={famousPerson.image}
-                  alt={famousPerson.name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
-                <span className="text-text-primary font-medium">
-                  Notable case: {famousPerson.name}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        </Dialog.Panel>
       </div>
-    </div>
+    </Dialog>
   );
 };
 
