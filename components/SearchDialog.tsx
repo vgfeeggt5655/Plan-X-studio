@@ -12,7 +12,6 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ التحديث: API key و Search Engine ID الجديد
   const GOOGLE_API_KEY = 'AIzaSyCdXXo2NHpQJdxY4-t6ZcuCROgQRAFdznk';
   const SEARCH_ENGINE_ID = '335e910ac021b44bf';
 
@@ -27,15 +26,22 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const handleSearch = async () => {
     if (!query) return;
     setLoading(true);
+    setImages([]);
     try {
       const res = await fetch(
         `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&searchType=image&q=${encodeURIComponent(query)}&num=10`
       );
       const data = await res.json();
-      const imgs: string[] = (data.items || []).map((item: any) => item.link);
+      
+      if (!data.items || data.items.length === 0) {
+        setImages([]);
+        return;
+      }
+
+      const imgs: string[] = data.items.map((item: any) => item.link);
       setImages(imgs);
     } catch (err) {
-      console.error(err);
+      console.error('Google API error:', err);
       setImages([]);
     } finally {
       setLoading(false);
