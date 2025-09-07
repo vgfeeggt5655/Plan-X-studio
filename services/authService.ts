@@ -1,44 +1,91 @@
+
 import { User } from '../types';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbwMCPhSKNab-CvtYfY114MdFqcuDS-SkmM3tlgfAr-Osjfxo0VJ04B76cRzgTiW9bmVUg/exec';
 
-// Helper: POST JSON
-async function post(body: any) {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+// Get all users
+export const getUsers = async (): Promise<User[]> => {
+  const response = await fetch(`${API_URL}?action=get`);
+  if (!response.ok) throw new Error('Failed to fetch users');
   const data = await response.json();
-  if (data.error) throw new Error(data.message || 'Request failed');
-  return data;
-}
-
-// Register user
-export async function createUser(user: Omit<User, 'id'>): Promise<void> {
-  await post({ action: 'register', ...user });
-}
+  const users = data.data || [];
+  return users.map((user: any) => ({ ...user, id: String(user.id) }));
+};
 
 // Login user
-export async function loginUser(email: string, password: string): Promise<User> {
-  const data = await post({ action: 'login', email, password });
-  return data.user;
-}
+export const loginUser = async (email: string, password: string): Promise<User> => {
+  const users = await getUsers();
+  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (!user) throw new Error("User not found.");
+  if (String(user.password).trim() !== String(password).trim()) throw new Error("Incorrect password.");
+  return user;
+};
 
-// Get users (if super_admin → كل اليوزرز، لو عادي → نفسه فقط)
-export async function getUsers(email: string, password: string): Promise<User[]> {
-  const data = await post({ action: 'getusers', email, password });
-  if (data.users) return data.users;
-  if (data.user) return [data.user];
-  return [];
-}
+// Create user
+export const createUser = async (user: Omit<User, 'id'>): Promise<void> => {
+  const formData = new FormData();
+  formData.append('action', 'create');
+  formData.append('name', user.name);
+  formData.append('email', user.email);
+  formData.append('password', user.password);
+  formData.append('role', user.role);
+  formData.append('watched', user.watched || '{}');
+  if (user.avatar) formData.append('avatar', user.avatar);
+
+  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+};
 
 // Update user
-export async function updateUser(requesterEmail: string, password: string, updates: Partial<User> & { targetEmail?: string; targetId?: string }): Promise<void> {
-  await post({ action: 'updateuser', email: requesterEmail, password, ...updates });
-}
+export const updateUser = async (user: User): Promise<void> => {
+  const formData = new FormData();
+  formData.append('action', 'update');
+  formData.append('id', user.id);
+  formData.append('name', user.name);
+  formData.append('email', user.email);
+  formData.append('password', user.password);
+  formData.append('role', user.role);
+  if (user.avatar) formData.append('avatar', user.avatar);
+  if (user.watched) formData.append('watched', user.watched);
+  if (user.todo_list) formData.append('todo_list', user.todo_list);
+
+  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+};
 
 // Delete user
-export async function deleteUser(requesterEmail: string, password: string, targetId?: string, targetEmail?: string): Promise<void> {
-  await post({ action: 'deleteuser', email: requesterEmail, password, targetId, targetEmail });
-}
+export const deleteUser = async (id: string): Promise<void> => {
+  const formData = new FormData();
+  formData.append('action', 'delete');
+  formData.append('id', id);
+
+  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+};
+
+/* ================== Todo List Methods ================== */
+
+// Get todo list of a user by ID
+export const getUserTodoList = async (userId: string): Promise<any> => {
+  const users = await getUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) throw new Error('User not found');
+  try {
+    return user.todo_list ? JSON.parse(user.todo_list) : {};
+  } catch {
+    return {};
+  }
+};
+
+// Update todo list of a user by ID
+export const updateUserTodoList = async (userId: string, todoList: any): Promise<void> => {
+  const user = await getUsers();
+  const currentUser = user.find(u => u.id === userId);
+  if (!currentUser) throw new Error('User not found');
+
+  currentUser.todo_list = JSON.stringify(todoList || {});
+
+  const formData = new FormData();
+  formData.append('action', 'update');
+  formData.append('id', currentUser.id);
+  formData.append('todo_list', currentUser.todo_list);
+
+  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+};
