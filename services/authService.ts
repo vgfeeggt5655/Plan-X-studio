@@ -3,13 +3,27 @@ import { User } from '../types';
 const API_URL =
   'https://script.google.com/macros/s/AKfycbwMCPhSKNab-CvtYfY114MdFqcuDS-SkmM3tlgfAr-Osjfxo0VJ04B76cRzgTiW9bmVUg/exec';
 
-// Get user by ID
-export const getUserById = async (id: string): Promise<User> => {
-  const response = await fetch(`${API_URL}?action=getUser&id=${id}`);
-  if (!response.ok) throw new Error('Failed to fetch user');
+// Get all users
+export const getUsers = async (requester?: User): Promise<User[]> => {
+  const response = await fetch(`${API_URL}?action=get`);
+  if (!response.ok) throw new Error('Failed to fetch users');
   const data = await response.json();
-  if (data.error) throw new Error(data.error);
-  return { ...data, id: String(data.id) };
+  let users: User[] = (data.data || []).map((user: any) => ({
+    ...user,
+    id: String(user.id),
+  }));
+
+  // لو اللى طالب Super Admin يرجعله كل الناس
+  if (requester && requester.role === 'super_admin') {
+    return users;
+  }
+
+  // لو مش Super Admin، يرجع يوزر واحد بس
+  if (requester) {
+    return users.filter((u) => u.id === requester.id);
+  }
+
+  return [];
 };
 
 // Login user
@@ -17,15 +31,22 @@ export const loginUser = async (
   email: string,
   password: string
 ): Promise<User> => {
-  const response = await fetch(
-    `${API_URL}?action=login&email=${encodeURIComponent(
-      email
-    )}&password=${encodeURIComponent(password)}`
-  );
-  if (!response.ok) throw new Error('Login request failed');
+  const response = await fetch(`${API_URL}?action=get`);
+  if (!response.ok) throw new Error('Failed to fetch users');
   const data = await response.json();
-  if (data.error) throw new Error(data.error);
-  return { ...data, id: String(data.id) };
+  const users: User[] = (data.data || []).map((user: any) => ({
+    ...user,
+    id: String(user.id),
+  }));
+
+  const user = users.find(
+    (u) => u.email.toLowerCase() === email.toLowerCase()
+  );
+  if (!user) throw new Error('User not found.');
+  if (String(user.password).trim() !== String(password).trim())
+    throw new Error('Incorrect password.');
+
+  return user;
 };
 
 // Create user
@@ -55,7 +76,8 @@ export const updateUser = async (user: User): Promise<void> => {
   if (user.watched) formData.append('watched', user.watched);
   if (user.todo_list) formData.append('todo_list', user.todo_list);
 
-  await fetch(API_URL, { method: 'POST', body: formData });
+  const response = await fetch(API_URL, { method: 'POST', body: formData });
+  if (!response.ok) throw new Error('Failed to update user');
 };
 
 // Delete user
@@ -64,14 +86,24 @@ export const deleteUser = async (id: string): Promise<void> => {
   formData.append('action', 'delete');
   formData.append('id', id);
 
-  await fetch(API_URL, { method: 'POST', body: formData });
+  const response = await fetch(API_URL, { method: 'POST', body: formData });
+  if (!response.ok) throw new Error('Failed to delete user');
 };
 
 /* ================== Todo List Methods ================== */
 
 // Get todo list of a user by ID
 export const getUserTodoList = async (userId: string): Promise<any> => {
-  const user = await getUserById(userId);
+  const response = await fetch(`${API_URL}?action=get`);
+  if (!response.ok) throw new Error('Failed to fetch users');
+  const data = await response.json();
+  const users: User[] = (data.data || []).map((user: any) => ({
+    ...user,
+    id: String(user.id),
+  }));
+
+  const user = users.find((u) => u.id === userId);
+  if (!user) throw new Error('User not found');
   try {
     return user.todo_list ? JSON.parse(user.todo_list) : {};
   } catch {
@@ -84,10 +116,24 @@ export const updateUserTodoList = async (
   userId: string,
   todoList: any
 ): Promise<void> => {
+  const response = await fetch(`${API_URL}?action=get`);
+  if (!response.ok) throw new Error('Failed to fetch users');
+  const data = await response.json();
+  const users: User[] = (data.data || []).map((user: any) => ({
+    ...user,
+    id: String(user.id),
+  }));
+
+  const currentUser = users.find((u) => u.id === userId);
+  if (!currentUser) throw new Error('User not found');
+
+  currentUser.todo_list = JSON.stringify(todoList || {});
+
   const formData = new FormData();
   formData.append('action', 'update');
-  formData.append('id', userId);
-  formData.append('todo_list', JSON.stringify(todoList || {}));
+  formData.append('id', currentUser.id);
+  formData.append('todo_list', currentUser.todo_list);
 
-  await fetch(API_URL, { method: 'POST', body: formData });
+  const res = await fetch(API_URL, { method: 'POST', body: formData });
+  if (!res.ok) throw new Error('Failed to update todo list');
 };
