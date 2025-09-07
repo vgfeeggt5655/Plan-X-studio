@@ -6,160 +6,152 @@ interface SearchDialogProps {
   onClose: () => void;
 }
 
-interface Info {
+interface Result {
   title: string;
   description: string;
-  image: string;
+  images: string[];
+  famousCases?: { name: string; image: string }[];
 }
 
-const GOOGLE_API_KEY = 'AIzaSyA-D4x8MwvRumSY-lqBKlTfzoYlJMgUghY';
-const CX = '335e910ac021b44bf';
+// قاعدة بيانات صغيرة لأشهر الناس
+const famousCasesDB: Record<string, { name: string; image: string }[]> = {
+  'Heart Disease': [
+    { name: 'Donald Trump', image: 'https://upload.wikimedia.org/wikipedia/commons/5/5d/Donald_Trump_official_portrait.jpg' }
+  ],
+  'Diabetes': [
+    { name: 'Tom Hanks', image: 'https://upload.wikimedia.org/wikipedia/commons/8/8d/Tom_Hanks_TIFF_2019.jpg' }
+  ],
+  'Stroke': [
+    { name: 'Sharon Stone', image: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Sharon_Stone_2013.jpg' }
+  ]
+  // ممكن تزود باقي الأمراض
+};
 
 const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
-  const [images, setImages] = useState<string[]>([]);
-  const [info, setInfo] = useState<Info | null>(null);
+  const [results, setResults] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
-  const [startIndex, setStartIndex] = useState(1);
-
   const inputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const GOOGLE_API_KEY = 'AIzaSyA-D4x8MwvRumSY-lqBKlTfzoYlJMgUghY';
+  const SEARCH_ENGINE_ID = '335e910ac021b44bf';
 
   useEffect(() => {
     if (open) {
       setQuery('');
-      setImages([]);
-      setInfo(null);
-      setStartIndex(1);
+      setResults(null);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open]);
 
-  const fetchImages = async (reset = false) => {
+  const translateToEnglish = async (text: string) => {
+    try {
+      const res = await fetch(`https://translation.googleapis.com/language/translate/v2?key=${GOOGLE_API_KEY}`, {
+        method: 'POST',
+        body: JSON.stringify({ q: text, target: 'en' }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      return data.data.translations[0].translatedText;
+    } catch {
+      return text; // fallback
+    }
+  };
+
+  const handleSearch = async () => {
     if (!query) return;
     setLoading(true);
     try {
-      const imgRes = await fetch(
-        `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${CX}&searchType=image&q=${encodeURIComponent(
-          query
-        )}&num=20&start=${startIndex}&safe=high`
+      const searchTerm = await translateToEnglish(query);
+
+      // fetch main description
+      const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
+      const wikiData = await wikiRes.json();
+      const description = wikiData.extract || 'No description available.';
+
+      // fetch images from Google Custom Search
+      const imageRes = await fetch(
+        `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&searchType=image&q=${encodeURIComponent(searchTerm)}&num=10`
       );
-      const imgData = await imgRes.json();
-      const imgUrls = imgData.items?.map((item: any) => item.link) || [];
+      const imageData = await imageRes.json();
+      const images: string[] = (imageData.items || []).map((item: any) => item.link);
 
-      setImages((prev) => (reset ? imgUrls : [...prev, ...imgUrls]));
-      setStartIndex((prev) => prev + 20);
-
-      if (reset) {
-        // fetch wiki info once
-        const wikiRes = await fetch(
-          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`
-        );
-        const wikiData = await wikiRes.json();
-        setInfo({
-          title: wikiData.title,
-          description: wikiData.extract,
-          image: wikiData.thumbnail?.source || ''
-        });
-      }
+      setResults({
+        title: wikiData.title,
+        description,
+        images,
+        famousCases: famousCasesDB[wikiData.title] || []
+      });
     } catch (err) {
       console.error(err);
+      setResults(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = () => {
-    setStartIndex(1);
-    fetchImages(true); // reset images
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleSearch();
-  };
-
-  // Infinite scroll
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const onScroll = () => {
-      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100 && !loading) {
-        fetchImages();
-      }
-    };
-    container.addEventListener('scroll', onScroll);
-    return () => container.removeEventListener('scroll', onScroll);
-  }, [loading, startIndex, query]);
-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white/20 backdrop-blur-lg rounded-xl shadow-lg w-11/12 md:w-4/5 lg:w-4/5 max-h-[90vh] flex flex-col md:flex-row overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md">
+      <div className="bg-white/30 backdrop-blur-xl rounded-xl shadow-xl w-11/12 md:w-4/5 lg:w-3/5 max-h-[90vh] overflow-hidden flex flex-col md:flex-row border border-white/20">
         
         {/* Left: Images */}
-        <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="relative mb-4 col-span-full">
+        <div className="flex-1 p-4 overflow-y-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="flex mb-4">
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Search for a disease or body part..."
-              className="w-full p-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none bg-white/50 backdrop-blur-sm"
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+              placeholder="Search medical term or body part..."
+              className="flex-1 p-2 rounded-l-md border border-white/50 focus:ring-2 focus:ring-primary focus:outline-none"
             />
             <button
               onClick={handleSearch}
-              className="absolute right-2 top-2 px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+              className="px-3 py-2 bg-primary text-white rounded-r-md hover:bg-primary/90 transition"
             >
               Search
             </button>
             <button
               onClick={onClose}
-              className="absolute right-16 top-2 p-1 text-gray-700 hover:text-red-500 transition"
+              className="ml-2 p-2 text-white hover:text-red-500 transition"
             >
-              <XIcon className="h-5 w-5" />
+              <XIcon className="h-5 w-5"/>
             </button>
           </div>
 
-          {loading && <div className="col-span-full text-center text-gray-700">Loading...</div>}
-          {!loading && images.length === 0 && query && (
-            <div className="col-span-full text-center text-gray-700">No results found.</div>
-          )}
+          {loading && <div className="col-span-full text-center text-white">Loading...</div>}
 
-          {images.map((url, idx) => (
-            <img
-              key={idx}
-              src={url}
-              alt={query}
-              className="w-full h-32 md:h-40 object-cover rounded-md hover:shadow-lg transition cursor-pointer"
-            />
+          {results && results.images.length === 0 && <div className="col-span-full text-center text-white">No images found</div>}
+
+          {results?.images.map((img, idx) => (
+            <img key={idx} src={img} alt={results.title} className="w-full h-40 object-cover rounded-md"/>
           ))}
         </div>
 
-        {/* Right: Info panel */}
-        <div className="hidden md:block w-1/3 bg-white/20 backdrop-blur-lg p-4 border-l border-gray-200 overflow-y-auto">
-          {info ? (
+        {/* Right: Description + famous cases */}
+        <div className="hidden md:flex md:flex-col w-1/3 bg-white/20 backdrop-blur-lg p-4 border-l border-white/30 overflow-y-auto">
+          {loading && <div className="text-white">Loading info...</div>}
+          {results && (
             <>
-              <h3 className="text-lg font-semibold mb-2">{info.title}</h3>
-              <p className="text-gray-700 text-sm">{info.description}</p>
-              {info.image && (
-                <img
-                  src={info.image}
-                  alt={info.title}
-                  className="w-full h-40 object-cover rounded-md mt-2"
-                />
+              <h3 className="text-lg font-semibold mb-2 text-white">{results.title}</h3>
+              <p className="text-white text-sm mb-4">{results.description}</p>
+              {results.famousCases && results.famousCases.length > 0 && (
+                <div>
+                  <h4 className="text-white font-medium mb-2">Famous cases:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {results.famousCases.map((person, i) => (
+                      <div key={i} className="flex flex-col items-center text-center w-20">
+                        <img src={person.image} alt={person.name} className="w-16 h-16 object-cover rounded-full"/>
+                        <span className="text-white text-sm">{person.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </>
-          ) : (
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Quick Info</h3>
-              <p className="text-gray-700 text-sm">
-                Select a disease or body part on the left to see description and related info here.
-              </p>
-            </div>
           )}
         </div>
       </div>
