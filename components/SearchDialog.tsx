@@ -350,14 +350,11 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
                         loading="lazy"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          // إذا فشلت الصورة، استخدم رقم ID مختلف
+                          // إذا فشلت الصورة من ويكيميديا، استخدم صورة بديلة
                           if (!target.dataset.retried) {
                             target.dataset.retried = 'true';
-                            const newId = Math.floor(Math.random() * 1000) + 100;
-                            target.src = `https://picsum.photos/300/300?random=${newId}`;
-                          } else {
-                            // كبديل أخير، استخدم placeholder
-                            target.src = `https://via.placeholder.com/300x300/f87171/ffffff?text=%F0%9F%8F%A5+%D8%B5%D9%88%D8%B1%D8%A9+%D8%B7%D8%A8%D9%8A%D8%A9`;
+                            // استخدام صورة طبية بديلة
+                            target.src = `https://via.placeholder.com/300x300/dc2626/ffffff?text=%F0%9F%A9%BA+%D8%B5%D9%88%D8%B1%D8%A9+%D8%B7%D8%A8%D9%8A%D8%A9`;
                           }
                         }}
                       />
