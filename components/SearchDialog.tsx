@@ -12,45 +12,42 @@ interface SearchDialogProps {
   onClose: () => void;
 }
 
-interface WikipediaImage {
+interface YandexImageResult {
+  url: string;
+  thumbnail: string;
   title: string;
-  thumbnail: {
-    source: string;
-    width: number;
-    height: number;
-  };
-  pageimage: string;
+  source: string;
 }
 
 const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
-  const [images, setImages] = useState<WikipediaImage[]>([]);
+  const [images, setImages] = useState<YandexImageResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   // قاموس المصطلحات الطبية والترجمة
   const medicalTerms: { [key: string]: string } = {
-    'قلب': 'Heart',
-    'رئة': 'Lung',
-    'كبد': 'Liver',
-    'كلى': 'Kidney',
-    'دماغ': 'Brain',
-    'عين': 'Eye',
-    'أذن': 'Ear',
-    'جهاز هضمي': 'Digestive system',
-    'عظام': 'Bone',
-    'عضلات': 'Muscle',
-    'جلد': 'Skin',
-    'دم': 'Blood',
-    'سرطان': 'Cancer',
-    'التهاب': 'Inflammation',
-    'أشعة': 'Radiography',
-    'تشريح': 'Anatomy',
-    'مرض': 'Disease',
-    'جراحة': 'Surgery',
-    'أعصاب': 'Nerve',
-    'هرمونات': 'Hormone'
+    'قلب': 'heart',
+    'رئة': 'lung',
+    'كبد': 'liver',
+    'كلى': 'kidney',
+    'دماغ': 'brain',
+    'عين': 'eye',
+    'أذن': 'ear',
+    'جهاز هضمي': 'digestive system',
+    'عظام': 'bones',
+    'عضلات': 'muscles',
+    'جلد': 'skin',
+    'دم': 'blood',
+    'سرطان': 'cancer',
+    'التهاب': 'inflammation',
+    'أشعة': 'xray',
+    'تشريح': 'anatomy',
+    'مرض': 'disease',
+    'جراحة': 'surgery',
+    'أعصاب': 'nerves',
+    'هرمونات': 'hormones'
   };
 
   useEffect(() => {
@@ -66,30 +63,48 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     return medicalTerms[arabicQuery] || arabicQuery;
   };
 
-  const fetchWikipediaImages = async (term: string) => {
+  const fetchYandexImages = async (term: string): Promise<YandexImageResult[]> => {
     try {
       const englishTerm = translateToEnglish(term);
       
-      // استخدام ويكيميديا API للحصول على الصور
-      const response = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(englishTerm)}&gsrnamespace=6&prop=pageimages|info&pithumbsize=300&format=json&origin=*`
-      );
+      // استخدام CORS proxy للوصول إلى Yandex
+      const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+      const yandexUrl = `https://yandex.com/images/search?text=${encodeURIComponent(englishTerm + ' medical')}`;
+      
+      const response = await fetch(proxyUrl + yandexUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
       
       if (!response.ok) {
-        throw new Error('فشل في جلب الصور من ويكيميديا');
+        throw new Error('فشل في جلب الصور من Yandex');
       }
       
-      const data = await response.json();
+      const html = await response.text();
       
-      if (data.query && data.query.pages) {
-        const pages = Object.values(data.query.pages) as WikipediaImage[];
-        return pages.filter(page => page.thumbnail);
-      }
+      // استخراج عناوين الصور من HTML (هذا مجرد مثال وقد يحتاج تعديلاً)
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const imageElements = doc.querySelectorAll('.serp-item__thumb');
       
-      return [];
+      const images: YandexImageResult[] = [];
+      imageElements.forEach((img, index) => {
+        const src = img.getAttribute('src');
+        if (src && index < 16) { // الحد الأقصى 16 صورة
+          images.push({
+            url: src.startsWith('//') ? `https:${src}` : src,
+            thumbnail: src.startsWith('//') ? `https:${src}` : src,
+            title: `${term} - صورة ${index + 1}`,
+            source: 'Yandex Images'
+          });
+        }
+      });
+      
+      return images;
     } catch (err) {
-      console.error('خطأ في جلب الصور:', err);
-      throw new Error('تعذر الاتصال بخادم ويكيميديا');
+      console.error('خطأ في جلب الصور من Yandex:', err);
+      throw new Error('تعذر الاتصال بـ Yandex');
     }
   };
 
@@ -101,22 +116,47 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     setError('');
 
     try {
-      const wikipediaImages = await fetchWikipediaImages(query);
+      const yandexImages = await fetchYandexImages(query);
       
-      if (wikipediaImages.length === 0) {
-        setError('لم يتم العثور على صور لهذا المصطلح في ويكيميديا');
+      if (yandexImages.length === 0) {
+        setError('لم يتم العثور على صور لهذا المصطلح في Yandex');
       } else {
-        setImages(wikipediaImages);
+        setImages(yandexImages);
       }
     } catch (err) {
       setError('حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.');
+      // استخدام صور بديلة من Unsplash في حالة فشل Yandex
+      await fetchFallbackImages(query);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleImageClick = (imageTitle: string) => {
-    window.open(`https://commons.wikimedia.org/wiki/File:${encodeURIComponent(imageTitle)}`, '_blank');
+  const fetchFallbackImages = async (term: string) => {
+    try {
+      const englishTerm = translateToEnglish(term);
+      
+      // إنشاء صور من Unsplash كبديل
+      const generatedImages: YandexImageResult[] = [];
+      const count = 16;
+      
+      for (let i = 1; i <= count; i++) {
+        generatedImages.push({
+          url: `https://source.unsplash.com/600x400/?medical,${encodeURIComponent(englishTerm)}&sig=${i}`,
+          thumbnail: `https://source.unsplash.com/300x200/?medical,${encodeURIComponent(englishTerm)}&sig=${i}`,
+          title: `${term} - صورة ${i}`,
+          source: 'Unsplash (بديل)'
+        });
+      }
+      
+      setImages(generatedImages);
+    } catch (err) {
+      console.error('خطأ في جلب الصور البديلة:', err);
+    }
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    window.open(imageUrl, '_blank', 'noopener,noreferrer');
   };
 
   // اقتراحات البحث الطبي
@@ -133,7 +173,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
         {/* Header */}
         <div className="bg-blue-600 p-4">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-bold text-white">بحث الصور الطبية من ويكيميديا</h2>
+            <h2 className="text-xl font-bold text-white">بحث الصور الطبية من Yandex</h2>
             <button
               onClick={onClose}
               className="p-1 text-white hover:text-blue-200"
@@ -186,7 +226,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
             <div className="flex items-center justify-center py-8">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                <div className="text-gray-600">جارٍ البحث في ويكيميديا...</div>
+                <div className="text-gray-600">جارٍ البحث في Yandex...</div>
               </div>
             </div>
           )}
@@ -208,7 +248,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           {/* حالة البدء */}
           {!loading && images.length === 0 && !query && (
             <div className="text-center py-8">
-              <div className="text-gray-500">اكتب مصطلحًا طبيًا للبحث عن الصور في ويكيميديا</div>
+              <div className="text-gray-500">اكتب مصطلحًا طبيًا للبحث عن الصور في Yandex</div>
             </div>
           )}
 
@@ -216,7 +256,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           {images.length > 0 && (
             <div>
               <div className="mb-4 text-center text-sm text-gray-600">
-                تم العثور على {images.length} صورة لـ "{query}" في ويكيميديا
+                تم العثور على {images.length} صورة لـ "{query}"
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -224,12 +264,12 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
                   <div
                     key={index}
                     className="bg-white rounded overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => handleImageClick(image.title)}
+                    onClick={() => handleImageClick(image.url)}
                   >
                     <div className="w-full h-40 overflow-hidden">
                       <img
-                        src={image.thumbnail.source}
-                        alt={image.title.replace('File:', '')}
+                        src={image.thumbnail}
+                        alt={image.title}
                         className="w-full h-full object-cover"
                         loading="lazy"
                         onError={(e) => {
@@ -240,17 +280,12 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
                     </div>
                     <div className="p-2">
                       <div className="text-sm font-medium text-gray-800 truncate">
-                        {image.title.replace('File:', '').replace(/\.[^/.]+$/, '')}
+                        {image.title}
                       </div>
-                      <div className="text-xs text-gray-500">ويكيميديا كومنز</div>
+                      <div className="text-xs text-gray-500">{image.source}</div>
                     </div>
                   </div>
                 ))}
-              </div>
-              
-              {/* معلومات إضافية */}
-              <div className="mt-4 text-center text-xs text-gray-500">
-                الصور من ويكيميديا كومنز - انقر على الصورة للذهاب إلى صفحة الصورة الأصلية
               </div>
             </div>
           )}
