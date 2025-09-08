@@ -11,19 +11,12 @@ const XIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-interface DuckImage {
-  image: string;
-  title: string;
-  url: string;
-}
-
 const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [iframeKey, setIframeKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const [showDialog, setShowDialog] = useState(false);
-  const [images, setImages] = useState<DuckImage[]>([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -31,33 +24,16 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
       setShowDialog(false);
-      setImages([]);
     }
   }, [open]);
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     if (!query.trim()) return;
     setSearchTerm(query.trim());
-    setLoading(true);
-    setImages([]);
-
-    try {
-      // استخدم SearchAPI.io أو SerpApi لو عايز JSON حقيقي
-      // هنا مثال بسيط باستخدام DuckDuckGo Instant API
-      const res = await fetch(`https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(query.trim())}`);
-      const data = await res.json();
-      const fetchedImages: DuckImage[] = data.results.map((item: any) => ({
-        image: item.image,
-        title: item.title,
-        url: item.url,
-      }));
-      setImages(fetchedImages);
-    } catch (err) {
-      console.error('Error fetching images:', err);
-    } finally {
-      setLoading(false);
-    }
+    setIframeKey(prev => prev + 1);
   };
+
+  const bingImagesUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(searchTerm)}&FORM=HDRSC2`;
 
   if (!showDialog) return null;
 
@@ -93,29 +69,21 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           </button>
         </div>
 
-        {/* Images Grid */}
-        <main className="flex-1 overflow-y-auto p-4">
-          {loading && (
+        {/* Bing Images */}
+        <main className="flex-1 overflow-hidden">
+          {searchTerm ? (
+            <iframe
+              key={iframeKey}
+              src={bingImagesUrl}
+              className="w-full h-full border-none"
+              title="Bing Images Search"
+              sandbox="allow-scripts allow-same-origin allow-popups"
+            />
+          ) : (
             <div className="flex items-center justify-center h-full text-gray-400 text-lg md:text-xl">
-              Loading images...
+              Enter a keyword to see images
             </div>
           )}
-          {!loading && images.length === 0 && searchTerm && (
-            <div className="flex items-center justify-center h-full text-gray-400 text-lg md:text-xl">
-              No images found
-            </div>
-          )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {images.map((img, idx) => (
-              <a key={idx} href={img.url} target="_blank" rel="noopener noreferrer" className="block">
-                <img
-                  src={img.image}
-                  alt={img.title}
-                  className="w-full h-32 md:h-40 object-cover rounded-lg hover:scale-105 transition-transform"
-                />
-              </a>
-            ))}
-          </div>
         </main>
       </div>
 
