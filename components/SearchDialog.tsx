@@ -24,35 +24,27 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     const term = query.trim();
     setSearchTerm(term);
     setIframeKey(prev => prev + 1);
-    await fetchFamousPeople(term);
+    await fetchFamousPeopleFromWikipedia(term);
   };
 
-  const fetchFamousPeople = async (term: string) => {
+  const fetchFamousPeopleFromWikipedia = async (term: string) => {
     try {
-      // نضيف كلمة مفتاحية "famous people" للبحث
-      const searchQuery = `${term} famous people`;
-      const response = await fetch(
-        `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&pretty=1`
-      );
+      // نبحث في ويكيبيديا
+      const url = `https://en.wikipedia.org/w/api.php?action=query&origin=*&format=json&prop=links&titles=${encodeURIComponent(term)}`;
+      const response = await fetch(url);
       const data = await response.json();
-      let allNames: string[] = [];
+      const pages = data.query.pages;
+      const page = pages[Object.keys(pages)[0]];
 
-      if (data.RelatedTopics) {
-        data.RelatedTopics.forEach((item: any) => {
-          if (item.Text) allNames.push(item.Text.split('–')[0].trim());
-          if (item.Topics) item.Topics.forEach((t: any) => {
-            if (t.Text) allNames.push(t.Text.split('–')[0].trim());
-          });
-        });
-      }
+      let links: string[] = [];
+      if (page.links) links = page.links.map((l: any) => l.title);
 
-      // فلترة العرب مقابل الأجانب (أسماء عربية شائعة)
-      const arab = allNames.filter(name => /محمد|أحمد|علي|محمود|يوسف|عائشة|خالد|فاطمة|سارة/.test(name));
-      const foreign = allNames.filter(name => !/محمد|أحمد|علي|محمود|يوسف|عائشة|خالد|فاطمة|سارة/.test(name));
+      // فلترة العرب مقابل الأجانب (أسماء شائعة)
+      const arab = links.filter(name => /محمد|أحمد|علي|محمود|يوسف|عائشة|خالد|فاطمة|سارة/.test(name)).slice(0, 10);
+      const foreign = links.filter(name => !/محمد|أحمد|علي|محمود|يوسف|عائشة|خالد|فاطمة|سارة/.test(name)).slice(0, 10);
 
-      // نحتفظ بأقصى 10 أسماء لكل فئة
-      setArabPeople(arab.slice(0, 10));
-      setForeignPeople(foreign.slice(0, 10));
+      setArabPeople(arab);
+      setForeignPeople(foreign);
     } catch (err) {
       console.error(err);
       setArabPeople([]);
