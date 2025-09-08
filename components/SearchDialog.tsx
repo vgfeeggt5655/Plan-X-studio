@@ -1,45 +1,66 @@
-import React, { useState, useEffect, useRef } from 'react';
-
-// أيقونة X
-const XIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
+import React, { useState, useRef } from 'react';
 
 interface SearchDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
-// مثال بيانات للأشخاص حسب المرض
-const mockFamousPeople: Record<string, { arab: string[], foreign: string[] }> = {
-  "مرض السكري": {
-    arab: ["محمد صلاح", "أحمد حلمي"],
-    foreign: ["Tom Hanks", "Halle Berry"]
-  },
-  "السرطان": {
-    arab: ["رياض محرز"],
-    foreign: ["Angelina Jolie", "Robert De Niro"]
-  }
-};
+const XIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
 
 const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [iframeKey, setIframeKey] = useState(0);
+  const [arabPeople, setArabPeople] = useState<string[]>([]);
+  const [foreignPeople, setForeignPeople] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!query.trim()) return;
-    setSearchTerm(query.trim());
+    const term = query.trim();
+    setSearchTerm(term);
     setIframeKey(prev => prev + 1);
+    await fetchFamousPeople(term);
+  };
+
+  const fetchFamousPeople = async (term: string) => {
+    try {
+      // نضيف كلمة مفتاحية "famous people" للبحث
+      const searchQuery = `${term} famous people`;
+      const response = await fetch(
+        `https://api.duckduckgo.com/?q=${encodeURIComponent(searchQuery)}&format=json&pretty=1`
+      );
+      const data = await response.json();
+      let allNames: string[] = [];
+
+      if (data.RelatedTopics) {
+        data.RelatedTopics.forEach((item: any) => {
+          if (item.Text) allNames.push(item.Text.split('–')[0].trim());
+          if (item.Topics) item.Topics.forEach((t: any) => {
+            if (t.Text) allNames.push(t.Text.split('–')[0].trim());
+          });
+        });
+      }
+
+      // فلترة العرب مقابل الأجانب (أسماء عربية شائعة)
+      const arab = allNames.filter(name => /محمد|أحمد|علي|محمود|يوسف|عائشة|خالد|فاطمة|سارة/.test(name));
+      const foreign = allNames.filter(name => !/محمد|أحمد|علي|محمود|يوسف|عائشة|خالد|فاطمة|سارة/.test(name));
+
+      // نحتفظ بأقصى 10 أسماء لكل فئة
+      setArabPeople(arab.slice(0, 10));
+      setForeignPeople(foreign.slice(0, 10));
+    } catch (err) {
+      console.error(err);
+      setArabPeople([]);
+      setForeignPeople([]);
+    }
   };
 
   if (!open) return null;
-
-  // جلب الأشخاص
-  const people = mockFamousPeople[searchTerm] || { arab: [], foreign: [] };
 
   const bingImagesUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(searchTerm)}&FORM=HDRSC2`;
 
@@ -83,25 +104,25 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
         <div className="w-64 bg-gray-100 p-4 overflow-y-auto border-l border-gray-300">
           <h3 className="font-bold mb-2">أشهر الأشخاص المصابين</h3>
 
-          {people.arab.length > 0 && (
+          {arabPeople.length > 0 && (
             <>
               <h4 className="text-sm font-semibold text-gray-600 mb-1">العرب</h4>
               <ul className="mb-4 list-disc list-inside">
-                {people.arab.map((name, i) => <li key={`arab-${i}`}>{name}</li>)}
+                {arabPeople.map((name, i) => <li key={`arab-${i}`}>{name}</li>)}
               </ul>
             </>
           )}
 
-          {people.foreign.length > 0 && (
+          {foreignPeople.length > 0 && (
             <>
               <h4 className="text-sm font-semibold text-gray-600 mb-1">الأجانب</h4>
               <ul className="list-disc list-inside">
-                {people.foreign.map((name, i) => <li key={`foreign-${i}`}>{name}</li>)}
+                {foreignPeople.map((name, i) => <li key={`foreign-${i}`}>{name}</li>)}
               </ul>
             </>
           )}
 
-          {people.arab.length === 0 && people.foreign.length === 0 && (
+          {arabPeople.length === 0 && foreignPeople.length === 0 && (
             <p className="text-gray-500 text-sm">لا توجد معلومات متاحة.</p>
           )}
         </div>
