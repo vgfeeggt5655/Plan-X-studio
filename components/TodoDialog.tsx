@@ -22,28 +22,32 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
-  const [showCelebration, setShowCelebration] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const [dialogVisible, setDialogVisible] = useState(false);
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Handle animation for opening dialog
+  useEffect(() => {
+    if (isOpen) {
+      setDialogVisible(true);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || !user) return;
-    
+
     const loadTodos = async () => {
       setLoading(true);
       try {
         const data = await getUserTodoList(user.id);
         let todayTasks = data[todayStr] || [];
-
         todayTasks = todayTasks.filter(task => {
           const taskDate = new Date(task.createdAt).toISOString().split('T')[0];
           if (task.done && taskDate !== todayStr) return false;
           return true;
         });
-
         setTodos(todayTasks);
       } catch (error) {
         console.error('Failed to load todos:', error);
@@ -56,9 +60,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   }, [isOpen, user, todayStr]);
 
   useEffect(() => {
-    if (showAddForm && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (showAddForm && inputRef.current) inputRef.current.focus();
   }, [showAddForm]);
 
   const saveTodos = async (updatedTodos: TodoItem[]) => {
@@ -73,7 +75,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   const handleAddTask = async () => {
     if (!newTask.trim()) return;
-    
     const task: TodoItem = {
       id: Date.now().toString(),
       text: newTask.trim(),
@@ -81,7 +82,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       createdAt: new Date().toISOString(),
       priority: newTaskPriority
     };
-    
     const updated = [...todos, task];
     setNewTask('');
     setNewTaskPriority('medium');
@@ -90,14 +90,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   };
 
   const handleToggleDone = async (taskId: string) => {
-    const task = todos.find(t => t.id === taskId);
     const updated = todos.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
-    
-    if (task && !task.done) {
-      setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 1500);
-    }
-    
     await saveTodos(updated);
   };
 
@@ -107,9 +100,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTask();
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Enter') handleAddTask();
+    else if (e.key === 'Escape') {
       setShowAddForm(false);
       setNewTask('');
     }
@@ -117,20 +109,14 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   const getFilteredTodos = () => {
     let filtered = todos;
+    if (filter === 'pending') filtered = filtered.filter(t => !t.done);
+    else if (filter === 'completed') filtered = filtered.filter(t => t.done);
 
-    if (filter === 'pending') {
-      filtered = filtered.filter(t => !t.done);
-    } else if (filter === 'completed') {
-      filtered = filtered.filter(t => t.done);
-    }
-
-    // Sort by priority and completion status
     filtered.sort((a, b) => {
       if (a.done !== b.done) return a.done ? 1 : -1;
       const priorityOrder = { high: 3, medium: 2, low: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority];
     });
-
     return filtered;
   };
 
@@ -147,25 +133,33 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const progress = todos.length ? (doneCount / todos.length) * 100 : 0;
   const filteredTodos = getFilteredTodos();
 
-  if (!isOpen) return null;
+  if (!dialogVisible) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose}></div>
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity duration-300"
+        onClick={() => {
+          setDialogVisible(false);
+          setTimeout(onClose, 300);
+        }}
+        style={{ opacity: isOpen ? 1 : 0 }}
+      ></div>
 
-      <div className="relative w-full max-w-2xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div
+        className={`relative w-full max-w-2xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden transition-all duration-300 transform ${
+          isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+        }`}
+      >
 
         {loading ? (
           <div className="flex flex-col items-center justify-center h-96 text-white">
-            <div className="relative">
-              <div className="w-20 h-20 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-r-blue-400 rounded-full animate-spin animation-delay-150"></div>
-            </div>
+            <div className="w-20 h-20 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin"></div>
             <p className="mt-6 text-xl font-light text-slate-300">Loading your tasks...</p>
           </div>
         ) : (
           <>
-            {/* Elegant Header */}
+            {/* Header */}
             <div className="p-8 pb-6">
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -179,14 +173,17 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                   </p>
                 </div>
                 <button
-                  onClick={onClose}
+                  onClick={() => {
+                    setDialogVisible(false);
+                    setTimeout(onClose, 300);
+                  }}
                   className="text-slate-400 hover:text-white transition-colors text-2xl font-light hover:rotate-90 transform transition-transform duration-200"
                 >
                   ✕
                 </button>
               </div>
 
-              {/* Progress Section */}
+              {/* Progress */}
               {todos.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -205,7 +202,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            {/* Simple Filter */}
+            {/* Filter */}
             <div className="px-8 pb-6">
               <div className="flex gap-1 bg-slate-800/50 p-1.5 rounded-2xl backdrop-blur-sm">
                 {['all', 'pending', 'completed'].map((filterOption) => (
@@ -224,7 +221,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            {/* Tasks List */}
+            {/* Tasks */}
             <div className="flex-1 px-8 overflow-y-auto">
               {filteredTodos.length === 0 ? (
                 <div className="text-center py-16">
@@ -372,87 +369,10 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </>
         )}
 
-        {/* Enhanced Celebration */}
-        {showCelebration && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-            {/* Main celebration elements */}
-            <div className="relative">
-              {/* Central burst */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-8xl animate-ping">🎉</div>
-              </div>
-              
-              {/* Rotating ring */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-32 h-32 border-4 border-cyan-400/30 rounded-full animate-spin">
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
-                    <div className="text-2xl animate-bounce">✨</div>
-                  </div>
-                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-2">
-                    <div className="text-2xl animate-bounce animation-delay-300">🌟</div>
-                  </div>
-                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-2">
-                    <div className="text-2xl animate-bounce animation-delay-150">💫</div>
-                  </div>
-                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-2">
-                    <div className="text-2xl animate-bounce animation-delay-450">⭐</div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Success message */}
-              <div className="absolute top-24 left-1/2 transform -translate-x-1/2">
-                <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-3 text-white font-medium text-lg shadow-2xl animate-pulse">
-                  Great job! 🚀
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <style>{`
           @keyframes slideInUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          
-          @keyframes particleFloat {
-            0% {
-              transform: translate(-50%, -50%) scale(0) rotate(0deg);
-              opacity: 1;
-            }
-            50% {
-              transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) scale(1) rotate(180deg);
-              opacity: 0.8;
-            }
-            100% {
-              transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) scale(0) rotate(360deg);
-              opacity: 0;
-            }
-          }
-          
-          .animation-delay-150 {
-            animation-delay: 150ms;
-          }
-          
-          .animation-delay-300 {
-            animation-delay: 300ms;
-          }
-          
-          .animation-delay-450 {
-            animation-delay: 450ms;
-          }
-          
-          /* Random particle positions using CSS custom properties */
-          div[style*="particleFloat"] {
-            --random-x: ${Math.random() * 200 - 100}px;
-            --random-y: ${Math.random() * 200 - 100}px;
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
           }
         `}</style>
       </div>
