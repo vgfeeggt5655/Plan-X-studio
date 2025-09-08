@@ -372,10 +372,41 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           </>
         )}
 
-        {/* Celebration */}
+        {/* Enhanced Celebration */}
         {showCelebration && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-6xl animate-bounce">✨</div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+            {/* Main celebration elements */}
+            <div className="relative">
+              {/* Central burst */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-8xl animate-ping">🎉</div>
+              </div>
+              
+              {/* Rotating ring */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-32 h-32 border-4 border-cyan-400/30 rounded-full animate-spin">
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
+                    <div className="text-2xl animate-bounce">✨</div>
+                  </div>
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-2">
+                    <div className="text-2xl animate-bounce animation-delay-300">🌟</div>
+                  </div>
+                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-2">
+                    <div className="text-2xl animate-bounce animation-delay-150">💫</div>
+                  </div>
+                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-2">
+                    <div className="text-2xl animate-bounce animation-delay-450">⭐</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Success message */}
+              <div className="absolute top-24 left-1/2 transform -translate-x-1/2">
+                <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 backdrop-blur-xl border border-white/20 rounded-2xl px-6 py-3 text-white font-medium text-lg shadow-2xl animate-pulse">
+                  Great job! 🚀
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -391,8 +422,37 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
             }
           }
           
+          @keyframes particleFloat {
+            0% {
+              transform: translate(-50%, -50%) scale(0) rotate(0deg);
+              opacity: 1;
+            }
+            50% {
+              transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) scale(1) rotate(180deg);
+              opacity: 0.8;
+            }
+            100% {
+              transform: translate(calc(-50% + var(--random-x, 0px)), calc(-50% + var(--random-y, 0px))) scale(0) rotate(360deg);
+              opacity: 0;
+            }
+          }
+          
           .animation-delay-150 {
             animation-delay: 150ms;
+          }
+          
+          .animation-delay-300 {
+            animation-delay: 300ms;
+          }
+          
+          .animation-delay-450 {
+            animation-delay: 450ms;
+          }
+          
+          /* Random particle positions using CSS custom properties */
+          div[style*="particleFloat"] {
+            --random-x: ${Math.random() * 200 - 100}px;
+            --random-y: ${Math.random() * 200 - 100}px;
           }
         `}</style>
       </div>
