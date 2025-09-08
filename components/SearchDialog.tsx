@@ -40,19 +40,18 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   return (
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity duration-300">
       <div
-        className="bg-background border border-border-color rounded-lg shadow-2xl w-full max-w-5xl transform transition-all duration-300 animate-fade-in-up flex flex-col overflow-hidden"
-        style={{ minHeight: '500px', maxHeight: '90vh' }}
+        className="bg-background border border-border-color rounded-lg shadow-2xl w-11/12 md:w-5/6 lg:w-4/5 h-5/6 flex flex-col overflow-hidden transform transition-all duration-300 animate-fade-in-up"
       >
         {/* Header */}
         <header className="flex justify-between items-center p-4 border-b border-border-color flex-shrink-0">
-          <h2 className="text-lg font-bold text-text-primary">Image Search</h2>
+          <h2 className="text-lg md:text-xl font-bold text-text-primary">Image Search</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-600 transition">
             <XIcon className="h-6 w-6" />
           </button>
         </header>
 
         {/* Search Bar */}
-        <div className="flex p-4 border-b border-border-color flex-shrink-0">
+        <div className="flex p-4 border-b border-border-color flex-shrink-0 gap-3">
           <input
             ref={inputRef}
             type="text"
@@ -60,11 +59,11 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
             placeholder="Type any keyword and press Enter..."
-            className="flex-1 p-3 rounded-lg border border-border-color focus:outline-none focus:ring-2 focus:ring-primary transition"
+            className="flex-1 bg-surface text-text-primary border border-border-color rounded-lg p-3 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-primary transition"
           />
           <button
             onClick={handleSearch}
-            className="ml-3 px-5 py-3 bg-primary text-background rounded-lg hover:bg-cyan-400 shadow-md transition hover:scale-105"
+            className="px-5 py-3 bg-primary text-background rounded-lg hover:bg-cyan-400 shadow-md transition hover:scale-105 text-base md:text-lg"
           >
             Search
           </button>
@@ -81,14 +80,13 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
               sandbox="allow-scripts allow-same-origin allow-popups"
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-400 text-lg">
+            <div className="flex items-center justify-center h-full text-gray-400 text-lg md:text-xl">
               Enter a keyword to see images
             </div>
           )}
         </main>
       </div>
 
-      {/* Tailwind CSS 3D/animations from FlashcardModal (if needed) */}
       <style>{`
         @keyframes fade-in-up {
           0% { opacity: 0; transform: translateY(10px); }
