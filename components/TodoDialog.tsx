@@ -150,7 +150,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
       <div
         className={`relative w-full max-w-2xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden transition-all duration-300 transform ${
-          closing ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+          closing ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-dialogIn'
         }`}
       >
         {loading ? (
@@ -287,7 +287,9 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         <style>{`
           @keyframes slideInUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
           @keyframes slideUp { 0%{transform:translateY(100%);opacity:0;}100%{transform:translateY(0);opacity:1;} }
+          @keyframes dialogIn { 0%{opacity:0;transform:scale(0.95);}100%{opacity:1;transform:scale(1);} }
           .animate-slideUp{animation:slideUp 0.35s ease-out forwards;}
+          .animate-dialogIn{animation:dialogIn 0.3s ease-out forwards;}
         `}</style>
       </div>
     </div>
