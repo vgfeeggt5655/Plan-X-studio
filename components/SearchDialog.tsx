@@ -35,71 +35,70 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
 
   const bingImagesUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(searchTerm)}&FORM=HDRSC2`;
 
+  if (!showDialog) return null;
+
   return (
-    <>
-      {showDialog && (
-        <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ${
-            open ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <div
-            className={`bg-white rounded-xl shadow-2xl w-11/12 md:w-5/6 lg:w-4/5 h-5/6 flex flex-col overflow-hidden transform transition-transform duration-300 ${
-              open ? 'translate-y-0' : 'translate-y-10'
-            }`}
+    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity duration-300">
+      <div
+        className="bg-background border border-border-color rounded-lg shadow-2xl w-full max-w-5xl transform transition-all duration-300 animate-fade-in-up flex flex-col overflow-hidden"
+        style={{ minHeight: '500px', maxHeight: '90vh' }}
+      >
+        {/* Header */}
+        <header className="flex justify-between items-center p-4 border-b border-border-color flex-shrink-0">
+          <h2 className="text-lg font-bold text-text-primary">Image Search</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-600 transition">
+            <XIcon className="h-6 w-6" />
+          </button>
+        </header>
+
+        {/* Search Bar */}
+        <div className="flex p-4 border-b border-border-color flex-shrink-0">
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+            placeholder="Type any keyword and press Enter..."
+            className="flex-1 p-3 rounded-lg border border-border-color focus:outline-none focus:ring-2 focus:ring-primary transition"
+          />
+          <button
+            onClick={handleSearch}
+            className="ml-3 px-5 py-3 bg-primary text-background rounded-lg hover:bg-cyan-400 shadow-md transition hover:scale-105"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 bg-blue-500">
-              <h2 className="text-xl font-bold text-white">Image Search</h2>
-              <button
-                onClick={onClose}
-                className="p-1 text-white hover:text-gray-200 transition-transform duration-200 hover:scale-110"
-              >
-                <XIcon className="h-6 w-6" />
-              </button>
-            </div>
-
-            {/* Search Bar */}
-            <div className="flex p-4 border-b border-gray-200">
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSearch();
-                }}
-                placeholder="Type any keyword and press Enter..."
-                className="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
-              <button
-                onClick={handleSearch}
-                className="ml-3 px-5 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow-md transition-transform duration-200 hover:scale-105"
-              >
-                Search
-              </button>
-            </div>
-
-            {/* Bing Images */}
-            <div className="flex-1 overflow-hidden">
-              {searchTerm ? (
-                <iframe
-                  key={iframeKey}
-                  src={bingImagesUrl}
-                  className="w-full h-full border-none"
-                  title="Bing Images Search"
-                  sandbox="allow-scripts allow-same-origin allow-popups"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 text-lg">
-                  Enter a keyword to see images
-                </div>
-              )}
-            </div>
-          </div>
+            Search
+          </button>
         </div>
-      )}
-    </>
+
+        {/* Bing Images */}
+        <main className="flex-1 overflow-hidden">
+          {searchTerm ? (
+            <iframe
+              key={iframeKey}
+              src={bingImagesUrl}
+              className="w-full h-full border-none"
+              title="Bing Images Search"
+              sandbox="allow-scripts allow-same-origin allow-popups"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-400 text-lg">
+              Enter a keyword to see images
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Tailwind CSS 3D/animations from FlashcardModal (if needed) */}
+      <style>{`
+        @keyframes fade-in-up {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.3s ease-out forwards;
+        }
+      `}</style>
+    </div>
   );
 };
 
