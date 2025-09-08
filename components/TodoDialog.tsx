@@ -286,9 +286,18 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
         <style>{`
           @keyframes slideInUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
-          @keyframes slideUp { 0%{transform:translateY(100%);opacity:0;}100%{transform:translateY(0);opacity:1;} }
           @keyframes dialogIn { 0%{opacity:0;transform:scale(0.95);}100%{opacity:1;transform:scale(1);} }
-          .animate-slideUp{animation:slideUp 0.35s ease-out forwards;}
+
+          /* New animation for Add Task form */
+          @keyframes popUp {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+          }
+
+          .animate-slideUp {
+            animation: popUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          }
           .animate-dialogIn{animation:dialogIn 0.3s ease-out forwards;}
         `}</style>
       </div>
