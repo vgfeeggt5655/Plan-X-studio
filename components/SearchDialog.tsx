@@ -32,12 +32,12 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     setSearchTerm(query);
     setIframeKey(prev => prev + 1);
     setLoading(true);
-    setTimeout(() => setLoading(false), 1000); // محاكاة التحميل
+    setTimeout(() => setLoading(false), 800);
   };
 
-  const getGoogleImagesUrl = () => {
+  const getBingImagesUrl = () => {
     if (!searchTerm) return '';
-    return `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchTerm)}`;
+    return `https://www.bing.com/images/search?q=${encodeURIComponent(searchTerm)}`;
   };
 
   if (!open) return null;
@@ -48,7 +48,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
         
         {/* Header */}
         <div className="bg-blue-600 p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">بحث الصور من Google</h2>
+          <h2 className="text-xl font-bold text-white">بحث الصور الطبية من Bing</h2>
           <button onClick={onClose} className="p-1 text-white hover:text-blue-200">
             <XIcon className="h-5 w-5"/>
           </button>
@@ -79,9 +79,9 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           {searchTerm ? (
             <iframe
               key={iframeKey}
-              src={getGoogleImagesUrl()}
+              src={getBingImagesUrl()}
               className="w-full h-full border-none"
-              title="نتائج البحث من Google Images"
+              title="نتائج البحث من Bing Images"
               sandbox="allow-scripts allow-same-origin allow-popups"
               onLoad={() => setLoading(false)}
               onError={(e) => {
@@ -92,8 +92,8 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
                   container.innerHTML = `
                     <div class="flex flex-col items-center justify-center h-full p-4 text-center">
                       <div class="text-2xl mb-4">⚠️</div>
-                      <div class="text-gray-700 font-medium mb-2">تعذر تحميل Google Images</div>
-                      <button onclick="window.open('${getGoogleImagesUrl()}', '_blank')" 
+                      <div class="text-gray-700 font-medium mb-2">تعذر تحميل Bing Images</div>
+                      <button onclick="window.open('${getBingImagesUrl()}', '_blank')" 
                               class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                           فتح في نافذة جديدة
                       </button>
