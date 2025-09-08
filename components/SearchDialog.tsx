@@ -12,18 +12,11 @@ interface SearchDialogProps {
   onClose: () => void;
 }
 
-interface YandexImageResult {
-  url: string;
-  thumbnail: string;
-  title: string;
-  source: string;
-}
-
 const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [query, setQuery] = useState('');
-  const [images, setImages] = useState<YandexImageResult[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [iframeKey, setIframeKey] = useState(0); // لإعادة تحميل الـ iframe
   const inputRef = useRef<HTMLInputElement>(null);
 
   // قاموس المصطلحات الطبية والترجمة
@@ -35,7 +28,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     'دماغ': 'brain',
     'عين': 'eye',
     'أذن': 'ear',
-    'جهاز هضمي': 'digestive system',
+    'جهاز هضمي': 'digestive+system',
     'عظام': 'bones',
     'عضلات': 'muscles',
     'جلد': 'skin',
@@ -53,8 +46,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   useEffect(() => {
     if (open) {
       setQuery('');
-      setImages([]);
-      setError('');
+      setSearchTerm('');
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [open]);
@@ -63,100 +55,26 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
     return medicalTerms[arabicQuery] || arabicQuery;
   };
 
-  const fetchYandexImages = async (term: string): Promise<YandexImageResult[]> => {
-    try {
-      const englishTerm = translateToEnglish(term);
-      
-      // استخدام CORS proxy للوصول إلى Yandex
-      const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-      const yandexUrl = `https://yandex.com/images/search?text=${encodeURIComponent(englishTerm + ' medical')}`;
-      
-      const response = await fetch(proxyUrl + yandexUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('فشل في جلب الصور من Yandex');
-      }
-      
-      const html = await response.text();
-      
-      // استخراج عناوين الصور من HTML (هذا مجرد مثال وقد يحتاج تعديلاً)
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const imageElements = doc.querySelectorAll('.serp-item__thumb');
-      
-      const images: YandexImageResult[] = [];
-      imageElements.forEach((img, index) => {
-        const src = img.getAttribute('src');
-        if (src && index < 16) { // الحد الأقصى 16 صورة
-          images.push({
-            url: src.startsWith('//') ? `https:${src}` : src,
-            thumbnail: src.startsWith('//') ? `https:${src}` : src,
-            title: `${term} - صورة ${index + 1}`,
-            source: 'Yandex Images'
-          });
-        }
-      });
-      
-      return images;
-    } catch (err) {
-      console.error('خطأ في جلب الصور من Yandex:', err);
-      throw new Error('تعذر الاتصال بـ Yandex');
-    }
-  };
-
-  const handleSearch = async () => {
+  const handleSearch = () => {
     if (!query.trim()) return;
 
     setLoading(true);
-    setImages([]);
-    setError('');
-
-    try {
-      const yandexImages = await fetchYandexImages(query);
-      
-      if (yandexImages.length === 0) {
-        setError('لم يتم العثور على صور لهذا المصطلح في Yandex');
-      } else {
-        setImages(yandexImages);
-      }
-    } catch (err) {
-      setError('حدث خطأ أثناء البحث. يرجى المحاولة مرة أخرى.');
-      // استخدام صور بديلة من Unsplash في حالة فشل Yandex
-      await fetchFallbackImages(query);
-    } finally {
-      setLoading(false);
-    }
+    
+    // ترجمة المصطلح العربي إلى إنجليزي
+    const englishTerm = translateToEnglish(query);
+    setSearchTerm(englishTerm);
+    
+    // إعادة تحميل الـ iframe
+    setIframeKey(prev => prev + 1);
+    
+    // محاكاة وقت التحميل
+    setTimeout(() => setLoading(false), 1000);
   };
 
-  const fetchFallbackImages = async (term: string) => {
-    try {
-      const englishTerm = translateToEnglish(term);
-      
-      // إنشاء صور من Unsplash كبديل
-      const generatedImages: YandexImageResult[] = [];
-      const count = 16;
-      
-      for (let i = 1; i <= count; i++) {
-        generatedImages.push({
-          url: `https://source.unsplash.com/600x400/?medical,${encodeURIComponent(englishTerm)}&sig=${i}`,
-          thumbnail: `https://source.unsplash.com/300x200/?medical,${encodeURIComponent(englishTerm)}&sig=${i}`,
-          title: `${term} - صورة ${i}`,
-          source: 'Unsplash (بديل)'
-        });
-      }
-      
-      setImages(generatedImages);
-    } catch (err) {
-      console.error('خطأ في جلب الصور البديلة:', err);
-    }
-  };
-
-  const handleImageClick = (imageUrl: string) => {
-    window.open(imageUrl, '_blank', 'noopener,noreferrer');
+  // إنشاء رابط بحث Yandex للصور
+  const getYandexImagesUrl = () => {
+    if (!searchTerm) return '';
+    return `https://yandex.com/images/search?text=${encodeURIComponent(searchTerm + ' medical')}`;
   };
 
   // اقتراحات البحث الطبي
@@ -168,7 +86,7 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-white rounded-lg shadow-xl w-11/12 md:w-4/5 max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-11/12 md:w-4/5 h-4/5 flex flex-col">
         
         {/* Header */}
         <div className="bg-blue-600 p-4">
@@ -219,73 +137,50 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-          
-          {/* حالات التحميل */}
-          {loading && (
-            <div className="flex items-center justify-center py-8">
+        <div className="flex-1 overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-                <div className="text-gray-600">جارٍ البحث في Yandex...</div>
+                <div className="text-gray-600">جارٍ تحميل نتائج البحث...</div>
               </div>
             </div>
-          )}
-          
-          {/* رسائل الخطأ */}
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-              <div className="text-red-700">{error}</div>
-            </div>
-          )}
-
-          {/* لا توجد نتائج */}
-          {!loading && images.length === 0 && query && !error && (
-            <div className="text-center py-8">
-              <div className="text-gray-600">لم يتم العثور على صور لـ "{query}"</div>
-            </div>
-          )}
-          
-          {/* حالة البدء */}
-          {!loading && images.length === 0 && !query && (
-            <div className="text-center py-8">
-              <div className="text-gray-500">اكتب مصطلحًا طبيًا للبحث عن الصور في Yandex</div>
-            </div>
-          )}
-
-          {/* عرض الصور */}
-          {images.length > 0 && (
-            <div>
-              <div className="mb-4 text-center text-sm text-gray-600">
-                تم العثور على {images.length} صورة لـ "{query}"
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {images.map((image, index) => (
-                  <div
-                    key={index}
-                    className="bg-white rounded overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => handleImageClick(image.url)}
-                  >
-                    <div className="w-full h-40 overflow-hidden">
-                      <img
-                        src={image.thumbnail}
-                        alt={image.title}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = `https://via.placeholder.com/300x200/eeeeee/999999?text=صورة+غير+متاحة`;
-                        }}
-                      />
-                    </div>
-                    <div className="p-2">
-                      <div className="text-sm font-medium text-gray-800 truncate">
-                        {image.title}
+          ) : searchTerm ? (
+            <div className="w-full h-full">
+              <iframe
+                key={iframeKey}
+                src={getYandexImagesUrl()}
+                className="w-full h-full border-none"
+                title="نتائج البحث عن الصور الطبية من Yandex"
+                sandbox="allow-scripts allow-same-origin allow-popups"
+                onLoad={() => setLoading(false)}
+                onError={(e) => {
+                  const target = e.target as HTMLIFrameElement;
+                  target.style.display = 'none';
+                  // عرض رسالة بديلة
+                  const container = target.parentElement;
+                  if (container) {
+                    container.innerHTML = `
+                      <div class="flex flex-col items-center justify-center h-full p-4 text-center">
+                        <div class="text-2xl mb-4">⚠️</div>
+                        <div class="text-gray-700 font-medium mb-2">تعذر تحميل Yandex</div>
+                        <div class="text-gray-500 text-sm mb-4">
+                            قد تكون هناك قيود على عرض محتوى Yandex مباشرة في التطبيق.
+                        </div>
+                        <button onclick="window.open('${getYandexImagesUrl()}', '_blank')" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            فتح Yandex في نافذة جديدة
+                        </button>
                       </div>
-                      <div className="text-xs text-gray-500">{image.source}</div>
-                    </div>
-                  </div>
-                ))}
+                    `;
+                  }
+                }}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-gray-500">
+                اكتب مصطلحًا طبيًا واضغط بحث لرؤية الصور من Yandex
               </div>
             </div>
           )}
