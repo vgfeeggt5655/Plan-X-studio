@@ -20,6 +20,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
   const [newTask, setNewTask] = useState('');
   const [loading, setLoading] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
 
@@ -41,30 +42,48 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
       setTodos(todayTasks);
       setLoading(false);
-
-      // ندي وقت صغير عشان يظهر effect fade-in
       setTimeout(() => setDataLoaded(true), 100);
     })();
   }, [isOpen, user, todayStr]);
+
+  // تعديل/إضافة/حذف يعتبر تغييرات غير محفوظة
+  const markUnsaved = () => setUnsavedChanges(true);
 
   const handleAddTask = () => {
     if (!newTask.trim()) return;
     const task: TodoItem = { id: Date.now().toString(), text: newTask.trim(), done: false, createdAt: new Date().toISOString() };
     setTodos(prev => [...prev, task]);
     setNewTask('');
+    markUnsaved();
   };
 
   const handleToggleDone = (taskId: string) => {
     setTodos(prev => prev.map(t => t.id === taskId ? { ...t, done: !t.done } : t));
+    markUnsaved();
   };
 
   const handleDeleteTask = (taskId: string) => {
     setTodos(prev => prev.filter(t => t.id !== taskId));
+    markUnsaved();
   };
 
   const handleSave = async () => {
     if (!user) return;
+    setLoading(true);
     await updateUserTodoList(user.id, { [todayStr]: todos });
+    setLoading(false);
+    setUnsavedChanges(false);
+  };
+
+  const handleClose = () => {
+    if (unsavedChanges) {
+      const confirmSave = window.confirm('في تعديلات لم تحفظ، هل تريد حفظها؟');
+      if (confirmSave) {
+        handleSave().then(onClose);
+        return;
+      }
+    }
+    onClose();
   };
 
   const doneCount = todos.filter(t => t.done).length;
@@ -80,14 +99,14 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
       <div className="relative w-full max-w-2xl p-6 rounded-3xl shadow-2xl max-h-[90vh]
         bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-white/20 dark:border-gray-700/20 flex flex-col overflow-y-auto">
 
-        {/* لودنج بار */}
-        {loading && !dataLoaded && (
-          <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mb-4">
-            <div className="h-2 bg-primary rounded animate-[loading-bar_1.5s_ease-in-out_infinite]" />
+        {/* لودنج بار محدث */}
+        {loading && (
+          <div className="w-full h-3 mb-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-3 rounded-full bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 animate-loading" />
           </div>
         )}
 
-        {/* المحتوى يظهر مع fade-in بعد التحميل */}
+        {/* المحتوى مع fade-in */}
         <div className={`transition-opacity duration-500 ${dataLoaded ? 'opacity-100' : 'opacity-0'}`}>
           {dataLoaded && (
             <>
@@ -98,7 +117,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-text-primary">Tasks</h3>
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="text-red-500 font-bold text-3xl hover:text-red-600 transition"
                 >
                   ×
@@ -178,8 +197,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         </div>
 
         <style>{`
-          @keyframes loading-bar { 0% { transform: translateX(-100%);} 50% { transform: translateX(0);} 100% { transform: translateX(100%);} }
-          .animate-[loading-bar_1.5s_ease-in-out_infinite] { animation: loading-bar 1.5s ease-in-out infinite; }
+          @keyframes loading { 0% { transform: translateX(-100%); } 50% { transform: translateX(0%); } 100% { transform: translateX(100%); } }
+          .animate-loading { animation: loading 1.5s ease-in-out infinite; }
         `}</style>
       </div>
     </div>
