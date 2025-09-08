@@ -28,16 +28,12 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Handle animation for opening dialog
   useEffect(() => {
-    if (isOpen) {
-      setDialogVisible(true);
-    }
+    if (isOpen) setDialogVisible(true);
   }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || !user) return;
-
     const loadTodos = async () => {
       setLoading(true);
       try {
@@ -55,7 +51,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
         setLoading(false);
       }
     };
-
     loadTodos();
   }, [isOpen, user, todayStr]);
 
@@ -111,7 +106,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     let filtered = todos;
     if (filter === 'pending') filtered = filtered.filter(t => !t.done);
     else if (filter === 'completed') filtered = filtered.filter(t => t.done);
-
     filtered.sort((a, b) => {
       if (a.done !== b.done) return a.done ? 1 : -1;
       const priorityOrder = { high: 3, medium: 2, low: 1 };
@@ -314,9 +308,18 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
             </div>
 
             {/* Add Task Section */}
-            <div className="p-8 pt-6">
-              {showAddForm ? (
-                <div className="space-y-4">
+            <div className="p-8 pt-6 relative">
+              <button
+                onClick={() => setShowAddForm(true)}
+                className={`w-full p-4 border-2 border-dashed border-slate-600/50 rounded-2xl text-slate-400 hover:border-cyan-400/50 hover:text-cyan-400 transition-all duration-300 font-light text-lg hover:bg-white/5 backdrop-blur-sm group ${
+                  showAddForm ? 'hidden' : 'flex items-center justify-center gap-2'
+                }`}
+              >
+                <span className="group-hover:scale-110 inline-block transition-transform duration-200">+</span> Add new task
+              </button>
+
+              {showAddForm && (
+                <div className="absolute bottom-0 left-0 w-full bg-slate-900/95 rounded-t-3xl p-6 backdrop-blur-xl shadow-lg animate-slideUp">
                   <input
                     ref={inputRef}
                     type="text"
@@ -324,20 +327,30 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                     value={newTask}
                     onChange={(e) => setNewTask(e.target.value)}
                     onKeyDown={handleKeyPress}
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 backdrop-blur-sm transition-all duration-200"
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 backdrop-blur-sm transition-all duration-200 mb-4"
                   />
-                  
+
+                  <div className="flex items-center justify-between mb-4 gap-4">
+                    {['low', 'medium', 'high'].map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => setNewTaskPriority(p as any)}
+                        className={`flex-1 py-3 rounded-full text-white font-medium transition-all duration-300 ${
+                          newTaskPriority === p
+                            ? p === 'high' 
+                              ? 'bg-red-500 shadow-lg scale-105' 
+                              : p === 'medium'
+                              ? 'bg-yellow-500 shadow-lg scale-105'
+                              : 'bg-green-500 shadow-lg scale-105'
+                            : 'bg-white/10 hover:bg-white/20'
+                        }`}
+                      >
+                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+
                   <div className="flex gap-3">
-                    <select
-                      value={newTaskPriority}
-                      onChange={(e) => setNewTaskPriority(e.target.value as any)}
-                      className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/50 backdrop-blur-sm"
-                    >
-                      <option value="high" className="bg-slate-800">🔴 High Priority</option>
-                      <option value="medium" className="bg-slate-800">🟡 Medium Priority</option>
-                      <option value="low" className="bg-slate-800">🟢 Low Priority</option>
-                    </select>
-                    
                     <button
                       onClick={handleAddTask}
                       disabled={!newTask.trim()}
@@ -345,7 +358,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                     >
                       Add Task
                     </button>
-                    
+
                     <button
                       onClick={() => {
                         setShowAddForm(false);
@@ -357,13 +370,6 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                     </button>
                   </div>
                 </div>
-              ) : (
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="w-full p-4 border-2 border-dashed border-slate-600/50 rounded-2xl text-slate-400 hover:border-cyan-400/50 hover:text-cyan-400 transition-all duration-300 font-light text-lg hover:bg-white/5 backdrop-blur-sm group"
-                >
-                  <span className="group-hover:scale-110 inline-block transition-transform duration-200">+</span> Add new task
-                </button>
               )}
             </div>
           </>
@@ -373,6 +379,13 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
           @keyframes slideInUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes slideUp {
+            0% { transform: translateY(100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+          }
+          .animate-slideUp {
+            animation: slideUp 0.35s ease-out forwards;
           }
         `}</style>
       </div>
