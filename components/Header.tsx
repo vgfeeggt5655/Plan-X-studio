@@ -77,7 +77,7 @@ const Header: React.FC = () => {
           onClick={() => setTodoOpen(true)}
           className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
         >
-          📝 Tasks
+          Tasks
         </button>
 
         {totalTasks > 0 && (
@@ -98,7 +98,7 @@ const Header: React.FC = () => {
         onClick={() => setSearchOpen(true)}
         className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
       >
-         Images🔍
+         Images
       </button>
 
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
