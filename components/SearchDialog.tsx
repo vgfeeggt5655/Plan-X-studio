@@ -1,5 +1,4 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface SearchDialogProps {
   open: boolean;
@@ -17,6 +16,16 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [iframeKey, setIframeKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [showDialog, setShowDialog] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setShowDialog(true);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      setShowDialog(false);
+    }
+  }, [open]);
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -27,31 +36,27 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const bingImagesUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(searchTerm)}&FORM=HDRSC2`;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+    <>
+      {showDialog && (
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ${
+            open ? 'opacity-100' : 'opacity-0'
+          }`}
         >
-          <motion.div
-            className="bg-white rounded-xl shadow-2xl w-11/12 md:w-5/6 lg:w-4/5 h-5/6 flex flex-col overflow-hidden"
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          <div
+            className={`bg-white rounded-xl shadow-2xl w-11/12 md:w-5/6 lg:w-4/5 h-5/6 flex flex-col overflow-hidden transform transition-transform duration-300 ${
+              open ? 'translate-y-0' : 'translate-y-10'
+            }`}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 bg-blue-500">
               <h2 className="text-xl font-bold text-white">Image Search</h2>
-              <motion.button
+              <button
                 onClick={onClose}
-                whileHover={{ scale: 1.1, opacity: 0.8 }}
-                className="p-1 text-white"
+                className="p-1 text-white hover:text-gray-200 transition-transform duration-200 hover:scale-110"
               >
-                <XIcon className="h-6 w-6"/>
-              </motion.button>
+                <XIcon className="h-6 w-6" />
+              </button>
             </div>
 
             {/* Search Bar */}
@@ -61,17 +66,18 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch();
+                }}
                 placeholder="Type any keyword and press Enter..."
                 className="flex-1 p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
-              <motion.button
+              <button
                 onClick={handleSearch}
-                whileHover={{ scale: 1.05 }}
-                className="ml-3 px-5 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow-md transition"
+                className="ml-3 px-5 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow-md transition-transform duration-200 hover:scale-105"
               >
                 Search
-              </motion.button>
+              </button>
             </div>
 
             {/* Bing Images */}
@@ -90,10 +96,10 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
                 </div>
               )}
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 };
 
