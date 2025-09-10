@@ -1,6 +1,6 @@
 import { User } from '../types';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwMCPhSKNab-CvtYfY114MdFqcuDS-SkmM3tlgfAr-Osjfxo0VJ04B76cRzgTiW9bmVUg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyxx36nHAUGjY5kD_AO_6utHsDqjB74Nklh3k8E8eo9-9_--BL5qDfPnGPI34v2DaDW6w/exec';
 
 // Get all users (كما كان)
 export const getUsers = async (): Promise<User[]> => {
