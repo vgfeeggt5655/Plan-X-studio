@@ -41,7 +41,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     const loadTodos = async () => {
       setLoading(true);
       try {
-        const data = await getUserTodoList(user.id);
+        // تمرير البريد الإلكتروني وكلمة المرور عند جلب البيانات
+        const data = await getUserTodoList(user.id, user.email, user.password);
         let todayTasks = data[todayStr] || [];
         todayTasks = todayTasks.filter(task => {
           const taskDate = new Date(task.createdAt).toISOString().split('T')[0];
@@ -66,7 +67,8 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
     if (!user) return;
     try {
       setTodos(updatedTodos);
-      await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
+      // تمرير البريد الإلكتروني وكلمة المرور عند التحديث
+      await updateUserTodoList(user.id, { [todayStr]: updatedTodos }, user.email, user.password);
     } catch (error) {
       console.error('Failed to save todos:', error);
     }
@@ -272,12 +274,12 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                     ))}
                   </div>
 
-                  <div className="flex gap-3">
-                    <button onClick={handleAddTask} disabled={!newTask.trim()}
-                      className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02]">Add Task</button>
-                    <button onClick={()=>{setShowAddForm(false);setNewTask('');}}
-                      className="px-4 py-3 bg-white/5 text-slate-300 rounded-xl hover:bg-white/10 transition-all duration-200">Cancel</button>
-                  </div>
+                    <div className="flex gap-3">
+                        <button onClick={handleAddTask} disabled={!newTask.trim()}
+                            className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02]">Add Task</button>
+                        <button onClick={()=>{setShowAddForm(false);setNewTask('');}}
+                            className="px-4 py-3 bg-white/5 text-slate-300 rounded-xl hover:bg-white/10 transition-all duration-200">Cancel</button>
+                    </div>
                 </div>
               )}
             </div>
