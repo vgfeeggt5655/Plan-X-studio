@@ -2,7 +2,7 @@ import { User } from '../types';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbyU2cjwhB2YnMTXPmtf2QqqGngNeGJKnrqOYP8T8DH0nAra4ZmJ6oezDfEl6koaU02F2g/exec';
 
-// Get all users
+// Get all users (for super_admin only)
 export const getUsers = async (): Promise<User[]> => {
   const response = await fetch(`${API_URL}?action=get`);
   if (!response.ok) throw new Error('Failed to fetch users');
@@ -12,12 +12,12 @@ export const getUsers = async (): Promise<User[]> => {
 };
 
 // Login user
-export const loginUser = async (email: string, password: string): Promise<User> => {
-  const users = await getUsers();
-  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (!user) throw new Error("User not found.");
-  if (String(user.password).trim() !== String(password).trim()) throw new Error("Incorrect password.");
-  return user;
+export const loginUser = async (email: string, password: string): Promise<{user: User, users?: User[]}> => {
+  const response = await fetch(`${API_URL}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+  if (!response.ok) throw new Error('Failed to login');
+  const data = await response.json();
+  if (data.error) throw new Error(data.message);
+  return data;
 };
 
 // Create user
@@ -75,16 +75,14 @@ export const getUserTodoList = async (userId: string): Promise<any> => {
 
 // Update todo list of a user by ID
 export const updateUserTodoList = async (userId: string, todoList: any): Promise<void> => {
-  const user = await getUsers();
-  const currentUser = user.find(u => u.id === userId);
+  const users = await getUsers();
+  const currentUser = users.find(u => u.id === userId);
   if (!currentUser) throw new Error('User not found');
 
-  currentUser.todo_list = JSON.stringify(todoList || {});
+  const updatedUser = {
+    ...currentUser,
+    todo_list: JSON.stringify(todoList || {})
+  };
 
-  const formData = new FormData();
-  formData.append('action', 'update');
-  formData.append('id', currentUser.id);
-  formData.append('todo_list', currentUser.todo_list);
-
-  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+  await updateUser(updatedUser);
 };
