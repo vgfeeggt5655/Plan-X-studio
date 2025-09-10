@@ -1,5 +1,3 @@
-// authService.ts (modified)
-
 import { User } from '../types';
 
 const API_URL = 'https://script.google.com/macros/s/AKfycbxKHbLHjNBhbhXDVuMXWLBjkK1_tbySpc7JoTcwbSjB9HrvZ0oGRaLHhss9eiLPWWlD2w/exec';
@@ -11,7 +9,12 @@ export const getUsers = async (authEmail: string, authPassword: string): Promise
   const data = await response.json();
   if (data.error) throw new Error(data.message);
   const users = data.data || [];
-  return users.map((user: any) => ({ ...user, id: String(user.id) }));
+  return users.map((user: any) => ({ 
+    ...user, 
+    id: String(user.id),
+    watched: user.watched || '{}',
+    todo_list: user.todo_list || '{}'
+  }));
 };
 
 // Login user (returns single user if credentials match)
@@ -20,7 +23,12 @@ export const loginUser = async (email: string, password: string): Promise<User> 
   if (!response.ok) throw new Error('Failed to login');
   const data = await response.json();
   if (data.error) throw new Error(data.message);
-  return { ...data.data, id: String(data.data.id) };
+  return { 
+    ...data.data, 
+    id: String(data.data.id),
+    watched: data.data.watched || '{}',
+    todo_list: data.data.todo_list || '{}'
+  };
 };
 
 // Create user
@@ -32,9 +40,11 @@ export const createUser = async (user: Omit<User, 'id'>): Promise<void> => {
   formData.append('password', user.password);
   formData.append('role', user.role);
   formData.append('watched', user.watched || '{}');
+  formData.append('todo_list', user.todo_list || '{}');
   if (user.avatar) formData.append('avatar', user.avatar);
 
-  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+  const response = await fetch(API_URL, { method: 'POST', body: formData });
+  if (!response.ok) throw new Error('Failed to create user');
 };
 
 // Update user (requires auth credentials; can be self or super_admin)
@@ -52,7 +62,8 @@ export const updateUser = async (user: User, authEmail: string, authPassword: st
   formData.append('auth_email', authEmail);
   formData.append('auth_password', authPassword);
 
-  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+  const response = await fetch(API_URL, { method: 'POST', body: formData });
+  if (!response.ok) throw new Error('Failed to update user');
 };
 
 // Delete user (requires super_admin auth)
@@ -63,7 +74,8 @@ export const deleteUser = async (id: string, authEmail: string, authPassword: st
   formData.append('auth_email', authEmail);
   formData.append('auth_password', authPassword);
 
-  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+  const response = await fetch(API_URL, { method: 'POST', body: formData });
+  if (!response.ok) throw new Error('Failed to delete user');
 };
 
 /* ================== Todo List Methods ================== */
@@ -90,11 +102,12 @@ export const getUserTodoList = async (userId: string, authEmail: string, authPas
 // Update todo list of a user by ID (requires auth; self or super_admin)
 export const updateUserTodoList = async (userId: string, todoList: any, authEmail: string, authPassword: string): Promise<void> => {
   const formData = new FormData();
-  formData.append('action', 'update');
+  formData.append('action', 'update_todo');
   formData.append('id', userId);
   formData.append('todo_list', JSON.stringify(todoList || {}));
   formData.append('auth_email', authEmail);
   formData.append('auth_password', authPassword);
 
-  await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+  const response = await fetch(API_URL, { method: 'POST', body: formData });
+  if (!response.ok) throw new Error('Failed to update todo list');
 };
