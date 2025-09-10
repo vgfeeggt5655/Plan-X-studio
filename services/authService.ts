@@ -1,6 +1,6 @@
 import { User } from '../types';
 
-const API_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiZITv_dfVFmsg1C5vZuLsQfRf0IR_2TnpHfyVRCore30JfoJrLMEw9XPJ6KqvmCwup-r6deJee_4rqgHdjSxe0GT_PC-A0x50GPzuCgeZf71J0ycGvyLjoji-cArIWPfDxGCAmzqrdSgBSrltSHdPOHk2X8sd7yJWUroYbOMrlmgMEgQ4YKsBLI5FcX0ZLbTEn4fr-Kf9M0KHmgbw9AarTjmiJnRCq0BYc7FuTrvNd6dHD8s8bCcCxy6Fan__4vfn0TDtJ69JejO0AoKAoR_yBruKQCIeLD1mvF3Lf&lib=M24lsWwQYScMCD2j0EMXogFufLKpFpfAi';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyU2cjwhB2YnMTXPmtf2QqqGngNeGJKnrqOYP8T8DH0nAra4ZmJ6oezDfEl6koaU02F2g/exec';
 
 // Get all users
 export const getUsers = async (): Promise<User[]> => {
