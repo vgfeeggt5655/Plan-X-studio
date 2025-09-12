@@ -1,35 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
-const StudyPrayerDialog: React.FC = () => {
-  const [open, setOpen] = useState(true);
+interface StudyPrayerDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
-  useEffect(() => {
-    // يظهر مرة واحدة في الجلسة
-    if (sessionStorage.getItem("studyPrayerShown")) {
-      setOpen(false);
-    } else {
-      setOpen(true);
-      sessionStorage.setItem("studyPrayerShown", "true");
-    }
-  }, []);
-
-  if (!open) return null;
+const StudyPrayerDialog: React.FC<StudyPrayerDialogProps> = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
-      <div className="bg-white rounded-2xl p-6 max-w-md text-center shadow-lg">
-        <h2 className="text-xl font-bold mb-4">📖 دعاء المذاكرة</h2>
-        <p className="mb-3">
-          "اللهم إني أسألك فهم النبيين، وحفظ المرسلين، وإلهام الملائكة
-          المقربين، اللهم اجعل لساني عامرًا بذكرك، وقلبي بخشيتك، وسري
-          بطاعتك، إنك على كل شيء قدير، وحسبي الله ونعم الوكيل."
-        </p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-2xl max-w-lg w-full p-8 animate-fade-in-up border border-cyan-500/30 relative">
         <button
-          onClick={() => setOpen(false)}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-300 hover:text-white transition"
         >
-          ابدأ المذاكرة
+          ✕
         </button>
+        <h2 className="text-2xl font-bold text-center text-cyan-400 mb-6">
+          دعاء بداية المذاكرة 📖
+        </h2>
+        <p className="text-lg leading-relaxed text-center text-gray-200">
+          "اللهم إني أسألك فهم النبيين، وحفظ المرسلين، وإلهام الملائكة المقربين،
+          اللهم اجعل ألسنتنا عامرة بذكرك، وقلوبنا بخشيتك، وأسرارنا بطاعتك،
+          إنك على كل شيء قدير."
+        </p>
+        <div className="mt-8 text-center">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 rounded-full bg-cyan-500 hover:bg-cyan-400 text-white font-semibold shadow-lg transition"
+          >
+            ابدأ المذاكرة 🚀
+          </button>
+        </div>
       </div>
     </div>
   );
