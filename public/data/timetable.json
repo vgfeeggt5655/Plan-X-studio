@@ -17,6 +17,12 @@
     "time": "10:00",
     "location": "Exam Hall"
   },
+  "2025-11-11": {
+    "type": "exam",
+    "title": "finaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaal",
+    "time": "10:00",
+    "location": "Exam Hall"
+  },
   "2025-09-25": {
     "type": "holiday",
     "title": "National Holiday"
