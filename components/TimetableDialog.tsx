@@ -1,62 +1,57 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import React, { useEffect, useState } from "react";
+import { Dialog } from "@/components/ui/dialog";
 
-type Event = {
-  date: string; // "2025-09-15"
+type DayEvent = {
   type: "lecture" | "exam" | "holiday";
   title: string;
+  time?: string;
 };
 
-const sampleEvents: Event[] = [
-  { date: "2025-09-15", type: "lecture", title: "Anatomy Lecture" },
-  { date: "2025-09-20", type: "exam", title: "Physiology Midterm" },
-  { date: "2025-09-25", type: "holiday", title: "National Holiday" },
-  { date: "2025-10-03", type: "lecture", title: "Biochemistry Lecture" },
-];
-
-const months = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
-
-type Props = {
-  open: boolean;
-  onClose: () => void;
-};
-
-const TimetableDialog: React.FC<Props> = ({ open, onClose }) => {
+export default function TimetableDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [timetable, setTimetable] = useState<Record<string, DayEvent>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const eventsByDate: Record<string, Event[]> = sampleEvents.reduce((acc, ev) => {
-    if (!acc[ev.date]) acc[ev.date] = [];
-    acc[ev.date].push(ev);
-    return acc;
-  }, {} as Record<string, Event[]>);
+  // 🟢 تحميل الـ JSON من public
+  useEffect(() => {
+    fetch("/data/timetable.json")
+      .then((res) => res.json())
+      .then((data) => setTimetable(data))
+      .catch((err) => console.error("Error loading timetable:", err));
+  }, []);
 
-  const renderMonth = (monthIndex: number) => {
+  const months = Array.from({ length: 12 }, (_, i) =>
+    new Date(2025, i).toLocaleString("en-US", { month: "long" })
+  );
+
+  const getEvent = (date: string): DayEvent | null => {
+    return timetable[date] || null;
+  };
+
+  const renderCalendar = (monthIndex: number) => {
     const year = 2025;
-    const firstDay = new Date(year, monthIndex, 1).getDay();
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const firstDay = new Date(year, monthIndex, 1).getDay();
 
-    const cells: JSX.Element[] = [];
+    const days: JSX.Element[] = [];
+
     for (let i = 0; i < firstDay; i++) {
-      cells.push(<div key={`empty-${i}`} className="p-2" />);
+      days.push(<div key={`empty-${i}`} className="p-2" />);
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const dayEvents = eventsByDate[dateKey] || [];
-      const bgColor =
-        dayEvents.find(e => e.type === "exam") ? "bg-red-500 text-white" :
-        dayEvents.find(e => e.type === "holiday") ? "bg-green-500 text-white" :
-        dayEvents.find(e => e.type === "lecture") ? "bg-blue-500 text-white" :
-        "bg-gray-100";
+      const dateStr = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const event = getEvent(dateStr);
 
-      cells.push(
+      let bgColor = "bg-white";
+      if (event?.type === "lecture") bgColor = "bg-blue-100";
+      if (event?.type === "exam") bgColor = "bg-red-200";
+      if (event?.type === "holiday") bgColor = "bg-green-200";
+
+      days.push(
         <button
           key={day}
-          className={`p-2 rounded-md hover:scale-105 transition ${bgColor}`}
-          onClick={() => setSelectedDate(dateKey)}
+          onClick={() => setSelectedDate(dateStr)}
+          className={`p-2 rounded-lg border hover:scale-105 transition-all ${bgColor}`}
         >
           {day}
         </button>
@@ -65,50 +60,30 @@ const TimetableDialog: React.FC<Props> = ({ open, onClose }) => {
 
     return (
       <div key={monthIndex} className="mb-8">
-        <h3 className="text-lg font-semibold mb-2">{months[monthIndex]} {year}</h3>
-        <div className="grid grid-cols-7 gap-2">
-          <div className="text-center font-bold">Sun</div>
-          <div className="text-center font-bold">Mon</div>
-          <div className="text-center font-bold">Tue</div>
-          <div className="text-center font-bold">Wed</div>
-          <div className="text-center font-bold">Thu</div>
-          <div className="text-center font-bold">Fri</div>
-          <div className="text-center font-bold">Sat</div>
-          {cells}
-        </div>
+        <h2 className="text-lg font-bold mb-2">{months[monthIndex]}</h2>
+        <div className="grid grid-cols-7 gap-2">{days}</div>
       </div>
     );
   };
 
+  const selectedEvent = selectedDate ? getEvent(selectedDate) : null;
+
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogHeader>
-        <DialogTitle>📅 Academic Timetable</DialogTitle>
-      </DialogHeader>
-      <DialogContent>
-        <div className="max-h-[70vh] overflow-y-auto p-2">
-          {months.map((_, i) => renderMonth(i))}
-        </div>
+      <h1 className="text-2xl font-bold mb-4">📅 Academic Timetable</h1>
+      <div className="h-[60vh] overflow-y-auto pr-2">
+        {months.map((_, i) => renderCalendar(i))}
+      </div>
 
-        {selectedDate && (
-          <div className="mt-4 p-3 border rounded-lg bg-gray-50">
-            <h4 className="font-bold">Events on {selectedDate}</h4>
-            {eventsByDate[selectedDate] ? (
-              <ul className="list-disc list-inside">
-                {eventsByDate[selectedDate].map((ev, idx) => (
-                  <li key={idx} className="capitalize">
-                    {ev.type}: {ev.title}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No events</p>
-            )}
-          </div>
-        )}
-      </DialogContent>
+      {selectedEvent && (
+        <div className="mt-4 p-4 bg-gray-100 rounded-xl">
+          <h2 className="font-bold">Details for {selectedDate}</h2>
+          <p>
+            <span className="font-semibold">{selectedEvent.type.toUpperCase()}:</span>{" "}
+            {selectedEvent.title} {selectedEvent.time && `- ${selectedEvent.time}`}
+          </p>
+        </div>
+      )}
     </Dialog>
   );
-};
-
-export default TimetableDialog;
+}
