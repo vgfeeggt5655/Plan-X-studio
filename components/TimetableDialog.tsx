@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin } from "lucide-react";
+import React, { useEffect, useState } from "react";
 
 type DayEvent = {
   type: "lecture" | "practical" | "exam" | "holiday";
@@ -20,25 +19,23 @@ export default function TimetableDialog({
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear] = useState(2025);
   const today = new Date();
-  
-  // 🟢 تحميل JSON من الملف
+
+  // 🟢 تحميل JSON من public/data/timetable.json
   useEffect(() => {
     if (open) {
       fetch("/data/timetable.json")
         .then((res) => {
-          if (!res.ok) throw new Error('Network response was not ok');
+          if (!res.ok) throw new Error("Network response was not ok");
           return res.json();
         })
         .then((data) => {
           setTimetable(data);
-          // البحث عن أول حدث اليوم أو قريب من اليوم
-          const todayStr = today.toISOString().split('T')[0];
+          const todayStr = today.toISOString().split("T")[0];
           if (data[todayStr]) {
             setSelectedDate(todayStr);
           } else {
-            // البحث عن أقرب حدث
             const dates = Object.keys(data).sort();
-            const futureDate = dates.find(date => date >= todayStr);
+            const futureDate = dates.find((date) => date >= todayStr);
             if (futureDate) {
               setSelectedDate(futureDate);
               const eventDate = new Date(futureDate);
@@ -46,15 +43,33 @@ export default function TimetableDialog({
             }
           }
         })
-        .catch((err) => {
-          console.error("Error loading timetable:", err);
-          // استخدام بيانات تجريبية في حالة فشل التحميل
+        .catch(() => {
           const fallbackData = {
-            "2025-09-15": { type: "lecture", title: "Introduction to Biology", time: "09:00", location: "Hall A" },
-            "2025-09-16": { type: "practical", title: "Chemistry Lab", time: "14:00", location: "Lab 201" },
-            "2025-09-20": { type: "exam", title: "Midterm Exam - Chemistry", time: "10:00", location: "Exam Hall" },
+            "2025-09-15": {
+              type: "lecture",
+              title: "Introduction to Biology",
+              time: "09:00",
+              location: "Hall A",
+            },
+            "2025-09-16": {
+              type: "practical",
+              title: "Chemistry Lab",
+              time: "14:00",
+              location: "Lab 201",
+            },
+            "2025-09-20": {
+              type: "exam",
+              title: "Midterm Exam - Chemistry",
+              time: "10:00",
+              location: "Exam Hall",
+            },
             "2025-09-25": { type: "holiday", title: "National Holiday" },
-            "2025-10-05": { type: "lecture", title: "Advanced Mathematics", time: "10:30", location: "Room 305" },
+            "2025-10-05": {
+              type: "lecture",
+              title: "Advanced Mathematics",
+              time: "10:30",
+              location: "Room 305",
+            },
           };
           setTimetable(fallbackData);
         });
@@ -77,7 +92,7 @@ export default function TimetableDialog({
           text: "text-blue-300",
           accent: "border-l-4 border-blue-400",
           dot: "bg-blue-400",
-          icon: "📚"
+          icon: "📚",
         };
       case "practical":
         return {
@@ -85,7 +100,7 @@ export default function TimetableDialog({
           text: "text-purple-300",
           accent: "border-l-4 border-purple-400",
           dot: "bg-purple-400",
-          icon: "🔬"
+          icon: "🔬",
         };
       case "exam":
         return {
@@ -93,7 +108,7 @@ export default function TimetableDialog({
           text: "text-red-300",
           accent: "border-l-4 border-red-400",
           dot: "bg-red-400",
-          icon: "📝"
+          icon: "📝",
         };
       case "holiday":
         return {
@@ -101,7 +116,7 @@ export default function TimetableDialog({
           text: "text-green-300",
           accent: "border-l-4 border-green-400",
           dot: "bg-green-400",
-          icon: "🎉"
+          icon: "🎉",
         };
       default:
         return {
@@ -109,19 +124,19 @@ export default function TimetableDialog({
           text: "text-slate-300",
           accent: "",
           dot: "bg-slate-400",
-          icon: ""
+          icon: "",
         };
     }
   };
 
   const getTodaysEvents = () => {
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split("T")[0];
     const todayEvent = timetable[todayStr];
     return todayEvent ? [{ date: todayStr, ...todayEvent }] : [];
   };
 
   const getUpcomingEvents = () => {
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split("T")[0];
     return Object.entries(timetable)
       .filter(([date]) => date >= todayStr)
       .slice(0, 5)
@@ -141,7 +156,10 @@ export default function TimetableDialog({
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dateStr = `${year}-${String(monthIndex + 1).padStart(
+        2,
+        "0"
+      )}-${String(day).padStart(2, "0")}`;
       const event = getEvent(dateStr);
       const style = event ? getEventStyle(event.type) : getEventStyle("default");
 
@@ -166,7 +184,9 @@ export default function TimetableDialog({
           <span className="relative z-10 font-bold">{day}</span>
           {event && (
             <>
-              <div className={`w-1.5 h-1.5 rounded-full ${style.dot} mt-1 opacity-80 group-hover:opacity-100`} />
+              <div
+                className={`w-1.5 h-1.5 rounded-full ${style.dot} mt-1 opacity-80 group-hover:opacity-100`}
+              />
               <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-6 bg-slate-800 px-2 py-1 rounded text-white whitespace-nowrap z-20">
                 {event.title}
               </span>
@@ -178,24 +198,22 @@ export default function TimetableDialog({
 
     return (
       <div className="bg-slate-800/60 backdrop-blur-sm rounded-3xl border border-slate-700/50 overflow-hidden">
-        {/* Calendar Header */}
         <div className="bg-gradient-to-r from-slate-700 to-slate-800 p-4">
           <h2 className="text-2xl font-bold text-white text-center">
             {months[monthIndex]} {year}
           </h2>
         </div>
-        
         <div className="p-6">
-          {/* Day headers */}
           <div className="grid grid-cols-7 gap-2 mb-4">
             {dayNames.map((dayName, idx) => (
-              <div key={idx} className="text-center text-sm font-bold text-slate-400 py-2">
+              <div
+                key={idx}
+                className="text-center text-sm font-bold text-slate-400 py-2"
+              >
                 {dayName}
               </div>
             ))}
           </div>
-          
-          {/* Calendar days */}
           <div className="grid grid-cols-7 gap-2">{days}</div>
         </div>
       </div>
@@ -211,7 +229,6 @@ export default function TimetableDialog({
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900/95 to-black/95 backdrop-blur-lg flex items-center justify-center z-50 p-4">
       <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden border border-slate-700/50">
-        
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 p-6 border-b border-slate-600/50">
           <div className="flex items-center justify-between">
@@ -225,9 +242,7 @@ export default function TimetableDialog({
               onClick={onClose}
               className="text-slate-400 hover:text-white transition-all duration-200 p-3 rounded-full hover:bg-slate-700/50 hover:scale-110"
             >
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ✖
             </button>
           </div>
         </div>
@@ -255,174 +270,98 @@ export default function TimetableDialog({
         </div>
 
         <div className="flex h-[calc(95vh-200px)]">
-          {/* Left Sidebar - Today's Events */}
+          {/* Sidebar Today */}
           <div className="w-80 bg-slate-800/50 border-r border-slate-700/50 p-6 overflow-y-auto">
-            <div className="space-y-6">
-              {/* Today's Events */}
-              <div>
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-cyan-400" />
-                  Today's Schedule
-                </h3>
-                {todaysEvents.length > 0 ? (
-                  <div className="space-y-3">
-                    {todaysEvents.map((event, idx) => {
-                      const style = getEventStyle(event.type);
-                      return (
-                        <div key={idx} className={`p-4 rounded-xl border ${style.bg} ${style.accent} ${style.text} border-slate-600/30`}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">{style.icon}</span>
-                            <span className="font-semibold text-sm uppercase tracking-wider opacity-80">
-                              {event.type}
-                            </span>
-                          </div>
-                          <h4 className="font-bold text-white mb-1">{event.title}</h4>
-                          {event.time && (
-                            <div className="flex items-center gap-2 text-sm opacity-80">
-                              <Clock className="w-4 h-4" />
-                              {event.time}
-                            </div>
-                          )}
-                          {event.location && (
-                            <div className="flex items-center gap-2 text-sm opacity-80 mt-1">
-                              <MapPin className="w-4 h-4" />
-                              {event.location}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              📅 Today's Schedule
+            </h3>
+            {todaysEvents.length > 0 ? (
+              todaysEvents.map((event, idx) => {
+                const style = getEventStyle(event.type);
+                return (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-xl border ${style.bg} ${style.accent} ${style.text}`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{style.icon}</span>
+                      <span className="font-semibold text-sm uppercase tracking-wider opacity-80">
+                        {event.type}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-white mb-1">{event.title}</h4>
+                    {event.time && (
+                      <div className="flex items-center gap-2 text-sm opacity-80">
+                        ⏰ {event.time}
+                      </div>
+                    )}
+                    {event.location && (
+                      <div className="flex items-center gap-2 text-sm opacity-80">
+                        📍 {event.location}
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-slate-400 text-center py-8 bg-slate-800/30 rounded-xl border border-slate-700/30">
-                    No events for today ✨
-                  </p>
-                )}
-              </div>
-
-              {/* Upcoming Events */}
-              <div>
-                <h3 className="text-lg font-bold text-white mb-4">Upcoming Events</h3>
-                <div className="space-y-2">
-                  {upcomingEvents.slice(0, 4).map((event, idx) => {
-                    const style = getEventStyle(event.type);
-                    const eventDate = new Date(event.date);
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setSelectedDate(event.date);
-                          setCurrentMonth(eventDate.getMonth());
-                        }}
-                        className={`w-full p-3 rounded-lg text-left transition-all hover:scale-105 border border-slate-700/30 ${style.bg}`}
-                      >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm">{style.icon}</span>
-                          <span className={`text-xs ${style.text} opacity-80`}>
-                            {eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
-                        </div>
-                        <p className="text-white text-sm font-medium truncate">{event.title}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+                );
+              })
+            ) : (
+              <p className="text-slate-400 text-center py-8 bg-slate-800/30 rounded-xl">
+                No events for today ✨
+              </p>
+            )}
           </div>
 
           {/* Main Calendar */}
           <div className="flex-1 flex flex-col">
-            {/* Month Navigation */}
             <div className="flex items-center justify-between p-6 bg-slate-800/30 border-b border-slate-700/50">
               <button
-                onClick={() => setCurrentMonth(prev => prev === 0 ? 11 : prev - 1)}
-                className="p-3 rounded-full bg-slate-700/50 hover:bg-slate-600/50 text-white transition-all hover:scale-110"
+                onClick={() =>
+                  setCurrentMonth((prev) => (prev === 0 ? 11 : prev - 1))
+                }
+                className="p-3 rounded-full bg-slate-700/50 hover:bg-slate-600/50 text-white"
               >
-                <ChevronLeft className="w-6 h-6" />
+                ◀
               </button>
-              
               <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
                 {months[currentMonth]} {currentYear}
               </h2>
-              
               <button
-                onClick={() => setCurrentMonth(prev => prev === 11 ? 0 : prev + 1)}
-                className="p-3 rounded-full bg-slate-700/50 hover:bg-slate-600/50 text-white transition-all hover:scale-110"
+                onClick={() =>
+                  setCurrentMonth((prev) => (prev === 11 ? 0 : prev + 1))
+                }
+                className="p-3 rounded-full bg-slate-700/50 hover:bg-slate-600/50 text-white"
               >
-                <ChevronRight className="w-6 h-6" />
+                ▶
               </button>
             </div>
-
-            {/* Calendar Content */}
             <div className="flex-1 p-6 overflow-y-auto">
               {renderCalendar(currentMonth)}
             </div>
           </div>
 
-          {/* Right Sidebar - Event Details */}
+          {/* Event Details */}
           {selectedEvent && (
             <div className="w-80 bg-slate-800/50 border-l border-slate-700/50 p-6">
-              <div className="bg-gradient-to-br from-slate-700/60 to-slate-800/60 rounded-2xl p-6 border border-slate-600/40">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-cyan-400" />
-                  Event Details
-                </h3>
-                
-                <div className="space-y-4">
-                  {/* Date */}
-                  <div className="flex items-center gap-3 p-3 bg-slate-800/40 rounded-lg">
-                    <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
-                    <span className="text-slate-300 text-sm">
-                      {new Date(selectedDate!).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </span>
+              <h3 className="text-xl font-bold text-white mb-6">📌 Event Details</h3>
+              <div className="p-4 rounded-xl bg-slate-800/40">
+                <p className="text-slate-300 mb-2">
+                  {new Date(selectedDate!).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+                <div>
+                  <span className="text-2xl">{getEventStyle(selectedEvent.type).icon}</span>
+                  <div className="text-white font-bold text-lg">
+                    {selectedEvent.title}
                   </div>
-                  
-                  {/* Event Info */}
-                  <div className="space-y-3">
-                    {(() => {
-                      const style = getEventStyle(selectedEvent.type);
-                      return (
-                        <div className={`p-4 rounded-xl border ${style.bg} ${style.accent} border-slate-600/30`}>
-                          <div className="flex items-center gap-3 mb-3">
-                            <span className="text-2xl">{style.icon}</span>
-                            <div>
-                              <div className={`text-xs uppercase tracking-wider font-semibold mb-1 ${style.text}`}>
-                                {selectedEvent.type}
-                              </div>
-                              <div className="text-white font-bold text-lg">
-                                {selectedEvent.title}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {selectedEvent.time && (
-                            <div className="flex items-center gap-2 text-slate-300 mb-2">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span>{selectedEvent.time}</span>
-                            </div>
-                          )}
-                          
-                          {selectedEvent.location && (
-                            <div className="flex items-center gap-2 text-slate-300">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                              </svg>
-                              <span>{selectedEvent.location}</span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
+                  {selectedEvent.time && (
+                    <p className="text-slate-300">⏰ {selectedEvent.time}</p>
+                  )}
+                  {selectedEvent.location && (
+                    <p className="text-slate-300">📍 {selectedEvent.location}</p>
+                  )}
                 </div>
               </div>
             </div>
