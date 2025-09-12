@@ -1,18 +1,8 @@
 {
-  "2025-09-14": [
-    { "time": "09:00", "title": "محاضرة تشريح", "type": "lecture" },
-    { "time": "12:00", "title": "محاضرة فسيولوجي", "type": "lecture" }
-  ],
-  "2025-09-16": [
-    { "time": "11:00", "title": "محاضرة باثولوجي", "type": "lecture" }
-  ],
-  "2025-09-20": [
-    { "time": "10:00", "title": "امتحان كويز فسيولوجي", "type": "exam" }
-  ],
-  "2025-09-25": [
-    { "title": "إجازة رسمية", "type": "holiday" }
-  ],
-  "2025-09-28": [
-    { "time": "09:00", "title": "امتحان نصف الترم تشريح", "type": "exam" }
-  ]
+  "2025-09-15": { "type": "lecture", "title": "Anatomy Lecture", "time": "10:00 AM" },
+  "2025-09-20": { "type": "exam", "title": "Physiology Exam", "time": "9:00 AM" },
+  "2025-09-25": { "type": "holiday", "title": "National Holiday" },
+  "2025-10-02": { "type": "lecture", "title": "Biochemistry Lecture", "time": "11:00 AM" },
+  "2025-10-18": { "type": "exam", "title": "Pathology Exam", "time": "8:30 AM" },
+  "2025-11-05": { "type": "holiday", "title": "Midterm Break" }
 }
