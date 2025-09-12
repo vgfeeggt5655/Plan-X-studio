@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getResources, deleteResource } from '../services/googleSheetService';
 import { getSubjects } from '../services/subjectService';
 import { Resource, Subject } from '../types';
@@ -54,7 +53,6 @@ const HomePage: React.FC = () => {
   const [showPrayer, setShowPrayer] = useState(false);
 
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const fetchInitialData = useCallback(async () => {
     try {
@@ -80,6 +78,7 @@ const HomePage: React.FC = () => {
     const randomIndex = Math.floor(Math.random() * encouragingMessages.length);
     setHeroMessage(encouragingMessages[randomIndex]);
 
+    // show prayer once per session (will not re-open when navigating back)
     if (!sessionStorage.getItem("studyPrayerShown")) {
       setShowPrayer(true);
       sessionStorage.setItem("studyPrayerShown", "true");
@@ -91,8 +90,8 @@ const HomePage: React.FC = () => {
     return resources
       .filter(r => {
         if (searchWords.length === 0) return true;
-        const title = r.title.toLowerCase();
-        const subject = r.Subject_Name.toLowerCase();
+        const title = (r.title || '').toLowerCase();
+        const subject = (r.Subject_Name || '').toLowerCase();
         return searchWords.every(word =>
           title.includes(word) || subject.includes(word)
         );
@@ -124,9 +123,7 @@ const HomePage: React.FC = () => {
   const groupedResources = useMemo(() => {
     return filteredResources.reduce((acc, resource) => {
       const subject = resource.Subject_Name || 'Uncategorized';
-      if (!acc[subject]) {
-        acc[subject] = [];
-      }
+      if (!acc[subject]) acc[subject] = [];
       acc[subject].push(resource);
       return acc;
     }, {} as Record<string, Resource[]>);
@@ -143,7 +140,6 @@ const HomePage: React.FC = () => {
 
   const handleConfirmDelete = async () => {
     if (!dialogState.resourceId) return;
-
     try {
       await deleteResource(dialogState.resourceId);
       setResources(prev => prev.filter(r => r.id !== dialogState.resourceId));
@@ -157,13 +153,8 @@ const HomePage: React.FC = () => {
 
   const targetedResource = resources.find(r => r.id === dialogState.resourceId);
 
-  if (loading) {
-    return <div className="pt-24"><Spinner /></div>;
-  }
-
-  if (error) {
-    return <div className="pt-24 text-center text-red-500 text-xl">{error}</div>;
-  }
+  if (loading) return <div className="pt-24"><Spinner /></div>;
+  if (error) return <div className="pt-24 text-center text-red-500 text-xl">{error}</div>;
 
   return (
     <div className="space-y-12 pb-12">
@@ -176,6 +167,7 @@ const HomePage: React.FC = () => {
           <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             {heroMessage}
           </p>
+
           <div className="max-w-2xl mx-auto bg-surface p-2 rounded-full shadow-lg flex items-center gap-1 sm:gap-2 animate-fade-in-up border border-border-color" style={{ animationDelay: '0.2s' }}>
             <SearchIcon className="ml-4 h-5 w-5 sm:h-6 sm:w-6 text-gray-400 flex-shrink-0" />
             <input
@@ -232,7 +224,7 @@ const HomePage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-text-primary mb-4">{subject.Subject_Name}</h2>
                 <div className="relative">
                   <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-thin overscroll-x-contain">
-                    {groupedResources[subject.Subject_Name].map((resource, index) => (
+                    {(groupedResources[subject.Subject_Name] || []).map((resource, index) => (
                       <div key={resource.id} className="flex-shrink-0 w-72 sm:w-80">
                         <ResourceCard
                           resource={resource}
