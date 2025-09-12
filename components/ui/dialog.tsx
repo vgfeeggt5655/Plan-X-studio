@@ -27,3 +27,11 @@ export function Dialog({ open, onClose, children }: DialogProps) {
 export function DialogContent({ children }: { children: React.ReactNode }) {
   return <div className="mt-4">{children}</div>;
 }
+
+export function DialogHeader({ children }: { children: React.ReactNode }) {
+  return <div className="mb-4">{children}</div>;
+}
+
+export function DialogTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="text-xl font-bold">{children}</h2>;
+}
