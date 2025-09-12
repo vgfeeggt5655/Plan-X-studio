@@ -9,6 +9,7 @@ import WatchPage from './pages/WatchPage';
 import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
+import StudyPrayerDialog from './components/StudyPrayerDialog'; // ✅ الاستدعاء الجديد
 
 const ProtectedLayout: React.FC = () => (
   <div className="min-h-screen flex flex-col">
@@ -26,8 +27,6 @@ const App: React.FC = () => {
     };
 
     const handleDragStart = (event: DragEvent) => {
-      // Prevent dragging of images, links, and videos, which can reveal source URLs
-      // when dropped into a new tab or window.
       if (
         event.target instanceof HTMLImageElement ||
         event.target instanceof HTMLAnchorElement ||
@@ -49,6 +48,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <HashRouter>
+        <StudyPrayerDialog /> {/* ✅ الديالوج الجديد */}
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
