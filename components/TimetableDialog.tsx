@@ -1,110 +1,111 @@
-import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
-type Task = {
-  time?: string;
-  title: string;
+type Event = {
+  date: string; // "2025-09-15"
   type: "lecture" | "exam" | "holiday";
+  title: string;
 };
 
-type Timetable = {
-  [date: string]: Task[];
-};
+const sampleEvents: Event[] = [
+  { date: "2025-09-15", type: "lecture", title: "Anatomy Lecture" },
+  { date: "2025-09-20", type: "exam", title: "Physiology Midterm" },
+  { date: "2025-09-25", type: "holiday", title: "National Holiday" },
+  { date: "2025-10-03", type: "lecture", title: "Biochemistry Lecture" },
+];
 
-interface TimetableDialogProps {
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
+type Props = {
   open: boolean;
   onClose: () => void;
-  timetable: Timetable;
-}
+};
 
-const TimetableDialog: React.FC<TimetableDialogProps> = ({ open, onClose, timetable }) => {
-  const [todayTasks, setTodayTasks] = useState<Task[]>([]);
-  const today = new Date().toISOString().split("T")[0];
+const TimetableDialog: React.FC<Props> = ({ open, onClose }) => {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (timetable[today]) {
-      setTodayTasks(timetable[today]);
-    } else {
-      setTodayTasks([]);
+  const eventsByDate: Record<string, Event[]> = sampleEvents.reduce((acc, ev) => {
+    if (!acc[ev.date]) acc[ev.date] = [];
+    acc[ev.date].push(ev);
+    return acc;
+  }, {} as Record<string, Event[]>);
+
+  const renderMonth = (monthIndex: number) => {
+    const year = 2025;
+    const firstDay = new Date(year, monthIndex, 1).getDay();
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+    const cells: JSX.Element[] = [];
+    for (let i = 0; i < firstDay; i++) {
+      cells.push(<div key={`empty-${i}`} className="p-2" />);
     }
-  }, [timetable, today]);
 
-  const getDayColor = (type: string) => {
-    switch (type) {
-      case "exam":
-        return "bg-red-500 text-white";
-      case "holiday":
-        return "bg-green-500 text-white";
-      default:
-        return "bg-blue-500 text-white";
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayEvents = eventsByDate[dateKey] || [];
+      const bgColor =
+        dayEvents.find(e => e.type === "exam") ? "bg-red-500 text-white" :
+        dayEvents.find(e => e.type === "holiday") ? "bg-green-500 text-white" :
+        dayEvents.find(e => e.type === "lecture") ? "bg-blue-500 text-white" :
+        "bg-gray-100";
+
+      cells.push(
+        <button
+          key={day}
+          className={`p-2 rounded-md hover:scale-105 transition ${bgColor}`}
+          onClick={() => setSelectedDate(dateKey)}
+        >
+          {day}
+        </button>
+      );
     }
+
+    return (
+      <div key={monthIndex} className="mb-8">
+        <h3 className="text-lg font-semibold mb-2">{months[monthIndex]} {year}</h3>
+        <div className="grid grid-cols-7 gap-2">
+          <div className="text-center font-bold">Sun</div>
+          <div className="text-center font-bold">Mon</div>
+          <div className="text-center font-bold">Tue</div>
+          <div className="text-center font-bold">Wed</div>
+          <div className="text-center font-bold">Thu</div>
+          <div className="text-center font-bold">Fri</div>
+          <div className="text-center font-bold">Sat</div>
+          {cells}
+        </div>
+      </div>
+    );
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl p-6 bg-gradient-to-b from-indigo-700 to-purple-800 text-white rounded-2xl shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center mb-4">
-            📅 جدول الترم الدراسي
-          </DialogTitle>
-        </DialogHeader>
+    <Dialog open={open} onClose={onClose}>
+      <DialogHeader>
+        <DialogTitle>📅 Academic Timetable</DialogTitle>
+      </DialogHeader>
+      <DialogContent>
+        <div className="max-h-[70vh] overflow-y-auto p-2">
+          {months.map((_, i) => renderMonth(i))}
+        </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          {/* التقويم */}
-          <div className="bg-white rounded-xl text-black p-4 shadow">
-            <div className="text-center font-bold text-lg mb-2">
-              {new Date().toLocaleString("ar-EG", { month: "long", year: "numeric" })}
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-sm font-semibold">
-              {["أح", "إث", "ثل", "أر", "خم", "جم", "سب"].map((d) => (
-                <div key={d} className="p-1">
-                  {d}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center mt-2">
-              {Array.from({ length: 30 }, (_, i) => {
-                const day = i + 1;
-                const dateKey = `2025-09-${String(day).padStart(2, "0")}`;
-                const tasks = timetable[dateKey];
-                let color = "";
-                if (tasks) {
-                  if (tasks.some((t) => t.type === "exam")) color = "bg-red-500 text-white";
-                  else if (tasks.some((t) => t.type === "holiday")) color = "bg-green-500 text-white";
-                  else color = "bg-blue-500 text-white";
-                }
-                return (
-                  <div
-                    key={day}
-                    className={`p-2 rounded cursor-pointer ${color}`}
-                  >
-                    {day}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* المهام اليومية */}
-          <div className="bg-white rounded-xl text-black p-4 shadow">
-            <h3 className="text-lg font-bold mb-3">📌 مهام اليوم</h3>
-            {todayTasks.length > 0 ? (
-              <ul className="space-y-2">
-                {todayTasks.map((task, i) => (
-                  <li
-                    key={i}
-                    className={`p-2 rounded ${getDayColor(task.type)}`}
-                  >
-                    {task.time && <span className="mr-2 font-bold">{task.time}</span>}
-                    {task.title}
+        {selectedDate && (
+          <div className="mt-4 p-3 border rounded-lg bg-gray-50">
+            <h4 className="font-bold">Events on {selectedDate}</h4>
+            {eventsByDate[selectedDate] ? (
+              <ul className="list-disc list-inside">
+                {eventsByDate[selectedDate].map((ev, idx) => (
+                  <li key={idx} className="capitalize">
+                    {ev.type}: {ev.title}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500">لا توجد مهام اليوم 🎉</p>
+              <p>No events</p>
             )}
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );
