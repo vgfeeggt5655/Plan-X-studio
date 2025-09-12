@@ -1,8 +1,24 @@
 {
-  "2025-09-15": { "type": "lecture", "title": "Anatomy Lecture", "time": "10:00 AM" },
-  "2025-09-20": { "type": "exam", "title": "Physiology Exam", "time": "9:00 AM" },
-  "2025-09-25": { "type": "holiday", "title": "National Holiday" },
-  "2025-10-02": { "type": "lecture", "title": "Biochemistry Lecture", "time": "11:00 AM" },
-  "2025-10-18": { "type": "exam", "title": "Pathology Exam", "time": "8:30 AM" },
-  "2025-11-05": { "type": "holiday", "title": "Midterm Break" }
+  "2025-09-15": {
+    "type": "lecture",
+    "title": "Introduction to Biology",
+    "time": "09:00",
+    "location": "Hall A"
+  },
+  "2025-09-16": {
+    "type": "practical", 
+    "title": "Chemistry Lab",
+    "time": "14:00",
+    "location": "Lab 201"
+  },
+  "2025-09-20": {
+    "type": "exam",
+    "title": "Midterm Exam",
+    "time": "10:00",
+    "location": "Exam Hall"
+  },
+  "2025-09-25": {
+    "type": "holiday",
+    "title": "National Holiday"
+  }
 }
