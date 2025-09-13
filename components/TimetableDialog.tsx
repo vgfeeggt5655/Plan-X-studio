@@ -18,43 +18,58 @@ export default function TimetableDialog({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [isLoading, setIsLoading] = useState(true);
   const today = new Date();
 
+  // Fetch timetable data from public/data/timetable.json
   useEffect(() => {
     if (open) {
-      // Simulating data fetch - replace with your actual data loading
-      const mockData: Record<string, DayEvent> = {
-        "2025-09-13": {
-          type: "lecture",
-          title: "Introduction to Biology",
-          time: "09:00",
-          location: "Hall A",
-        },
-        "2025-09-15": {
-          type: "practical",
-          title: "Biology Lab",
-          time: "14:00",
-          location: "Lab B",
-        },
-        "2025-09-20": {
-          type: "exam",
-          title: "Biology Midterm",
-          time: "10:30",
-          location: "Hall C",
-        },
-        "2025-09-25": {
-          type: "lecture",
-          title: "Cell Biology",
-          time: "11:00",
-          location: "Hall A",
-        },
-      };
-      
-      setTimetable(mockData);
-      const todayStr = today.toISOString().split("T")[0];
-      if (mockData[todayStr]) {
-        setSelectedDate(todayStr);
-      }
+      setIsLoading(true);
+      fetch("/data/timetable.json")
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to load timetable data");
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setTimetable(data);
+          
+          // Set initial selected date to today if it has an event
+          const todayStr = today.toISOString().split("T")[0];
+          if (data[todayStr]) {
+            setSelectedDate(todayStr);
+          } else {
+            // Find the next event if today has none
+            const dates = Object.keys(data).sort();
+            const futureDate = dates.find((date) => date >= todayStr);
+            if (futureDate) {
+              setSelectedDate(futureDate);
+              const eventDate = new Date(futureDate);
+              setCurrentMonth(eventDate.getMonth());
+              setCurrentYear(eventDate.getFullYear());
+            }
+          }
+        })
+        .catch((err) => {
+          console.error("Error loading timetable data:", err);
+          // Fallback to some mock data if the fetch fails
+          const mockData: Record<string, DayEvent> = {
+            "2025-09-13": {
+              type: "lecture",
+              title: "Introduction to Biology",
+              time: "09:00",
+              location: "Hall A",
+            },
+          };
+          setTimetable(mockData);
+          setSelectedDate("2025-09-13");
+          setCurrentMonth(8); // September
+          setCurrentYear(2025);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   }, [open]);
 
@@ -169,133 +184,140 @@ export default function TimetableDialog({
           </button>
         </div>
 
-        <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
-          {/* Calendar Section */}
-          <div className="flex-1 p-4 overflow-auto">
-            <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={() => {
-                  if (currentMonth === 0) {
-                    setCurrentMonth(11);
-                    setCurrentYear((y) => y - 1);
-                  } else setCurrentMonth((m) => m - 1);
-                }}
-                className="text-slate-300 hover:text-white p-2 rounded hover:bg-slate-700/50"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <span className="text-white font-semibold">
-                {months[currentMonth]} {currentYear}
-              </span>
-              <button
-                onClick={() => {
-                  if (currentMonth === 11) {
-                    setCurrentMonth(0);
-                    setCurrentYear((y) => y + 1);
-                  } else setCurrentMonth((m) => m + 1);
-                }}
-                className="text-slate-300 hover:text-white p-2 rounded hover:bg-slate-700/50"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-            <div className="mb-6">
-              {renderCalendar(currentMonth, currentYear)}
-            </div>
-            
-            {/* Event Legend */}
-            <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-              <h3 className="text-sm font-medium text-slate-300 mb-2">Event Types</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-slate-400">Lecture</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-slate-400">Practical</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-slate-400">Exam</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  <span className="text-xs text-slate-400">Holiday</span>
-                </div>
-              </div>
-            </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center p-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="ml-3 text-slate-300">Loading timetable...</span>
           </div>
-
-          {/* Event Details */}
-          <div className="md:w-96 bg-slate-800 border-t md:border-t-0 md:border-l border-slate-700 p-5">
-            <h2 className="text-lg font-semibold text-white mb-4">Event Details</h2>
-            
-            {selectedEvent ? (
-              <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl">
-                    {getEventStyle(selectedEvent.type).icon}
-                  </span>
-                  <div>
-                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-slate-600/50 text-slate-300">
-                      {getEventStyle(selectedEvent.type).badge}
-                    </span>
-                    <h3 className="text-lg font-semibold text-white mt-1">
-                      {selectedEvent.title}
-                    </h3>
-                  </div>
-                </div>
-                
-                <div className="space-y-3">
+        ) : (
+          <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
+            {/* Calendar Section */}
+            <div className="flex-1 p-4 overflow-auto">
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => {
+                    if (currentMonth === 0) {
+                      setCurrentMonth(11);
+                      setCurrentYear((y) => y - 1);
+                    } else setCurrentMonth((m) => m - 1);
+                  }}
+                  className="text-slate-300 hover:text-white p-2 rounded hover:bg-slate-700/50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span className="text-white font-semibold">
+                  {months[currentMonth]} {currentYear}
+                </span>
+                <button
+                  onClick={() => {
+                    if (currentMonth === 11) {
+                      setCurrentMonth(0);
+                      setCurrentYear((y) => y + 1);
+                    } else setCurrentMonth((m) => m + 1);
+                  }}
+                  className="text-slate-300 hover:text-white p-2 rounded hover:bg-slate-700/50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mb-6">
+                {renderCalendar(currentMonth, currentYear)}
+              </div>
+              
+              {/* Event Legend */}
+              <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
+                <h3 className="text-sm font-medium text-slate-300 mb-2">Event Types</h3>
+                <div className="grid grid-cols-2 gap-2">
                   <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-slate-300 text-sm">
-                      {new Date(selectedDate!).toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                    <span className="text-xs text-slate-400">Lecture</span>
                   </div>
-                  
-                  {selectedEvent.time && (
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-slate-300 text-sm">{selectedEvent.time}</span>
-                    </div>
-                  )}
-                  
-                  {selectedEvent.location && (
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <span className="text-slate-300 text-sm">{selectedEvent.location}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                    <span className="text-xs text-slate-400">Practical</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                    <span className="text-xs text-slate-400">Exam</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span className="text-xs text-slate-400">Holiday</span>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-10 text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p>Select a date to view event details</p>
-              </div>
-            )}
+            </div>
+
+            {/* Event Details */}
+            <div className="md:w-96 bg-slate-800 border-t md:border-t-0 md:border-l border-slate-700 p-5">
+              <h2 className="text-lg font-semibold text-white mb-4">Event Details</h2>
+              
+              {selectedEvent ? (
+                <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-2xl">
+                      {getEventStyle(selectedEvent.type).icon}
+                    </span>
+                    <div>
+                      <span className="text-xs font-medium px-2 py-1 rounded-full bg-slate-600/50 text-slate-300">
+                        {getEventStyle(selectedEvent.type).badge}
+                      </span>
+                      <h3 className="text-lg font-semibold text-white mt-1">
+                        {selectedEvent.title}
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-slate-300 text-sm">
+                        {new Date(selectedDate!).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    
+                    {selectedEvent.time && (
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-slate-300 text-sm">{selectedEvent.time}</span>
+                      </div>
+                    )}
+                    
+                    {selectedEvent.location && (
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="text-slate-300 text-sm">{selectedEvent.location}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10 text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p>Select a date to view event details</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
