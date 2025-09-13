@@ -1,50 +1,50 @@
 {
-  "2025-09-15": {
-    "type": "lecture",
-    "title": "Introduction to Biology",
-    "time": "09:00",
-    "location": "Hall A"
-  },"2025-09-15": {
-    "type": "lecture2",
-    "title": "Introduction to Biology",
-    "time": "09:00",
-    "location": "Hall A"
-  },"2025-09-15": {
-    "type": "lecture3",
-    "title": "Introduction to Biology",
-    "time": "09:00",
-    "location": "Hall A"
-  },"2025-09-15": {
-    "type": "lecture4",
-    "title": "Introduction to Biology",
-    "time": "09:00",
-    "location": "Hall A"
-  },"2025-09-15": {
-    "type": "lecture5",
-    "title": "Introduction to Biology",
-    "time": "09:00",
-    "location": "Hall A"
-  },
-  "2025-09-16": {
-    "type": "practical", 
-    "title": "Chemistry Lab",
-    "time": "14:00",
-    "location": "Lab 201"
-  },
-  "2025-09-20": {
-    "type": "exam",
-    "title": "Midterm Exam",
-    "time": "10:00",
-    "location": "Exam Hall"
-  },
-  "2025-11-11": {
-    "type": "exam",
-    "title": "finaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaal",
-    "time": "10:00",
-    "location": "Exam Hall"
-  },
-  "2025-09-25": {
-    "type": "holiday",
-    "title": "National Holiday"
-  }
+  "2025-09-13": [
+    {
+      "type": "lecture",
+      "title": "مقدمة في الذكاء الاصطناعي",
+      "time": "09:00",
+      "location": "قاعة 101"
+    },
+    {
+      "type": "practical",
+      "title": "برمجة بايثون للمبتدئين",
+      "time": "11:00",
+      "location": "معمل 3A"
+    },
+    {
+      "type": "lecture",
+      "title": "هياكل البيانات",
+      "time": "13:00",
+      "location": "قاعة 205"
+    }
+  ],
+  "2025-09-15": [
+    {
+      "type": "exam",
+      "title": "امتحان رياضيات متقدمة",
+      "time": "10:00",
+      "location": "قاعة الامتحانات الكبرى"
+    }
+  ],
+  "2025-09-16": [
+    {
+      "type": "lecture",
+      "title": "أساسيات الشبكات",
+      "time": "09:00",
+      "location": "قاعة 101"
+    },
+    {
+      "type": "practical",
+      "title": "مقدمة في قواعد البيانات",
+      "time": "11:30",
+      "location": "معمل 4B"
+    }
+  ],
+  "2025-09-18": [
+    {
+      "type": "holiday",
+      "title": "يوم العطلة الرسمي"
+    }
+  ]
 }
