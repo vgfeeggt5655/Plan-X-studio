@@ -177,7 +177,7 @@ export default function TimetableDialog({
       <div className="bg-slate-900 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-slate-700 flex flex-col transform scale-95 md:scale-100 transition-transform duration-300">
         {/* Header */}
         <div className="bg-slate-800 p-4 border-b border-slate-700 flex justify-between items-center animate-slide-down">
-          <h1 className="text-2xl font-extrabold text-white">Academic Timetable</h1>
+          <h1 className="text-2xl font-extrabold text-white">Table</h1>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors duration-300 p-1 rounded-full hover:bg-slate-700"
