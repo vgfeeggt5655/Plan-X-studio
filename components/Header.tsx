@@ -116,7 +116,7 @@ const Header: React.FC = () => {
         onClick={() => setTimetableOpen(true)}
         className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
       >
-        Timetable
+        table
       </button>
 
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
