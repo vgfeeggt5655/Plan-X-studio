@@ -12,10 +12,10 @@
 /* نص مع typing effect */
 .typing-text {
   color: white;
-  font-size: 3rem;
+  font-size: 9rem;
   font-weight: bold;
   letter-spacing: 0.15em;
-  border-right: 3px solid #38bdf8;
+  border-right: 9px solid #38bdf8;
   white-space: nowrap;
   overflow: hidden;
   width: 0;
