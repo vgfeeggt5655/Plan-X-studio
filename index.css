@@ -23,14 +23,14 @@
   animation:
     typing 2s steps(7, end) forwards,
     blink 0.75s step-end infinite;
-  font-size: 1.5rem; /* الأساس للموبايل */
+  font-size: 3rem; /* الأساس للموبايل */
 }
 
 /* تابلت */
 @media (min-width: 768px) {
   .typing-text {
-    font-size: 4rem;
-    border-right-width: 4px;
+    font-size: 5rem;
+    border-right-width: 5px;
   }
 }
 
