@@ -4,13 +4,13 @@
       "title": "Morning Lecture",
       "time": "08:00 AM",
       "location": "Auditorium A",
-      "description": "Introduction to cardiovascular physiology."
+      "type": "lecture"
     },
     {
       "title": "Lab Session",
       "time": "02:00 PM",
       "location": "Lab 3",
-      "description": "Dissection and anatomy practice."
+      "type": "lab"
     }
   ],
   "2025-09-16": [
@@ -18,7 +18,7 @@
       "title": "Seminar",
       "time": "11:00 AM",
       "location": "Conference Room",
-      "description": "Latest updates in medical imaging."
+      "type": "seminar"
     }
   ],
   "2025-09-18": [
@@ -26,31 +26,7 @@
       "title": "Exam",
       "time": "09:00 AM",
       "location": "Main Hall",
-      "description": "Midterm examination covering Units 1–3."
-    }
-  ],
-  "2025-09-19": [
-    {
-      "title": "Exam",
-      "time": "09:00 AM",
-      "location": "Main Hall",
-      "description": "Midterm examination covering Units 1–3."
-    }
-  ],
-  "2025-09-20": [
-    {
-      "title": "Exam",
-      "time": "09:00 AM",
-      "location": "Main Hall",
-      "description": "Midterm examination covering Units 1–3."
-    }
-  ],
-  "2025-09-18": [
-    {
-      "title": "Exam",
-      "time": "09:00 AM",
-      "location": "Main Hall",
-      "description": "Midterm examination covering Units 1–3."
+      "type": "exam"
     }
   ]
 }
