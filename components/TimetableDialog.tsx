@@ -24,6 +24,21 @@ export default function TimetableDialog({
   const [showEventDetails, setShowEventDetails] = useState(false);
   const today = new Date();
 
+  // Prevent body scroll when dialog is open
+  useEffect(() => {
+    if (open) {
+      // Store original overflow
+      const originalOverflow = document.body.style.overflow;
+      // Prevent scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Cleanup function
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [open]);
+
   useEffect(() => {
     if (open) {
       setIsLoading(true);
