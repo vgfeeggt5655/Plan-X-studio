@@ -455,7 +455,7 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
                     return (
 
-                      <div key={task.id} className={`group relative p-5 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02]`} style={{animation:`slideInUp 0.3s ease-out forwards`, animationDelay:`${index*50}ms`}}>
+                      <div key={task.id} className={`group relative p-5 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${isStale ? 'bg-red-900/40 animate-bounce' : ''}`} style={{animation:`slideInUp 0.3s ease-out forwards`, animationDelay:`${index*50}ms`}}>
 
                         <div className="flex items-center gap-4">
 
@@ -478,6 +478,12 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
                             </div>
 
                           </div>
+                          
+                          {isStale && (
+                            <div className="absolute top-1 right-1 px-2 py-1 bg-red-600 rounded-lg text-xs text-white font-bold">
+                              OVERDUE!
+                            </div>
+                          )}
 
                           <button onClick={()=>handleDeleteTask(task.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all duration-200 text-xl hover:scale-110">🗑️</button>
 
