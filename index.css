@@ -2,59 +2,44 @@
 .splash-screen {
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, #0f172a, #1e293b); /* خلفية راقية */
+  background: linear-gradient(135deg, #0f172a, #1e293b);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
 }
 
-/* النص */
-.splash-text {
+/* نص مع typing effect */
+.typing-text {
+  color: white;
   font-size: 3rem;
   font-weight: bold;
-  color: white;
-  letter-spacing: 0.2em;
-  position: relative;
-  animation: fadeZoom 2.5s ease-in-out forwards;
-}
-
-/* الخط المتحرك تحت الكلمة */
-.splash-text .underline {
-  position: absolute;
-  bottom: -10px;
-  left: 0;
-  height: 3px;
+  letter-spacing: 0.15em;
+  border-right: 3px solid #38bdf8;
+  white-space: nowrap;
+  overflow: hidden;
   width: 0;
-  background: #38bdf8; /* أزرق فاتح */
-  animation: underlineGrow 1.5s ease-out forwards;
-  animation-delay: 0.5s;
+  animation:
+    typing 2s steps(7, end) forwards,
+    blink 0.75s step-end infinite;
 }
 
-/* أنيميشن التكبير والاختفاء */
-@keyframes fadeZoom {
-  0% {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  40% {
-    opacity: 1;
-    transform: scale(1.2);
-  }
-  80% {
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-/* أنيميشن الخط */
-@keyframes underlineGrow {
+/* أنيميشن الكتابة */
+@keyframes typing {
   from {
     width: 0;
   }
   to {
-    width: 100%;
+    width: 7ch; /* عدد الحروف */
+  }
+}
+
+/* أنيميشن المؤشر */
+@keyframes blink {
+  from, to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: #38bdf8;
   }
 }
