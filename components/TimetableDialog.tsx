@@ -172,7 +172,7 @@ export default function TimetableDialog({
                 {d}
               </div>
             ))}
-          </div>
+              </div>
           <div className="grid grid-cols-7 gap-0.5 sm:gap-1">{days}</div>
         </div>
       </div>
@@ -220,14 +220,11 @@ export default function TimetableDialog({
         ) : (
           <div className="flex flex-1 overflow-hidden">
             {/* Event Details Section - Left Side */}
-            <div className={`
+            <div className="
               bg-slate-800/80 border-t lg:border-t-0 lg:border-r border-slate-700 flex-shrink-0 transition-all duration-500 ease-in-out order-2 lg:order-1
-              ${showEventDetails && selectedEvents.length > 0 
-                ? 'w-full lg:w-1/3 flex' 
-                : 'w-0 lg:w-1/3 hidden lg:flex overflow-hidden'
-              }
-              flex-col p-4 sm:p-6
-            `}>
+              w-full lg:w-1/3 flex flex-col p-4 sm:p-6
+              {showEventDetails && selectedEvents.length > 0 ? '' : 'hidden lg:flex'}
+            ">
               {/* Mobile: Back button */}
               <div className="flex items-center justify-between mb-4 lg:hidden">
                 <h2 className="text-lg sm:text-xl font-bold text-white">Event Details</h2>
@@ -257,14 +254,12 @@ export default function TimetableDialog({
               {selectedEvents.length > 0 ? (
                 <div className="space-y-4 overflow-y-auto pr-2">
                   {selectedEvents.map((event, index) => (
-                    <div key={index} className="bg-slate-700/50 rounded-xl p-4 border border-slate-600/50 transition-transform hover:scale-[1.03] duration-300 ease-in-out">
-                      <div className="flex items-start gap-4 mb-2">
-                        <span className={`text-4xl sm:text-5xl flex-shrink-0`}>
-                          {getEventStyle(event.type).icon}
-                        </span>
+                    <div key={index} className="bg-slate-700/50 rounded-xl p-4 border border-slate-600/50 transition-transform hover:scale-[1.03] duration-300 ease-in-out shadow-lg hover:shadow-xl">
+                      <div className="flex items-center gap-4 mb-2">
+                        <span className={`text-4xl sm:text-5xl flex-shrink-0 ${getEventStyle(event.type).icon}`} />
                         <div>
                           <h4 className="text-xl font-bold text-white leading-tight">{event.title}</h4>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getEventStyle(event.type).dot.replace('bg-', 'bg-')}/40 text-white`}>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getEventStyle(event.type).dot.replace('bg-', 'bg-')}/40 text-white`}>
                             {getEventStyle(event.type).badge}
                           </span>
                         </div>
@@ -287,14 +282,14 @@ export default function TimetableDialog({
                             <span className="font-light">{event.location}</span>
                           </div>
                         )}
-                    </div>
+                  </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-center py-6 sm:py-10 text-slate-400">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 0 002-2V7a2 0 00-2-2H5a2 0 00-2 2v12a2 0 002 2z" />
                 </svg>
                 <p className="text-sm sm:text-base font-medium">No events on this day</p>
                 <p className="mt-1 text-xs text-slate-500">Select another date from the calendar</p>
@@ -337,27 +332,6 @@ export default function TimetableDialog({
               </div>
               <div className="flex-1">
                 {renderCalendar(currentMonth, currentYear)}
-              </div>
-              <div className={`bg-slate-800/50 p-3 sm:p-4 rounded-lg border border-slate-700/50 shadow-inner mt-3 sm:mt-4 ${showEventDetails && selectedEvents.length > 0 ? 'hidden lg:block' : 'block'}`}>
-                <h3 className="text-sm sm:text-base font-bold text-slate-300 mb-2">Event Types</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center">
-                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-blue-500 rounded-full mr-2"></div>
-                    <span className="text-xs sm:text-sm text-slate-400">Lecture</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-purple-500 rounded-full mr-2"></div>
-                    <span className="text-xs sm:text-sm text-slate-400">Practical</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-red-500 rounded-full mr-2"></div>
-                    <span className="text-xs sm:text-sm text-slate-400">Exam</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full mr-2"></div>
-                    <span className="text-xs sm:text-sm text-slate-400">Holiday</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
