@@ -15,26 +15,27 @@
   font-family: 'Segoe UI', Arial, sans-serif;
   font-size: 5rem;
   font-weight: 900;
-  letter-spacing: 0.1em;
-  border-right: 4px solid #38bdf8;
+  letter-spacing: 0.12em;
+  border-right: 4px solid #ffffff;
   white-space: nowrap;
   overflow: hidden;
   width: 0;
 
-  /* لون متدرج */
-  background: linear-gradient(90deg, #38bdf8, #22d3ee);
+  /* تدرج للّمعان */
+  background: linear-gradient(90deg, #ffffff, #38bdf8, #ffffff);
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 
-  /* تحديد خارجي للحروف */
-  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.4);
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.25);
 
-  text-shadow: 0 4px 14px rgba(56, 189, 248, 0.6);
   animation:
     typing 2s steps(6, end) forwards,
     blink 0.8s step-end infinite,
     fadeIn 2s ease forwards,
-    fadeOutText 1s ease 3s forwards;
+    fadeOutText 1s ease 3s forwards,
+    glowPulse 4s infinite ease-in-out,
+    shimmer 3s infinite linear;
 }
 
 /* أنيميشن الكتابة */
@@ -46,7 +47,7 @@
 /* أنيميشن المؤشر */
 @keyframes blink {
   from, to { border-color: transparent; }
-  50% { border-color: #38bdf8; }
+  50% { border-color: #ffffff; }
 }
 
 /* دخول سلس */
@@ -63,4 +64,26 @@
 /* اختفاء الشاشة */
 @keyframes fadeOutScreen {
   to { opacity: 0; visibility: hidden; }
+}
+
+/* نبض الـglow */
+@keyframes glowPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 8px rgba(56, 189, 248, 0.8),
+      0 0 16px rgba(56, 189, 248, 0.6),
+      0 0 24px rgba(56, 189, 248, 0.4);
+  }
+  50% {
+    text-shadow:
+      0 0 14px rgba(56, 189, 248, 1),
+      0 0 28px rgba(56, 189, 248, 0.8),
+      0 0 42px rgba(56, 189, 248, 0.6);
+  }
+}
+
+/* لمعان متحرك */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
 }
