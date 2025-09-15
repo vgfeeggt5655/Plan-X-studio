@@ -246,10 +246,10 @@ export default function TimetableDialog({
 
               {selectedDate && (
                 <div className="text-center mb-6">
-                  <p className="text-8xl sm:text-9xl font-extrabold leading-none text-white text-shadow-md">
+                  <p className="text-9xl sm:text-[10rem] font-extrabold leading-none text-white text-shadow-md">
                     {new Date(selectedDate).getDate()}
                   </p>
-                  <h2 className="text-xl sm:text-2xl font-bold text-blue-400 -mt-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-blue-400 -mt-2">
                     {new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" })}
                   </h2>
                   <p className="text-slate-400 font-light text-sm sm:text-base">
@@ -295,8 +295,8 @@ export default function TimetableDialog({
                             <span className="font-light">{event.location}</span>
                           </div>
                         )}
-                  </div>
-                  </div>
+                      </div>
+                    </div>
                 ))}
               </div>
             ) : (
