@@ -14,16 +14,40 @@
 /* نص مع typing effect */
 .typing-text {
   color: white;
-  font-size: 9rem;
   font-weight: bold;
   letter-spacing: 0.15em;
-  border-right: 9px solid #38bdf8;
+  border-right: 3px solid #38bdf8;
   white-space: nowrap;
   overflow: hidden;
   width: 0;
   animation:
     typing 2s steps(7, end) forwards,
     blink 0.75s step-end infinite;
+  font-size: 1.5rem; /* الأساس للموبايل */
+}
+
+/* تابلت */
+@media (min-width: 768px) {
+  .typing-text {
+    font-size: 4rem;
+    border-right-width: 4px;
+  }
+}
+
+/* لابتوب */
+@media (min-width: 1024px) {
+  .typing-text {
+    font-size: 6rem;
+    border-right-width: 5px;
+  }
+}
+
+/* كمبيوتر كبير */
+@media (min-width: 1440px) {
+  .typing-text {
+    font-size: 9rem;
+    border-right-width: 6px;
+  }
 }
 
 /* أنيميشن الكتابة */
