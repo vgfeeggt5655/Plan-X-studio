@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface SearchDialogProps {
   open: boolean;
@@ -16,16 +16,45 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [iframeKey, setIframeKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [showDialog, setShowDialog] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const [isOpening, setIsOpening] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  // لمنع التمرير في الصفحة الرئيسية عند فتح الديالوج
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      setIsOpening(true);
+      setIsClosing(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      setIsClosing(true);
+      setIsOpening(false);
+      const timer = setTimeout(() => {
+        document.body.style.overflow = 'unset';
+      }, 300); // المدة تتطابق مع مدة حركة الإغلاق
+
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  // لإغلاق الديالوج عند الضغط خارج المساحة المحددة
+  const handleOutsideClick = useCallback((event: MouseEvent) => {
+    if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+      onClose();
+    }
+  }, [onClose]);
 
   useEffect(() => {
     if (open) {
-      setShowDialog(true);
-      setTimeout(() => inputRef.current?.focus(), 100);
+      document.addEventListener('mousedown', handleOutsideClick);
     } else {
-      setShowDialog(false);
+      document.removeEventListener('mousedown', handleOutsideClick);
     }
-  }, [open]);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [open, handleOutsideClick]);
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -35,12 +64,28 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
 
   const bingImagesUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(searchTerm)}&FORM=HDRSC2`;
 
-  if (!showDialog) return null;
+  if (!open && !isClosing) return null;
+
+  const animationClass = isOpening
+    ? 'animate-dialog-in'
+    : isClosing
+    ? 'animate-dialog-out'
+    : '';
 
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity duration-300">
+    <div
+      className={`fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity duration-300 ${isOpening ? 'opacity-100' : isClosing ? 'opacity-0' : ''}`}
+      style={{ pointerEvents: isClosing ? 'none' : 'auto' }}
+    >
       <div
-        className="bg-background border border-border-color rounded-lg shadow-2xl w-11/12 md:w-5/6 lg:w-4/5 h-5/6 flex flex-col overflow-hidden transform transition-all duration-300 animate-fade-in-up"
+        ref={dialogRef}
+        className={`bg-background border border-border-color rounded-lg shadow-2xl w-11/12 md:w-5/6 lg:w-4/5 h-5/6 flex flex-col overflow-hidden transform transition-all duration-300 ${animationClass}`}
+        onAnimationEnd={() => {
+          if (isClosing) {
+            // للتأكد من إخفاء المكون تماما بعد انتهاء حركة الإغلاق
+            onClose();
+          }
+        }}
       >
         {/* Header */}
         <header className="flex justify-between items-center p-4 border-b border-border-color flex-shrink-0">
@@ -70,14 +115,14 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
         </div>
 
         {/* Bing Images */}
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-y-auto">
           {searchTerm ? (
             <iframe
               key={iframeKey}
               src={bingImagesUrl}
               className="w-full h-full border-none"
               title="Bing Images Search"
-              sandbox="allow-scripts allow-same-origin allow-popups"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400 text-lg md:text-xl">
@@ -86,14 +131,20 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
           )}
         </main>
       </div>
-
       <style>{`
-        @keyframes fade-in-up {
-          0% { opacity: 0; transform: translateY(10px); }
-          100% { opacity: 1; transform: translateY(0); }
+        @keyframes dialog-in {
+          0% { transform: scale(0.95) translateY(10px); opacity: 0; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
         }
-        .animate-fade-in-up {
-          animation: fade-in-up 0.3s ease-out forwards;
+        @keyframes dialog-out {
+          0% { transform: scale(1) translateY(0); opacity: 1; }
+          100% { transform: scale(0.95) translateY(10px); opacity: 0; }
+        }
+        .animate-dialog-in {
+          animation: dialog-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .animate-dialog-out {
+          animation: dialog-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
       `}</style>
     </div>
