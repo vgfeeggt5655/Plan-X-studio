@@ -23,7 +23,7 @@ const ProtectedLayout: React.FC = () => (
 // شاشة البداية (Splash)
 const SplashScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
   useEffect(() => {
-    const timer = setTimeout(onFinish, 3000); // 3 ثواني
+    const timer = setTimeout(onFinish, 4000); // 3 ثواني
     return () => clearTimeout(timer);
   }, [onFinish]);
 
