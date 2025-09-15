@@ -17,30 +17,27 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   const [iframeKey, setIframeKey] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const [isOpening, setIsOpening] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
 
   // لمنع التمرير في الصفحة الرئيسية عند فتح الديالوج
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
-      setIsOpening(true);
-      setIsClosing(false);
+      // Focus on the input field
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
-      setIsClosing(true);
-      setIsOpening(false);
-      const timer = setTimeout(() => {
-        document.body.style.overflow = 'unset';
-      }, 300); // المدة تتطابق مع مدة حركة الإغلاق
-
-      return () => clearTimeout(timer);
+      document.body.style.overflow = 'unset';
     }
   }, [open]);
 
-  // لإغلاق الديالوج عند الضغط خارج المساحة المحددة
+  // لإغلاق الديالوج عند الضغط خارج المساحة المحددة أو بضغطة Esc
   const handleOutsideClick = useCallback((event: MouseEvent) => {
     if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+      onClose();
+    }
+  }, [onClose]);
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
       onClose();
     }
   }, [onClose]);
@@ -48,13 +45,16 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
   useEffect(() => {
     if (open) {
       document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('keydown', handleKeyDown);
     } else {
       document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [open, handleOutsideClick]);
+  }, [open, handleOutsideClick, handleKeyDown]);
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -64,28 +64,15 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
 
   const bingImagesUrl = `https://www.bing.com/images/search?q=${encodeURIComponent(searchTerm)}&FORM=HDRSC2`;
 
-  if (!open && !isClosing) return null;
-
-  const animationClass = isOpening
-    ? 'animate-dialog-in'
-    : isClosing
-    ? 'animate-dialog-out'
-    : '';
+  if (!open) return null;
 
   return (
     <div
-      className={`fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex justify-center items-center p-4 transition-opacity duration-300 ${isOpening ? 'opacity-100' : isClosing ? 'opacity-0' : ''}`}
-      style={{ pointerEvents: isClosing ? 'none' : 'auto' }}
+      className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-end justify-center md:items-center p-0 md:p-4 transition-all duration-300"
     >
       <div
         ref={dialogRef}
-        className={`bg-background border border-border-color rounded-lg shadow-2xl w-11/12 md:w-5/6 lg:w-4/5 h-5/6 flex flex-col overflow-hidden transform transition-all duration-300 ${animationClass}`}
-        onAnimationEnd={() => {
-          if (isClosing) {
-            // للتأكد من إخفاء المكون تماما بعد انتهاء حركة الإغلاق
-            onClose();
-          }
-        }}
+        className="bg-background border border-border-color rounded-t-lg md:rounded-lg shadow-2xl w-full h-full md:w-5/6 lg:w-4/5 md:h-5/6 flex flex-col overflow-hidden transform transition-all duration-300 animate-slide-up md:animate-zoom-in"
       >
         {/* Header */}
         <header className="flex justify-between items-center p-4 border-b border-border-color flex-shrink-0">
@@ -104,11 +91,11 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
             placeholder="Type any keyword and press Enter..."
-            className="flex-1 bg-surface text-text-primary border border-border-color rounded-lg p-3 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-primary transition"
+            className="flex-1 bg-surface text-text-primary border border-border-color rounded-lg p-3 text-base focus:outline-none focus:ring-2 focus:ring-primary transition"
           />
           <button
             onClick={handleSearch}
-            className="px-5 py-3 bg-primary text-background rounded-lg hover:bg-cyan-400 shadow-md transition hover:scale-105 text-base md:text-lg"
+            className="px-5 py-3 bg-primary text-background rounded-lg hover:bg-cyan-400 shadow-md transition hover:scale-105 text-base"
           >
             Search
           </button>
@@ -125,26 +112,26 @@ const SearchDialog: React.FC<SearchDialogProps> = ({ open, onClose }) => {
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-400 text-lg md:text-xl">
+            <div className="flex items-center justify-center h-full text-gray-400 text-lg">
               Enter a keyword to see images
             </div>
           )}
         </main>
       </div>
       <style>{`
-        @keyframes dialog-in {
-          0% { transform: scale(0.95) translateY(10px); opacity: 0; }
-          100% { transform: scale(1) translateY(0); opacity: 1; }
+        @keyframes slide-up {
+          0% { transform: translateY(100%); }
+          100% { transform: translateY(0); }
         }
-        @keyframes dialog-out {
-          0% { transform: scale(1) translateY(0); opacity: 1; }
-          100% { transform: scale(0.95) translateY(10px); opacity: 0; }
+        @keyframes zoom-in {
+          0% { transform: scale(0.95); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
         }
-        .animate-dialog-in {
-          animation: dialog-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        .animate-slide-up {
+          animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
-        .animate-dialog-out {
-          animation: dialog-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        .animate-zoom-in {
+          animation: zoom-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
       `}</style>
     </div>
