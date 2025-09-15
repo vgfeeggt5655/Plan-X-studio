@@ -116,6 +116,7 @@ export default function TimetableDialog({
       const dateStr = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       const events = getEvents(dateStr);
       const eventTypes = [...new Set(events.map(event => event.type))];
+      const hasExam = eventTypes.includes("exam");
 
       const isToday =
         today.getFullYear() === year &&
@@ -139,7 +140,8 @@ export default function TimetableDialog({
             relative p-2 md:p-3 rounded-xl transform transition-all duration-300 ease-in-out
             flex flex-col items-center justify-start h-24 sm:h-28
             group overflow-hidden
-            ${isToday ? "bg-blue-950/20 border-2 border-blue-600 shadow-inner shadow-blue-500/30" : "bg-slate-800/50"}
+            ${hasExam ? "bg-red-950/20 border-2 border-red-600 shadow-inner shadow-red-500/30" : "bg-slate-800/50"}
+            ${isToday ? "ring-2 ring-blue-500" : ""}
             ${isSelected ? "bg-blue-700/60 ring-2 ring-blue-500 shadow-xl" : "hover:bg-slate-700/60"}
           `}
         >
@@ -172,7 +174,7 @@ export default function TimetableDialog({
                 {d}
               </div>
             ))}
-              </div>
+          </div>
           <div className="grid grid-cols-7 gap-0.5 sm:gap-1">{days}</div>
         </div>
       </div>
@@ -220,11 +222,11 @@ export default function TimetableDialog({
         ) : (
           <div className="flex flex-1 overflow-hidden">
             {/* Event Details Section - Left Side */}
-            <div className="
+            <div className={`
               bg-slate-800/80 border-t lg:border-t-0 lg:border-r border-slate-700 flex-shrink-0 transition-all duration-500 ease-in-out order-2 lg:order-1
               w-full lg:w-1/3 flex flex-col p-4 sm:p-6
-              {showEventDetails && selectedEvents.length > 0 ? '' : 'hidden lg:flex'}
-            ">
+              ${showEventDetails && selectedEvents.length > 0 ? '' : 'hidden lg:flex'}
+            `}>
               {/* Mobile: Back button */}
               <div className="flex items-center justify-between mb-4 lg:hidden">
                 <h2 className="text-lg sm:text-xl font-bold text-white">Event Details</h2>
@@ -254,9 +256,16 @@ export default function TimetableDialog({
               {selectedEvents.length > 0 ? (
                 <div className="space-y-4 overflow-y-auto pr-2">
                   {selectedEvents.map((event, index) => (
-                    <div key={index} className="bg-slate-700/50 rounded-xl p-4 border border-slate-600/50 transition-transform hover:scale-[1.03] duration-300 ease-in-out shadow-lg hover:shadow-xl">
+                    <div key={index} className="
+                      bg-slate-700/50 rounded-xl p-4 border border-slate-600/50
+                      transition-all duration-300 ease-in-out transform
+                      hover:scale-[1.03] hover:bg-slate-700 hover:border-blue-500/50 hover:shadow-lg
+                      group
+                    ">
                       <div className="flex items-center gap-4 mb-2">
-                        <span className={`text-4xl sm:text-5xl flex-shrink-0 ${getEventStyle(event.type).icon}`} />
+                        <span className={`text-4xl sm:text-5xl flex-shrink-0 transition-transform group-hover:scale-110`}>
+                          {getEventStyle(event.type).icon}
+                        </span>
                         <div>
                           <h4 className="text-xl font-bold text-white leading-tight">{event.title}</h4>
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getEventStyle(event.type).dot.replace('bg-', 'bg-')}/40 text-white`}>
