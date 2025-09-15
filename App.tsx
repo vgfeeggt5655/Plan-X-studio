@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Outlet } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
+// Layout للصفحات بعد تسجيل الدخول
 const ProtectedLayout: React.FC = () => (
   <div className="min-h-screen flex flex-col">
     <Header />
@@ -19,15 +20,26 @@ const ProtectedLayout: React.FC = () => (
   </div>
 );
 
-const App: React.FC = () => {
+// شاشة البداية (Splash)
+const SplashScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
   useEffect(() => {
-    const handleContextMenu = (event: MouseEvent) => {
-      event.preventDefault();
-    };
+    const timer = setTimeout(onFinish, 3000); // 3 ثواني
+    return () => clearTimeout(timer);
+  }, [onFinish]);
 
+  return (
+    <div className="splash-screen">
+      <h1 className="typing-text">Plan x</h1>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  const [splashDone, setSplashDone] = useState(false);
+
+  useEffect(() => {
+    const handleContextMenu = (event: MouseEvent) => event.preventDefault();
     const handleDragStart = (event: DragEvent) => {
-      // Prevent dragging of images, links, and videos, which can reveal source URLs
-      // when dropped into a new tab or window.
       if (
         event.target instanceof HTMLImageElement ||
         event.target instanceof HTMLAnchorElement ||
@@ -39,7 +51,7 @@ const App: React.FC = () => {
 
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('dragstart', handleDragStart);
-    
+
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('dragstart', handleDragStart);
@@ -49,30 +61,36 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <HashRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <ProtectedLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<HomePage />} />
-            <Route path="watch/:resourceId" element={<WatchPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-             <Route 
-              path="admin" 
+        {/* نرندر كل الصفحات في الخلفية */}
+        <div style={{ visibility: splashDone ? 'visible' : 'hidden' }}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route
+              path="/"
               element={
-                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                  <AdminDashboardPage />
+                <ProtectedRoute>
+                  <ProtectedLayout />
                 </ProtectedRoute>
-              } 
-            />
-          </Route>
-        </Routes>
+              }
+            >
+              <Route index element={<HomePage />} />
+              <Route path="watch/:resourceId" element={<WatchPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route
+                path="admin"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                    <AdminDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+          </Routes>
+        </div>
+
+        {/* الـ Splash فوق الكل */}
+        {!splashDone && <SplashScreen onFinish={() => setSplashDone(true)} />}
       </HashRouter>
     </AuthProvider>
   );
