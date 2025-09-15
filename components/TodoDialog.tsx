@@ -449,37 +449,45 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
                 <div className="space-y-3 pb-4">
 
-                  {filteredTodos.map((task,index) => (
+                  {filteredTodos.map((task,index) => {
 
-                    <div key={task.id} className={`group relative p-5 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02]`} style={{animation:`slideInUp 0.3s ease-out forwards`, animationDelay:`${index*50}ms`}}>
+                    const isStale = !task.done && (new Date().getTime() - new Date(task.createdAt).getTime()) > 12 * 60 * 60 * 1000;
 
-                      <div className="flex items-center gap-4">
+                    return (
 
-                        <button onClick={()=>handleToggleDone(task.id)} className={`w-6 h-6 rounded-full border-2 transition-all duration-300 flex items-center justify-center hover:scale-110 ${task.done?'bg-gradient-to-r from-green-400 to-blue-500 border-transparent':'border-slate-500 hover:border-cyan-400'}`}>
+                      <div key={task.id} className={`group relative p-5 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02]`} style={{animation:`slideInUp 0.3s ease-out forwards`, animationDelay:`${index*50}ms`}}>
 
-                          {task.done && <span className="text-white text-sm">✓</span>}
+                        <div className="flex items-center gap-4">
 
-                        </button>
+                          <button onClick={()=>handleToggleDone(task.id)} className={`w-6 h-6 rounded-full border-2 transition-all duration-300 flex items-center justify-center hover:scale-110 ${task.done?'bg-gradient-to-r from-green-400 to-blue-500 border-transparent':'border-slate-500 hover:border-cyan-400'}`}>
 
-                        <div className="flex-1 min-w-0">
+                            {task.done && <span className="text-white text-sm">✓</span>}
 
-                          <div className="flex items-center gap-3">
+                          </button>
 
-                            <span className="text-lg">{getPriorityIcon(task.priority)}</span>
+                          <div className="flex-1 min-w-0">
 
-                            <p className={`text-lg font-light leading-relaxed transition-all duration-300 ${task.done?'line-through text-slate-500':'text-white'}`}>{task.text}</p>
+                            <div className="flex items-center gap-3">
+
+                              <span className="text-lg">{getPriorityIcon(task.priority)}</span>
+
+                              <p className={`text-lg font-light leading-relaxed transition-all duration-300 ${task.done?'line-through text-slate-500':'text-white'}`}>{task.text}</p>
+                              
+                              {isStale && <span className="text-2xl animate-pulse ml-2" title="This task is overdue! You should probably get it done.">🤨</span>}
+
+                            </div>
 
                           </div>
 
-                        </div>
+                          <button onClick={()=>handleDeleteTask(task.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all duration-200 text-xl hover:scale-110">🗑️</button>
 
-                        <button onClick={()=>handleDeleteTask(task.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all duration-200 text-xl hover:scale-110">🗑️</button>
+                        </div>
 
                       </div>
 
-                    </div>
+                    );
 
-                  ))}
+                  })}
 
                 </div>
 
