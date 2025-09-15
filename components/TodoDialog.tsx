@@ -1,4 +1,4 @@
- import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { getUserTodoList, updateUserTodoList } from '../services/authService';
 
@@ -8,15 +8,15 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface TodoItem {
 
-  id: string;
+  id: string;
 
-  text: string;
+  text: string;
 
-  done: boolean;
+  done: boolean;
 
-  createdAt: string;
+  createdAt: string;
 
-  priority: 'low' | 'medium' | 'high';
+  priority: 'low' | 'medium' | 'high';
 
 }
 
@@ -24,9 +24,9 @@ interface TodoItem {
 
 interface TodoDialogProps {
 
-  isOpen: boolean;
+  isOpen: boolean;
 
-  onClose: () => void;
+  onClose: () => void;
 
 }
 
@@ -34,579 +34,600 @@ interface TodoDialogProps {
 
 const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
-  const { user } = useAuth();
+  const { user } = useAuth();
 
-  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [todos, setTodos] = useState<TodoItem[]>([]);
 
-  const [newTask, setNewTask] = useState('');
+  const [newTask, setNewTask] = useState('');
 
-  const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
 
-  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogVisible, setDialogVisible] = useState(false);
 
-  const [closing, setClosing] = useState(false);
+  const [closing, setClosing] = useState(false);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
 
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split('T')[0];
 
 
 
-  useEffect(() => {
+  // Prevent body scroll when dialog is open
+  useEffect(() => {
+    if (isOpen) {
+      // Store original overflow
+      const originalOverflow = document.body.style.overflow;
+      // Prevent scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Cleanup function
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
-    if (isOpen) {
 
-      setDialogVisible(true);
 
-      setClosing(false);
+  useEffect(() => {
 
-    }
+    if (isOpen) {
 
-  }, [isOpen]);
+      setDialogVisible(true);
 
+      setClosing(false);
 
+    }
 
-  useEffect(() => {
+  }, [isOpen]);
 
-    if (!isOpen || !user) return;
 
-    const loadTodos = async () => {
 
-      setLoading(true);
+  useEffect(() => {
 
-      try {
+    if (!isOpen || !user) return;
 
-        const data = await getUserTodoList(user.id);
+    const loadTodos = async () => {
 
-        let todayTasks = data[todayStr] || [];
+      setLoading(true);
 
-        todayTasks = todayTasks.filter(task => {
+      try {
 
-          const taskDate = new Date(task.createdAt).toISOString().split('T')[0];
+        const data = await getUserTodoList(user.id);
 
-          if (task.done && taskDate !== todayStr) return false;
+        let todayTasks = data[todayStr] || [];
 
-          return true;
+        todayTasks = todayTasks.filter(task => {
 
-        });
+          const taskDate = new Date(task.createdAt).toISOString().split('T')[0];
 
-        setTodos(todayTasks);
+          if (task.done && taskDate !== todayStr) return false;
 
-      } catch (error) {
+          return true;
 
-        console.error('Failed to load todos:', error);
+        });
 
-      } finally {
+        setTodos(todayTasks);
 
-        setLoading(false);
+      } catch (error) {
 
-      }
+        console.error('Failed to load todos:', error);
 
-    };
+      } finally {
 
-    loadTodos();
+        setLoading(false);
 
-  }, [isOpen, user, todayStr]);
+      }
 
+    };
 
+    loadTodos();
 
-  useEffect(() => {
+  }, [isOpen, user, todayStr]);
 
-    if (showAddForm && inputRef.current) inputRef.current.focus();
 
-  }, [showAddForm]);
 
+  useEffect(() => {
 
+    if (showAddForm && inputRef.current) inputRef.current.focus();
 
-  const saveTodos = async (updatedTodos: TodoItem[]) => {
+  }, [showAddForm]);
 
-    if (!user) return;
 
-    try {
 
-      setTodos(updatedTodos);
+  const saveTodos = async (updatedTodos: TodoItem[]) => {
 
-      await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
+    if (!user) return;
 
-    } catch (error) {
+    try {
 
-      console.error('Failed to save todos:', error);
+      setTodos(updatedTodos);
 
-    }
+      await updateUserTodoList(user.id, { [todayStr]: updatedTodos });
 
-  };
+    } catch (error) {
 
+      console.error('Failed to save todos:', error);
 
+    }
 
-  const handleAddTask = async () => {
+  };
 
-    if (!newTask.trim()) return;
 
-    const task: TodoItem = {
 
-      id: Date.now().toString(),
+  const handleAddTask = async () => {
 
-      text: newTask.trim(),
+    if (!newTask.trim()) return;
 
-      done: false,
+    const task: TodoItem = {
 
-      createdAt: new Date().toISOString(),
+      id: Date.now().toString(),
 
-      priority: newTaskPriority
+      text: newTask.trim(),
 
-    };
+      done: false,
 
-    const updated = [...todos, task];
+      createdAt: new Date().toISOString(),
 
-    setNewTask('');
+      priority: newTaskPriority
 
-    setNewTaskPriority('medium');
+    };
 
-    setShowAddForm(false);
+    const updated = [...todos, task];
 
-    await saveTodos(updated);
+    setNewTask('');
 
-  };
+    setNewTaskPriority('medium');
 
+    setShowAddForm(false);
 
+    await saveTodos(updated);
 
-  const handleToggleDone = async (taskId: string) => {
+  };
 
-    const updated = todos.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
 
-    await saveTodos(updated);
 
-  };
+  const handleToggleDone = async (taskId: string) => {
 
+    const updated = todos.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
 
+    await saveTodos(updated);
 
-  const handleDeleteTask = async (taskId: string) => {
+  };
 
-    const updated = todos.filter(t => t.id !== taskId);
 
-    await saveTodos(updated);
 
-  };
+  const handleDeleteTask = async (taskId: string) => {
 
+    const updated = todos.filter(t => t.id !== taskId);
 
+    await saveTodos(updated);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  };
 
-    if (e.key === 'Enter') handleAddTask();
 
-    else if (e.key === 'Escape') {
 
-      setShowAddForm(false);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
 
-      setNewTask('');
+    if (e.key === 'Enter') handleAddTask();
 
-    }
+    else if (e.key === 'Escape') {
 
-  };
+      setShowAddForm(false);
 
+      setNewTask('');
 
+    }
 
-  const getFilteredTodos = () => {
+  };
 
-    let filtered = todos;
 
-    if (filter === 'pending') filtered = filtered.filter(t => !t.done);
 
-    else if (filter === 'completed') filtered = filtered.filter(t => t.done);
+  const getFilteredTodos = () => {
 
-    filtered.sort((a, b) => {
+    let filtered = todos;
 
-      if (a.done !== b.done) return a.done ? 1 : -1;
+    if (filter === 'pending') filtered = filtered.filter(t => !t.done);
 
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
+    else if (filter === 'completed') filtered = filtered.filter(t => t.done);
 
-      return priorityOrder[b.priority] - priorityOrder[a.priority];
+    filtered.sort((a, b) => {
 
-    });
+      if (a.done !== b.done) return a.done ? 1 : -1;
 
-    return filtered;
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
 
-  };
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
 
+    });
 
+    return filtered;
 
-  const getPriorityIcon = (priority: string) => {
+  };
 
-    switch (priority) {
 
-      case 'high': return '🔴';
 
-      case 'medium': return '🟡';
+  const getPriorityIcon = (priority: string) => {
 
-      case 'low': return '🟢';
+    switch (priority) {
 
-      default: return '⚪';
+      case 'high': return '🔴';
 
-    }
+      case 'medium': return '🟡';
 
-  };
+      case 'low': return '🟢';
 
+      default: return '⚪';
 
+    }
 
-  const doneCount = todos.filter(t => t.done).length;
+  };
 
-  const progress = todos.length ? (doneCount / todos.length) * 100 : 0;
 
-  const filteredTodos = getFilteredTodos();
 
+  const doneCount = todos.filter(t => t.done).length;
 
+  const progress = todos.length ? (doneCount / todos.length) * 100 : 0;
 
-  if (!dialogVisible) return null;
+  const filteredTodos = getFilteredTodos();
 
 
 
-  const closeDialog = () => {
+  if (!dialogVisible) return null;
 
-    setClosing(true);
 
-    setTimeout(() => {
 
-      setDialogVisible(false);
+  const closeDialog = () => {
 
-      onClose();
+    setClosing(true);
 
-    }, 300);
+    setTimeout(() => {
 
-  };
+      setDialogVisible(false);
 
+      onClose();
 
+    }, 300);
 
-  return (
+  };
 
-    <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
 
-      <div
 
-        className={`absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity duration-300 ${closing ? 'opacity-0' : 'opacity-100'}`}
+  return (
 
-        onClick={closeDialog}
+    <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
 
-      ></div>
+      <div
 
+        className={`absolute inset-0 bg-black/70 backdrop-blur-md transition-opacity duration-300 ${closing ? 'opacity-0' : 'opacity-100'}`}
 
+        onClick={closeDialog}
 
-      <div
+      ></div>
 
-        className={`relative w-full max-w-2xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden transition-all duration-300 transform ${
 
-          closing ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-dialogIn'
 
-        }`}
+      <div
 
-      >
+        className={`relative w-full max-w-2xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden transition-all duration-300 transform ${
 
-        {loading ? (
+          closing ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-dialogIn'
 
-          <div className="flex flex-col items-center justify-center h-96 text-white">
+        }`}
 
-            <div className="w-20 h-20 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin"></div>
+      >
 
-            <p className="mt-6 text-xl font-light text-slate-300">Loading your tasks...</p>
+        {loading ? (
 
-          </div>
+          <div className="flex flex-col items-center justify-center h-96 text-white">
 
-        ) : (
+            <div className="w-20 h-20 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin"></div>
 
-          <>
+            <p className="mt-6 text-xl font-light text-slate-300">Loading your tasks...</p>
 
-            {/* Header */}
+          </div>
 
-            <div className="p-8 pb-6 flex justify-between items-start">
+        ) : (
 
-              <div>
+          <>
 
-                <h1 className="text-3xl font-light text-white mb-2 tracking-wide">Today's Focus</h1>
+            {/* Header */}
 
-                <p className="text-slate-400 text-sm font-light">
+            <div className="p-8 pb-6 flex justify-between items-start">
 
-                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              <div>
 
-                </p>
+                <h1 className="text-3xl font-light text-white mb-2 tracking-wide">Today's Focus</h1>
 
-              </div>
+                <p className="text-slate-400 text-sm font-light">
 
-              <button
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
 
-                onClick={closeDialog}
+                </p>
 
-                className="text-slate-400 hover:text-white transition-colors text-2xl font-light hover:rotate-90 transform transition-transform duration-200"
+              </div>
 
-              >
+              <button
 
-                ✕
+                onClick={closeDialog}
 
-              </button>
+                className="text-slate-400 hover:text-white transition-colors text-2xl font-light hover:rotate-90 transform transition-transform duration-200"
 
-            </div>
+              >
 
+                ✕
 
+              </button>
 
-            {/* Progress */}
+            </div>
 
-            {todos.length > 0 && (
 
-              <div className="px-8 pb-6 space-y-3">
 
-                <div className="flex justify-between items-center">
+            {/* Progress */}
 
-                  <span className="text-slate-300 text-sm font-light">{doneCount} of {todos.length} completed</span>
+            {todos.length > 0 && (
 
-                  <span className="text-cyan-400 font-medium text-sm">{Math.round(progress)}%</span>
+              <div className="px-8 pb-6 space-y-3">
 
-                </div>
+                <div className="flex justify-between items-center">
 
-                <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                  <span className="text-slate-300 text-sm font-light">{doneCount} of {todos.length} completed</span>
 
-                  <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
+                  <span className="text-cyan-400 font-medium text-sm">{Math.round(progress)}%</span>
 
-                </div>
+                </div>
 
-              </div>
+                <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
 
-            )}
+                  <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all duration-700 ease-out" style={{ width: `${progress}%` }} />
 
+                </div>
 
+              </div>
 
-            {/* Filter */}
+            )}
 
-            <div className="px-8 pb-6">
 
-              <div className="flex gap-1 bg-slate-800/50 p-1.5 rounded-2xl backdrop-blur-sm">
 
-                {['all','pending','completed'].map(f => (
+            {/* Filter */}
 
-                  <button
+            <div className="px-8 pb-6">
 
-                    key={f}
+              <div className="flex gap-1 bg-slate-800/50 p-1.5 rounded-2xl backdrop-blur-sm">
 
-                    onClick={() => setFilter(f as any)}
+                {['all','pending','completed'].map(f => (
 
-                    className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 capitalize ${
+                  <button
 
-                      filter === f ? 'bg-white/10 text-white shadow-lg backdrop-blur-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    key={f}
 
-                    }`}
+                    onClick={() => setFilter(f as any)}
 
-                  >
+                    className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 capitalize ${
 
-                    {f}
+                      filter === f ? 'bg-white/10 text-white shadow-lg backdrop-blur-sm' : 'text-slate-400 hover:text-white hover:bg-white/5'
 
-                  </button>
+                    }`}
 
-                ))}
+                  >
 
-              </div>
+                    {f}
 
-            </div>
+                  </button>
 
+                ))}
 
+              </div>
 
-            {/* Tasks */}
+            </div>
 
-            <div className="flex-1 px-8 overflow-y-auto">
 
-              {filteredTodos.length === 0 ? (
 
-                <div className="text-center py-16">
+            {/* Tasks */}
 
-                  <div className="text-5xl mb-4 opacity-50">✨</div>
+            <div className="flex-1 px-8 overflow-y-auto">
 
-                  <p className="text-slate-400 text-lg font-light">{todos.length === 0 ? 'Ready for a productive day?' : 'No tasks in this view'}</p>
+              {filteredTodos.length === 0 ? (
 
-                </div>
+                <div className="text-center py-16">
 
-              ) : (
+                  <div className="text-5xl mb-4 opacity-50">✨</div>
 
-                <div className="space-y-3 pb-4">
+                  <p className="text-slate-400 text-lg font-light">{todos.length === 0 ? 'Ready for a productive day?' : 'No tasks in this view'}</p>
 
-                  {filteredTodos.map((task,index) => (
+                </div>
 
-                    <div key={task.id} className={`group relative p-5 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02]`} style={{animation:`slideInUp 0.3s ease-out forwards`, animationDelay:`${index*50}ms`}}>
+              ) : (
 
-                      <div className="flex items-center gap-4">
+                <div className="space-y-3 pb-4">
 
-                        <button onClick={()=>handleToggleDone(task.id)} className={`w-6 h-6 rounded-full border-2 transition-all duration-300 flex items-center justify-center hover:scale-110 ${task.done?'bg-gradient-to-r from-green-400 to-blue-500 border-transparent':'border-slate-500 hover:border-cyan-400'}`}>
+                  {filteredTodos.map((task,index) => (
 
-                          {task.done && <span className="text-white text-sm">✓</span>}
+                    <div key={task.id} className={`group relative p-5 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:scale-[1.02]`} style={{animation:`slideInUp 0.3s ease-out forwards`, animationDelay:`${index*50}ms`}}>
 
-                        </button>
+                      <div className="flex items-center gap-4">
 
-                        <div className="flex-1 min-w-0">
+                        <button onClick={()=>handleToggleDone(task.id)} className={`w-6 h-6 rounded-full border-2 transition-all duration-300 flex items-center justify-center hover:scale-110 ${task.done?'bg-gradient-to-r from-green-400 to-blue-500 border-transparent':'border-slate-500 hover:border-cyan-400'}`}>
 
-                          <div className="flex items-center gap-3">
+                          {task.done && <span className="text-white text-sm">✓</span>}
 
-                            <span className="text-lg">{getPriorityIcon(task.priority)}</span>
+                        </button>
 
-                            <p className={`text-lg font-light leading-relaxed transition-all duration-300 ${task.done?'line-through text-slate-500':'text-white'}`}>{task.text}</p>
+                        <div className="flex-1 min-w-0">
 
-                          </div>
+                          <div className="flex items-center gap-3">
 
-                        </div>
+                            <span className="text-lg">{getPriorityIcon(task.priority)}</span>
 
-                        <button onClick={()=>handleDeleteTask(task.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all duration-200 text-xl hover:scale-110">🗑️</button>
+                            <p className={`text-lg font-light leading-relaxed transition-all duration-300 ${task.done?'line-through text-slate-500':'text-white'}`}>{task.text}</p>
 
-                      </div>
+                          </div>
 
-                    </div>
+                        </div>
 
-                  ))}
+                        <button onClick={()=>handleDeleteTask(task.id)} className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-all duration-200 text-xl hover:scale-110">🗑️</button>
 
-                </div>
+                      </div>
 
-              )}
+                    </div>
 
-            </div>
+                  ))}
 
+                </div>
 
+              )}
 
-            {/* Add Task */}
+            </div>
 
-            <div className="p-8 pt-6 relative">
 
-              <button
 
-                onClick={() => setShowAddForm(true)}
+            {/* Add Task */}
 
-                className={`w-full p-4 border-2 border-dashed border-slate-600/50 rounded-2xl text-slate-400 hover:border-cyan-400/50 hover:text-cyan-400 transition-all duration-300 font-light text-lg hover:bg-white/5 backdrop-blur-sm group ${showAddForm?'hidden':'flex items-center justify-center gap-2'}`}
+            <div className="p-8 pt-6 relative">
 
-              >
+              <button
 
-                <span className="group-hover:scale-110 inline-block transition-transform duration-200">+</span> Add new task
+                onClick={() => setShowAddForm(true)}
 
-              </button>
+                className={`w-full p-4 border-2 border-dashed border-slate-600/50 rounded-2xl text-slate-400 hover:border-cyan-400/50 hover:text-cyan-400 transition-all duration-300 font-light text-lg hover:bg-white/5 backdrop-blur-sm group ${showAddForm?'hidden':'flex items-center justify-center gap-2'}`}
 
+              >
 
+                <span className="group-hover:scale-110 inline-block transition-transform duration-200">+</span> Add new task
 
-              {showAddForm && (
+              </button>
 
-                <div className="absolute bottom-0 left-0 w-full bg-slate-900/95 rounded-t-3xl p-6 backdrop-blur-xl shadow-lg animate-slideUp">
 
-                  <input
 
-                    ref={inputRef}
+              {showAddForm && (
 
-                    type="text"
+                <div className="absolute bottom-0 left-0 w-full bg-slate-900/95 rounded-t-3xl p-6 backdrop-blur-xl shadow-lg animate-slideUp">
 
-                    placeholder="What needs to be done?"
+                  <input
 
-                    value={newTask}
+                    ref={inputRef}
 
-                    onChange={e=>setNewTask(e.target.value)}
+                    type="text"
 
-                    onKeyDown={handleKeyPress}
+                    placeholder="What needs to be done?"
 
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 backdrop-blur-sm transition-all duration-200 mb-4"
+                    value={newTask}
 
-                  />
+                    onChange={e=>setNewTask(e.target.value)}
 
-                  {/* Priority iOS-style */}
+                    onKeyDown={handleKeyPress}
 
-                  <div className="flex items-center justify-between mb-4 gap-4">
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 backdrop-blur-sm transition-all duration-200 mb-4"
 
-                    {['low','medium','high'].map(p => (
+                  />
 
-                      <button key={p} onClick={()=>setNewTaskPriority(p as any)}
+                  {/* Priority iOS-style */}
 
-                        className={`flex-1 py-3 rounded-full text-white font-medium transition-all duration-300 ${
+                  <div className="flex items-center justify-between mb-4 gap-4">
 
-                          newTaskPriority===p
+                    {['low','medium','high'].map(p => (
 
-                            ? p==='high'?'bg-red-500 shadow-lg scale-105'
+                      <button key={p} onClick={()=>setNewTaskPriority(p as any)}
 
-                            :p==='medium'?'bg-yellow-500 shadow-lg scale-105'
+                        className={`flex-1 py-3 rounded-full text-white font-medium transition-all duration-300 ${
 
-                            :'bg-green-500 shadow-lg scale-105'
+                          newTaskPriority===p
 
-                            :'bg-white/10 hover:bg-white/20'
+                            ? p==='high'?'bg-red-500 shadow-lg scale-105'
 
-                        }`}
+                            :p==='medium'?'bg-yellow-500 shadow-lg scale-105'
 
-                      >
+                            :'bg-green-500 shadow-lg scale-105'
 
-                        {p.charAt(0).toUpperCase()+p.slice(1)}
+                            :'bg-white/10 hover:bg-white/20'
 
-                      </button>
+                        }`}
 
-                    ))}
+                      >
 
-                  </div>
+                        {p.charAt(0).toUpperCase()+p.slice(1)}
 
+                      </button>
 
+                    ))}
 
-                  <div className="flex gap-3">
+                  </div>
 
-                    <button onClick={handleAddTask} disabled={!newTask.trim()}
 
-                      className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02]">Add Task</button>
 
-                    <button onClick={()=>{setShowAddForm(false);setNewTask('');}}
+                  <div className="flex gap-3">
 
-                      className="px-4 py-3 bg-white/5 text-slate-300 rounded-xl hover:bg-white/10 transition-all duration-200">Cancel</button>
+                    <button onClick={handleAddTask} disabled={!newTask.trim()}
 
-                  </div>
+                      className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-400 hover:to-blue-500 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02]">Add Task</button>
 
-                </div>
+                    <button onClick={()=>{setShowAddForm(false);setNewTask('');}}
 
-              )}
+                      className="px-4 py-3 bg-white/5 text-slate-300 rounded-xl hover:bg-white/10 transition-all duration-200">Cancel</button>
 
-            </div>
+                  </div>
 
-          </>
+                </div>
 
-        )}
+              )}
 
+            </div>
 
+          </>
 
-        <style>{`
+        )}
 
-          @keyframes slideInUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
 
-          @keyframes dialogIn { 0%{opacity:0;transform:scale(0.95);}100%{opacity:1;transform:scale(1);} }
 
+        <style>{`
 
+          @keyframes slideInUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
 
-          /* New animation for Add Task form */
+          @keyframes dialogIn { 0%{opacity:0;transform:scale(0.95);}100%{opacity:1;transform:scale(1);} }
 
-          @keyframes popUp {
 
-            0% { transform: scale(0.8); opacity: 0; }
 
-            60% { transform: scale(1.05); opacity: 1; }
+          /* New animation for Add Task form */
 
-            100% { transform: scale(1); opacity: 1; }
+          @keyframes popUp {
 
-          }
+            0% { transform: scale(0.8); opacity: 0; }
 
+            60% { transform: scale(1.05); opacity: 1; }
 
+            100% { transform: scale(1); opacity: 1; }
 
-          .animate-slideUp {
+          }
 
-            animation: popUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 
-          }
 
-          .animate-dialogIn{animation:dialogIn 0.3s ease-out forwards;}
+          .animate-slideUp {
 
-        `}</style>
+            animation: popUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 
-      </div>
+          }
 
-    </div>
+          .animate-dialogIn{animation:dialogIn 0.3s ease-out forwards;}
 
-  );
+          .animate-bounce { animation: bounce 2s infinite; }
+
+          .animate-pulse { animation: pulse 2s infinite; }
+
+        `}</style>
+
+      </div>
+
+    </div>
+
+  );
 
 };
 
