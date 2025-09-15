@@ -7,25 +7,34 @@
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  animation: fadeOutScreen 1s ease 4s forwards; /* الشاشة تختفي بعد النص */
+  animation: fadeOutScreen 1s ease 4s forwards;
 }
 
 /* نص Plan X */
 .typing-text {
-  color: #38bdf8;
+  font-family: 'Segoe UI', Arial, sans-serif;
   font-size: 5rem;
-  font-weight: 800;
-  letter-spacing: 0.15em;
+  font-weight: 900;
+  letter-spacing: 0.1em;
   border-right: 4px solid #38bdf8;
   white-space: nowrap;
   overflow: hidden;
   width: 0;
-  text-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+
+  /* لون متدرج */
+  background: linear-gradient(90deg, #38bdf8, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  /* تحديد خارجي للحروف */
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.4);
+
+  text-shadow: 0 4px 14px rgba(56, 189, 248, 0.6);
   animation:
     typing 2s steps(6, end) forwards,
     blink 0.8s step-end infinite,
     fadeIn 2s ease forwards,
-    fadeOutText 1s ease 3s forwards; /* تذويب النص */
+    fadeOutText 1s ease 3s forwards;
 }
 
 /* أنيميشن الكتابة */
@@ -48,7 +57,7 @@
 
 /* خروج النص */
 @keyframes fadeOutText {
-  to { opacity: 0; }
+  to { opacity: 0; transform: scale(0.9); }
 }
 
 /* اختفاء الشاشة */
