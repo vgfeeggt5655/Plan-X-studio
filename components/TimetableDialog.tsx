@@ -108,6 +108,8 @@ export default function TimetableDialog({
     const days: JSX.Element[] = [];
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+    const todayDate = today.toISOString().split("T")[0];
+
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="p-1 sm:p-2" />);
     }
@@ -124,6 +126,7 @@ export default function TimetableDialog({
         today.getDate() === day;
 
       const isSelected = selectedDate === dateStr;
+      const isPastDay = dateStr < todayDate && !isToday;
 
       days.push(
         <button
@@ -140,9 +143,10 @@ export default function TimetableDialog({
             relative p-2 md:p-3 rounded-xl transform transition-all duration-300 ease-in-out
             flex flex-col items-center justify-start h-24 sm:h-28
             group overflow-hidden
-            ${hasExam ? "bg-red-950/20 border-2 border-red-600 shadow-inner shadow-red-500/30" : "bg-slate-800/50"}
+            ${hasExam ? "bg-red-500/20 border-2 border-red-600 shadow-inner shadow-red-500/30" : "bg-slate-800/50"}
             ${isToday ? "ring-2 ring-blue-500" : ""}
             ${isSelected ? "bg-blue-700/60 ring-2 ring-blue-500 shadow-xl" : "hover:bg-slate-700/60"}
+            ${isPastDay ? "opacity-50" : ""}
           `}
         >
           <span className={`
@@ -242,10 +246,10 @@ export default function TimetableDialog({
 
               {selectedDate && (
                 <div className="text-center mb-6">
-                  <p className="text-8xl sm:text-9xl font-extrabold leading-none text-slate-600/30">
+                  <p className="text-8xl sm:text-9xl font-extrabold leading-none text-white text-shadow-md">
                     {new Date(selectedDate).getDate()}
                   </p>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white -mt-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-blue-400 -mt-4">
                     {new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" })}
                   </h2>
                   <p className="text-slate-400 font-light text-sm sm:text-base">
@@ -254,20 +258,20 @@ export default function TimetableDialog({
                 </div>
               )}
               {selectedEvents.length > 0 ? (
-                <div className="space-y-4 overflow-y-auto pr-2">
+                <div className="space-y-3 overflow-y-auto pr-2">
                   {selectedEvents.map((event, index) => (
                     <div key={index} className="
-                      bg-slate-700/50 rounded-xl p-4 border border-slate-600/50
+                      bg-slate-700/50 rounded-lg p-3 border border-slate-600/50
                       transition-all duration-300 ease-in-out transform
-                      hover:scale-[1.03] hover:bg-slate-700 hover:border-blue-500/50 hover:shadow-lg
+                      hover:scale-[1.02] hover:bg-slate-700 hover:ring-2 hover:ring-blue-500/50 hover:shadow-lg
                       group
                     ">
-                      <div className="flex items-center gap-4 mb-2">
-                        <span className={`text-4xl sm:text-5xl flex-shrink-0 transition-transform group-hover:scale-110`}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`text-3xl sm:text-4xl flex-shrink-0 transition-transform group-hover:scale-110`}>
                           {getEventStyle(event.type).icon}
                         </span>
                         <div>
-                          <h4 className="text-xl font-bold text-white leading-tight">{event.title}</h4>
+                          <h4 className="text-lg font-bold text-white leading-tight">{event.title}</h4>
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getEventStyle(event.type).dot.replace('bg-', 'bg-')}/40 text-white`}>
                             {getEventStyle(event.type).badge}
                           </span>
