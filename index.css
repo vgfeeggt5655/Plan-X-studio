@@ -2,7 +2,7 @@
 .splash-screen {
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
+  background: linear-gradient(135deg, #0f172a, #1e293b); /* خلفية راقية */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -10,44 +10,51 @@
 }
 
 /* النص */
-.typing-text {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  font-size: 7rem; /* حجم كبير */
-  font-weight: 900;
-  letter-spacing: 0.15em;
-  border-right: 6px solid #ffffff; /* كارسر */
-  white-space: nowrap;
-  overflow: hidden;
+.splash-text {
+  font-size: 9rem;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 0.2em;
+  position: relative;
+  animation: fadeZoom 2.5s ease-in-out forwards;
+}
+
+/* الخط المتحرك تحت الكلمة */
+.splash-text .underline {
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  height: 3px;
   width: 0;
-
-  color: #ffffff; /* أبيض */
-  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.25);
-
-  animation:
-    typing 3s steps(7, end) forwards,
-    blink 0.8s step-end infinite,
-    fadeIn 2s ease forwards,
-    fadeOutText 1s ease 4.5s forwards; /* يبدأ بعد 1.5 ثانية من نهاية الكتابة */
+  background: #38bdf8; /* أزرق فاتح */
+  animation: underlineGrow 1.5s ease-out forwards;
+  animation-delay: 0.5s;
 }
 
-/* حركة الكتابة */
-@keyframes typing {
-  from { width: 0 }
-  to { width: 7.5ch } /* مسافة زيادة بعد X */
+/* أنيميشن التكبير والاختفاء */
+@keyframes fadeZoom {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  80% {
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
-/* وميض الكارسر */
-@keyframes blink {
-  50% { border-color: transparent }
-}
-
-/* دخول ناعم */
-@keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
-}
-
-/* اختفاء النص */
-@keyframes fadeOutText {
-  to { opacity: 0; }
+/* أنيميشن الخط */
+@keyframes underlineGrow {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
 }
