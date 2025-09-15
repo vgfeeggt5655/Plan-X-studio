@@ -12,28 +12,28 @@
 /* النص */
 .typing-text {
   font-family: 'Segoe UI', Arial, sans-serif;
-  font-size: 5rem;
+  font-size: 7rem; /* حجم كبير */
   font-weight: 900;
-  letter-spacing: 0.12em;
-  border-right: 4px solid #ffffff;
+  letter-spacing: 0.15em;
+  border-right: 6px solid #ffffff; /* كارسر */
   white-space: nowrap;
   overflow: hidden;
   width: 0;
 
-  color: #ffffff; /* أبيض صريح */
+  color: #ffffff; /* أبيض */
   -webkit-text-stroke: 1px rgba(0, 0, 0, 0.25);
 
   animation:
-    typing 2s steps(6, end) forwards,
+    typing 3s steps(7, end) forwards,
     blink 0.8s step-end infinite,
     fadeIn 2s ease forwards,
-    fadeOutText 1s ease 3s forwards;
+    fadeOutText 1s ease 4.5s forwards; /* يبدأ بعد 1.5 ثانية من نهاية الكتابة */
 }
 
 /* حركة الكتابة */
 @keyframes typing {
   from { width: 0 }
-  to { width: 6ch }
+  to { width: 7.5ch } /* مسافة زيادة بعد X */
 }
 
 /* وميض الكارسر */
