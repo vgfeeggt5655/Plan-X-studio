@@ -1,56 +1,32 @@
 {
-  "2025-09-13": [
-    {
-      "type": "lecture",
-      "title": "مقدمة في الذكاء الاصطناعي",
-      "time": "09:00",
-      "location": "قاعة 101"
-    },
-    {
-      "type": "practical",
-      "title": "برمجة بايثون للمبتدئين",
-      "time": "11:00",
-      "location": "معمل 3A"
-    },
-    {
-      "type": "lecture",
-      "title": "هياكل البيانات",
-      "time": "13:00",
-      "location": "قاعة 205"
-    }
-  ],
   "2025-09-15": [
     {
-      "type": "exam",
-      "title": "امتحان رياضيات متقدمة",
-      "time": "10:00",
-      "location": "قاعة الامتحانات الكبرى"
+      "title": "Morning Lecture",
+      "time": "08:00 AM",
+      "location": "Auditorium A",
+      "description": "Introduction to cardiovascular physiology."
+    },
+    {
+      "title": "Lab Session",
+      "time": "02:00 PM",
+      "location": "Lab 3",
+      "description": "Dissection and anatomy practice."
     }
   ],
   "2025-09-16": [
     {
-      "type": "lecture",
-      "title": "أساسيات الشبكات",
-      "time": "09:00",
-      "location": "قاعة 101"
-    },
-    {
-      "type": "exam",
-      "title": "امتحان رياضيات متقدمة",
-      "time": "10:00",
-      "location": "قاعة الامتحانات الكبرى"
-    },
-    {
-      "type": "practical",
-      "title": "مقدمة في قواعد البيانات",
-      "time": "11:30",
-      "location": "معمل 4B"
+      "title": "Seminar",
+      "time": "11:00 AM",
+      "location": "Conference Room",
+      "description": "Latest updates in medical imaging."
     }
   ],
   "2025-09-18": [
     {
-      "type": "holiday",
-      "title": "يوم العطلة الرسمي"
+      "title": "Exam",
+      "time": "09:00 AM",
+      "location": "Main Hall",
+      "description": "Midterm examination covering Units 1–3."
     }
   ]
 }
