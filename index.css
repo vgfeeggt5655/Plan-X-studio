@@ -1,111 +1,51 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>موقع طبي</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        /* شاشة البداية: خلفية متدرجة هادئة */
-        .splash-screen {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, #1A4D2E, #28A745); /* درجات الأخضر الطبي */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            animation: fadeOut 1s forwards 4s; /* تختفي بعد 4 ثوانٍ */
-            font-family: 'Tajawal', sans-serif; /* خط عربي حديث وواضح */
-        }
+/* شاشة البداية */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeOut 1s ease 3s forwards;
+}
 
-        /* حركة التلاشي للخلفية */
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                visibility: hidden;
-            }
-        }
+/* نص Plan X */
+.typing-text {
+  color: #38bdf8;
+  font-size: 5rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  border-right: 4px solid #38bdf8;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 0;
+  text-shadow: 0 4px 14px rgba(56, 189, 248, 0.4);
+  animation:
+    typing 2s steps(6, end) forwards,
+    blink 0.8s step-end infinite,
+    scaleIn 2s ease forwards;
+}
 
-        /* نص ترحيبي مع تأثير الكتابة */
-        .typing-text {
-            color: #E8F9FD; /* أزرق فاتح جداً */
-            font-size: clamp(2rem, 8vw, 6rem); /* حجم متجاوب */
-            font-weight: 700; /* خط ثقيل للوضوح */
-            letter-spacing: 0.1em;
-            border-right: 4px solid #38B6FF; /* لون أزرق طبي للمؤشر */
-            white-space: nowrap;
-            overflow: hidden;
-            width: 0;
-            animation:
-                typing 3s steps(18, end) forwards,
-                blink 0.75s step-end infinite;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3); /* ظل خفيف للنص */
-        }
+/* أنيميشن الكتابة */
+@keyframes typing {
+  from { width: 0; }
+  to { width: 6ch; } /* Plan X */
+}
 
-        /* أنيميشن الكتابة */
-        @keyframes typing {
-            from {
-                width: 0;
-            }
-            to {
-                width: 18ch; /* عدد الحروف لعبارة "مرحبًا بك" */
-            }
-        }
+/* أنيميشن المؤشر */
+@keyframes blink {
+  from, to { border-color: transparent; }
+  50% { border-color: #38bdf8; }
+}
 
-        /* أنيميشن المؤشر: أزرق طبي */
-        @keyframes blink {
-            from, to {
-                border-color: transparent;
-            }
-            50% {
-                border-color: #38B6FF; /* لون المؤشر */
-            }
-        }
+/* أنيميشن تكبير + دخول سلس */
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0.7; }
+  to { transform: scale(1); opacity: 1; }
+}
 
-        /* محتوى الموقع الأساسي */
-        .main-content {
-            display: none; /* مخفي في البداية */
-            padding: 2rem;
-            text-align: center;
-            font-family: 'Tajawal', sans-serif;
-            opacity: 0;
-            animation: fadeIn 1s forwards 5s; /* يظهر بعد اختفاء شاشة البداية */
-        }
-
-        /* أنيميشن ظهور المحتوى */
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="splash-screen">
-        <h1 class="typing-text">مرحبًا بك في موقعنا</h1>
-    </div>
-
-    <div class="main-content">
-        <h2>موقعنا يوفر لك أفضل الخدمات الطبية</h2>
-        <p>اكتشف خدماتنا المتكاملة للعناية بصحتك.</p>
-    </div>
-    
-    <script>
-        // إخفاء شاشة البداية وإظهار المحتوى الرئيسي بعد انتهاء الأنيميشن
-        window.addEventListener('load', () => {
-            const splashScreen = document.querySelector('.splash-screen');
-            const mainContent = document.querySelector('.main-content');
-            
-            splashScreen.addEventListener('animationend', () => {
-                splashScreen.style.display = 'none';
-                mainContent.style.display = 'block';
-            });
-        });
-    </script>
-
-</body>
-</html>
+/* اختفاء الشاشة */
+@keyframes fadeOut {
+  to { opacity: 0; visibility: hidden; }
+}
