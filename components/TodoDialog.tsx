@@ -105,17 +105,27 @@ const TodoDialog: React.FC<TodoDialogProps> = ({ isOpen, onClose }) => {
 
         let todayTasks = data[todayStr] || [];
 
-        todayTasks = todayTasks.filter(task => {
+        
+        const now = new Date().getTime();
+        const twelveHoursInMs = 12 * 60 * 60 * 1000;
 
+        // Filter out completed tasks older than 12 hours from the server's data
+        const tasksToKeep = todayTasks.filter(task => {
           const taskDate = new Date(task.createdAt).toISOString().split('T')[0];
+          const taskAge = now - new Date(task.createdAt).getTime();
 
-          if (task.done && taskDate !== todayStr) return false;
-
-          return true;
-
+          // Condition to keep the task:
+          // 1. It's not completed OR
+          // 2. It is completed but is from today and not older than 12 hours
+          return !task.done || (taskDate === todayStr && taskAge < twelveHoursInMs);
         });
 
-        setTodos(todayTasks);
+        // Update the server with the filtered list, effectively deleting the old ones
+        if (tasksToKeep.length < todayTasks.length) {
+          await updateUserTodoList(user.id, { [todayStr]: tasksToKeep });
+        }
+
+        setTodos(tasksToKeep);
 
       } catch (error) {
 
