@@ -58,7 +58,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   };
 
   const totalTime = getTotalTime();
-  const progress = totalTime > 0 ? 1 - (timeLeft / totalTime) : 0;
+  const progress = totalTime > 0 ? (totalTime - timeLeft) / totalTime : 0;
 
   const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
   const seconds = (timeLeft % 60).toString().padStart(2, '0');
@@ -68,42 +68,42 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
       case 'work':
         return {
           title: 'Pomodoro',
-          color: '#FF6B6B',
-          secondaryColor: '#FF5252',
-          bgGradient: 'from-red-900/20 via-slate-900 to-slate-900',
-          glowColor: 'rgba(255, 107, 107, 0.5)',
+          color: '#6366F1', // أزرق يتناسب مع موقع PlanX
+          secondaryColor: '#818CF8',
+          bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
+          glowColor: 'rgba(99, 102, 241, 0.5)',
           description: 'Focus & Work',
-          ringColor: 'ring-red-500/30'
+          ringColor: 'ring-indigo-500/30'
         };
       case 'shortBreak':
         return {
           title: 'Short Break',
-          color: '#4ECDC4',
-          secondaryColor: '#26A69A',
-          bgGradient: 'from-teal-900/20 via-slate-900 to-slate-900',
-          glowColor: 'rgba(78, 205, 196, 0.5)',
+          color: '#10B981', // أخضر
+          secondaryColor: '#34D399',
+          bgGradient: 'from-emerald-900/20 via-gray-900 to-gray-900',
+          glowColor: 'rgba(16, 185, 129, 0.5)',
           description: 'Take a Break',
-          ringColor: 'ring-teal-500/30'
+          ringColor: 'ring-emerald-500/30'
         };
       case 'longBreak':
         return {
           title: 'Long Break',
-          color: '#45B7D1',
-          secondaryColor: '#29B6F6',
-          bgGradient: 'from-blue-900/20 via-slate-900 to-slate-900',
-          glowColor: 'rgba(69, 183, 209, 0.5)',
+          color: '#8B5CF6', // بنفسجي
+          secondaryColor: '#A78BFA',
+          bgGradient: 'from-purple-900/20 via-gray-900 to-gray-900',
+          glowColor: 'rgba(139, 92, 246, 0.5)',
           description: 'Long Rest',
-          ringColor: 'ring-blue-500/30'
+          ringColor: 'ring-purple-500/30'
         };
       default:
         return {
           title: 'Pomodoro',
-          color: '#FF6B6B',
-          secondaryColor: '#FF5252',
-          bgGradient: 'from-red-900/20 via-slate-900 to-slate-900',
-          glowColor: 'rgba(255, 107, 107, 0.5)',
+          color: '#6366F1',
+          secondaryColor: '#818CF8',
+          bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
+          glowColor: 'rgba(99, 102, 241, 0.5)',
           description: 'Focus & Work',
-          ringColor: 'ring-red-500/30'
+          ringColor: 'ring-indigo-500/30'
         };
     }
   };
@@ -142,16 +142,16 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   // حساب دائرة التقدم
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * progress;
+  const strokeDashoffset = circumference * (1 - progress);
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
-      <div className="absolute inset-0 bg-black/85 backdrop-blur-lg" onClick={handleClose}></div>
+      <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-lg" onClick={handleClose}></div>
       
-      <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-slate-700/30 p-0 w-[400px] min-h-[500px] overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95' : 'scale-100'}`}>
+      <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-gray-700/30 p-0 w-full max-w-md overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95' : 'scale-100'}`}>
         
         {/* التابات العلوية */}
-        <div className="flex bg-slate-800/50 backdrop-blur-sm border-b border-slate-700/30">
+        <div className="flex bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/30">
           {[
             { key: 'work', label: 'Pomodoro' },
             { key: 'shortBreak', label: 'Short Break' },
@@ -164,7 +164,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
               className={`flex-1 px-4 py-4 text-sm font-medium transition-all duration-300 relative ${
                 mode === tab.key
                   ? 'text-white'
-                  : `text-slate-400 hover:text-white ${running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/30'}`
+                  : `text-gray-400 hover:text-white ${running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/30'}`
               } ${index === 0 ? 'rounded-tl-3xl' : ''} ${index === 2 ? 'rounded-tr-3xl' : ''}`}
             >
               {tab.label}
@@ -184,14 +184,14 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           {/* العنوان والوصف */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2" style={{ color: config.color }}>{config.title}</h2>
-            <p className="text-slate-400 text-sm">{config.description}</p>
+            <p className="text-gray-400 text-sm">{config.description}</p>
           </div>
 
           {/* الدائرة المحسنة */}
           <div className="flex justify-center mb-8">
             <div className="relative w-64 h-64">
               {/* دائرة الخلفية */}
-              <div className="absolute inset-0 rounded-full border-8 border-slate-700/20"></div>
+              <div className="absolute inset-0 rounded-full border-8 border-gray-700/20"></div>
               
               {/* دائرة التقدم */}
               <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 200 200">
@@ -206,7 +206,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   cy="100"
                   r="90"
                   fill="none"
-                  stroke="url(#progress-gradient-work)"
+                  stroke={`url(#progress-gradient-${mode})`}
                   strokeWidth="8"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
@@ -223,11 +223,11 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 <div className="text-5xl font-mono font-bold text-white mb-2">
                   {minutes}:{seconds}
                 </div>
-                <div className="text-sm text-slate-400 mb-1">
+                <div className="text-sm text-gray-400 mb-1">
                   {Math.round(progress * 100)}% Complete
                 </div>
                 {running && (
-                  <div className="text-xs px-3 py-1 rounded-full bg-slate-700/50 text-slate-300 border border-slate-600/30 uppercase tracking-widest mt-2">
+                  <div className="text-xs px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 border border-gray-600/30 uppercase tracking-widest mt-2">
                     {mode === 'work' ? 'FOCUS TIME' : 'BREAK TIME'}
                   </div>
                 )}
@@ -277,7 +277,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 reset();
                 setSessionComplete(false);
               }}
-              className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
+              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -292,14 +292,14 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
               <button 
                 onClick={() => setShowCustomInput(true)}
                 disabled={running}
-                className={`text-sm px-6 py-2 rounded-xl border border-slate-600 text-slate-300 transition-all duration-200 font-medium ${
-                  running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/30 hover:border-slate-500 hover:text-white'
+                className={`text-sm px-6 py-2 rounded-xl border border-gray-600 text-gray-300 transition-all duration-200 font-medium ${
+                  running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/30 hover:border-gray-500 hover:text-white'
                 }`}
               >
                 ⚙️ Custom Timer
               </button>
             ) : (
-              <div className="flex gap-2 max-w-xs mx-auto bg-slate-800/50 p-3 rounded-xl border border-slate-700/30">
+              <div className="flex gap-2 max-w-xs mx-auto bg-gray-800/50 p-3 rounded-xl border border-gray-700/30">
                 <input 
                   type="number" 
                   min="1" 
@@ -307,12 +307,12 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   value={customTime} 
                   onChange={(e) => setCustomTime(e.target.value)} 
                   placeholder="Minutes (1-120)"
-                  className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 font-medium"
+                  className="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 font-medium"
                 />
                 <div className="flex gap-1">
                   <button 
                     onClick={applyCustomTime}
-                    className="px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-lg font-medium transition-all duration-200 shadow-lg flex items-center"
+                    className="px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-lg font-medium transition-all duration-200 shadow-lg flex items-center"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -323,7 +323,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                       setShowCustomInput(false);
                       setCustomTime('');
                     }}
-                    className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all duration-200 flex items-center"
+                    className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 flex items-center"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -338,7 +338,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
         {/* زر الإغلاق */}
         <button 
           onClick={handleClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-700/50 hover:bg-slate-600/70 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-200 z-10"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-700/50 hover:bg-gray-600/70 flex items-center justify-center text-gray-400 hover:text-white transition-all duration-200 z-10"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
