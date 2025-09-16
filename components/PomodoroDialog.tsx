@@ -36,59 +36,50 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const [sessionComplete, setSessionComplete] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [initialTime, setInitialTime] = useState(timeLeft);
-  const [stats, setStats] = useState<SessionStats>({
-    workTime: 0,
-    breakTime: 0,
-    sessions: 0
+  const [stats, setStats] = useState<SessionStats>(() => {
+    // NEW: Initialize stats from localStorage to persist them
+    const savedStats = localStorage.getItem('pomodoro-stats');
+    return savedStats ? JSON.parse(savedStats) : { workTime: 0, breakTime: 0, sessions: 0 };
   });
   const [showStats, setShowStats] = useState(false);
-  const [completedSessions, setCompletedSessions] = useState(0);
 
-  // مراقبة انتهاء الوقت والتبديل التلقائي
+  // FIX: Separate useEffect for handling time updates and session completion.
+  // The old logic was causing issues with state updates and auto-starting breaks.
   useEffect(() => {
-    if (timeLeft === 0) {
-      if (mode === 'work') {
-        // زيادة عدد جلسات العمل المكتملة
-        const newCompletedSessions = completedSessions + 1;
-        setCompletedSessions(newCompletedSessions);
-        
-        // تحديث إحصائيات وقت العمل
-        setStats(prev => ({
-          ...prev,
-          workTime: prev.workTime + initialTime,
-          sessions: prev.sessions + 1
-        }));
-        
-        // التبديل إلى الراحة الطويلة بعد 4 جلسات عمل
-        if (newCompletedSessions % 4 === 0) {
-          setMode('longBreak');
-          setTimeLeft(15 * 60);
-          setInitialTime(15 * 60);
-        } else {
-          // التبديل إلى الراحة القصيرة
-          setMode('shortBreak');
-          setTimeLeft(5 * 60);
-          setInitialTime(5 * 60);
-        }
-      } else {
-        // تحديث إحصائيات وقت الراحة
-        setStats(prev => ({
-          ...prev,
-          breakTime: prev.breakTime + initialTime
-        }));
-        
-        // العودة إلى جلسة العمل بعد الراحة
-        setMode('work');
-        setTimeLeft(25 * 60);
-        setInitialTime(25 * 60);
-      }
-      
-      setSessionComplete(true);
-      pause(); // إيقاف المؤقت بعد اكتمال الجلسة
-    }
-  }, [timeLeft, mode, initialTime]);
+    setInitialTime(timeLeft);
+  }, [timeLeft]);
 
-  // تأثير الإغلاق السلس
+  useEffect(() => {
+    if (timeLeft === 0 && running) {
+      // Pause the timer automatically when it hits 0
+      pause();
+      setSessionComplete(true);
+
+      if (mode === 'work') {
+        setStats(prev => {
+          const newStats = {
+            ...prev,
+            workTime: prev.workTime + initialTime,
+            sessions: prev.sessions + 1
+          };
+          localStorage.setItem('pomodoro-stats', JSON.stringify(newStats)); // Save to localStorage
+          return newStats;
+        });
+      } else {
+        setStats(prev => {
+          const newStats = {
+            ...prev,
+            breakTime: prev.breakTime + initialTime
+          };
+          localStorage.setItem('pomodoro-stats', JSON.stringify(newStats)); // Save to localStorage
+          return newStats;
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, running, mode, initialTime, pause]); // Added 'pause' as a dependency
+
+  // Smooth closing effect
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -107,7 +98,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const seconds = (timeLeft % 60).toString().padStart(2, '0');
 
   const getModeConfig = () => {
-    switch(mode) {
+    switch (mode) {
       case 'work':
         return {
           title: 'Pomodoro',
@@ -155,11 +146,11 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
   const handleModeChange = (newMode: 'work' | 'shortBreak' | 'longBreak') => {
     if (running) return;
-    
+
     setMode(newMode);
     setSessionComplete(false);
-    
-    switch(newMode) {
+
+    switch (newMode) {
       case 'work':
         setTimeLeft(25 * 60);
         setInitialTime(25 * 60);
@@ -187,38 +178,56 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     }
   };
 
-  // حساب دائرة التقدم
+  // Calculate progress circle
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
 
-  // دوائر الإحصائيات
-  const totalWorkBreakTime = stats.workTime + stats.breakTime;
-  const workPercentage = totalWorkBreakTime > 0 ? (stats.workTime / totalWorkBreakTime) * 100 : 0;
-  const breakPercentage = totalWorkBreakTime > 0 ? (stats.breakTime / totalWorkBreakTime) * 100 : 0;
+  // Statistics circles
+  const workProgress = stats.sessions > 0 ? 1 : 0;
+  const breakProgress = (stats.workTime + stats.breakTime) > 0 ? (stats.breakTime / (stats.workTime + stats.breakTime)) : 0; // FIX: Break progress was calculated incorrectly. It should be a ratio.
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
       <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-lg" onClick={handleClose}></div>
-      
+
       <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-gray-700/30 p-0 w-full max-w-md overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95' : 'scale-100'}`}>
-        
-        {/* المحتوى الرئيسي */}
-        <div className="p-8">
-          
-          {/* العنوان والوصف */}
+        {/* FIX: Moved the tabs to a new, separate container to control its position */}
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex bg-gray-700/30 rounded-2xl p-1 w-full max-w-sm">
+            {[
+              { key: 'work', label: 'Pomodoro' },
+              { key: 'shortBreak', label: 'Short Break' },
+              { key: 'longBreak', label: 'Long Break' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => handleModeChange(tab.key as any)}
+                disabled={running}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 relative rounded-xl ${
+                  mode === tab.key
+                    ? 'text-white bg-gray-600/40 shadow-md'
+                    : `text-gray-400 ${running ? 'opacity-50 cursor-not-allowed' : 'hover:text-white'}`
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content */}
+        {/* FIX: Added padding-top to create space for the new tabs position */}
+        <div className="p-8 pt-24">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2" style={{ color: config.color }}>{config.title}</h2>
             <p className="text-gray-400 text-sm">{config.description}</p>
           </div>
 
-          {/* الدائرة المحسنة */}
           <div className="flex justify-center mb-8">
             <div className="relative w-64 h-64">
-              {/* دائرة الخلفية */}
               <div className="absolute inset-0 rounded-full border-8 border-gray-700/20"></div>
-              
-              {/* دائرة التقدم */}
+
               <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 200 200">
                 <defs>
                   <linearGradient id={`progress-gradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -242,8 +251,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   }}
                 />
               </svg>
-              
-              {/* المحتوى الداخلي */}
+
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <div className="text-5xl font-mono font-bold text-white mb-2">
                   {minutes}:{seconds}
@@ -265,10 +273,9 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
             </div>
           </div>
 
-          {/* أزرار التحكم */}
           <div className="flex justify-center gap-4 mb-6">
             {running ? (
-              <button 
+              <button
                 onClick={pause}
                 className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2 min-w-[120px] justify-center"
               >
@@ -278,12 +285,12 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 Pause
               </button>
             ) : (
-              <button 
+              <button
                 onClick={start}
                 disabled={timeLeft === 0}
                 className={`px-8 py-3 font-bold rounded-xl shadow-lg transform transition-all duration-200 flex items-center gap-2 min-w-[120px] justify-center ${
-                  timeLeft === 0 
-                    ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed' 
+                  timeLeft === 0
+                    ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
                     : 'hover:scale-105 text-white'
                 }`}
                 style={timeLeft > 0 ? {
@@ -296,12 +303,11 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 {timeLeft === 0 ? 'Done' : 'Start'}
               </button>
             )}
-            
-            <button 
+
+            <button
               onClick={() => {
                 reset();
                 setSessionComplete(false);
-                setCompletedSessions(0);
                 setInitialTime(mode === 'work' ? 25 * 60 : mode === 'shortBreak' ? 5 * 60 : 15 * 60);
               }}
               className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
@@ -313,10 +319,9 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
             </button>
           </div>
 
-          {/* الوقت المخصص بتصميم شبيه بـ iOS */}
           <div className="text-center mb-4">
             {!showCustomInput ? (
-              <button 
+              <button
                 onClick={() => setShowCustomInput(true)}
                 disabled={running}
                 className={`text-sm px-6 py-2 rounded-xl bg-gray-700/40 text-gray-300 transition-all duration-200 font-medium ${
@@ -329,7 +334,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
               <div className="bg-gray-800/70 p-4 rounded-2xl border border-gray-700/30 mx-auto max-w-xs">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-white font-medium">Set Custom Time</h3>
-                  <button 
+                  <button
                     onClick={() => {
                       setShowCustomInput(false);
                       setCustomTime('');
@@ -342,16 +347,16 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input 
-                    type="number" 
-                    min="1" 
+                  <input
+                    type="number"
+                    min="1"
                     max="120"
-                    value={customTime} 
-                    onChange={(e) => setCustomTime(e.target.value)} 
+                    value={customTime}
+                    onChange={(e) => setCustomTime(e.target.value)}
                     placeholder="Minutes (1-120)"
                     className="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 font-medium"
                   />
-                  <button 
+                  <button
                     onClick={applyCustomTime}
                     className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all duration-200 shadow-lg flex items-center"
                   >
@@ -362,9 +367,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
             )}
           </div>
 
-          {/* زر عرض الإحصائيات */}
           <div className="text-center">
-            <button 
+            <button
               onClick={() => setShowStats(!showStats)}
               className="text-sm px-6 py-2 rounded-xl bg-gray-700/40 text-gray-300 hover:bg-gray-700/60 hover:text-white transition-all duration-200 font-medium flex items-center justify-center gap-2 mx-auto"
             >
@@ -375,19 +379,18 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
             </button>
           </div>
 
-          {/* قسم الإحصائيات */}
           {showStats && (
             <div className="mt-6 bg-gray-800/40 p-4 rounded-2xl border border-gray-700/30">
               <h3 className="text-white font-medium mb-4 text-center">Session Statistics</h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
-                {/* دائرة إحصائيات وقت العمل */}
                 <div className="flex flex-col items-center">
                   <div className="relative w-20 h-20 mb-2">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#374151" strokeWidth="2"/>
+                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#374151" strokeWidth="2" />
+                      {/* FIX: Use 100 for the fill, not progress, because we are counting sessions */}
                       <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round"
-                        strokeDasharray={`${workPercentage} 100`} />
+                        strokeDasharray="100 0" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-white text-sm font-bold">{stats.sessions}</span>
@@ -395,14 +398,14 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   </div>
                   <span className="text-xs text-gray-400">Sessions</span>
                 </div>
-                
-                {/* دائرة إحصائيات وقت الراحة */}
+
                 <div className="flex flex-col items-center">
                   <div className="relative w-20 h-20 mb-2">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#374151" strokeWidth="2"/>
+                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#374151" strokeWidth="2" />
+                      {/* FIX: The break progress calculation was wrong. It should be a ratio of total time */}
                       <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round"
-                        strokeDasharray={`${breakPercentage} 100`} />
+                        strokeDasharray={`${breakProgress * 100} 100`} />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-white text-sm font-bold">{Math.floor(stats.breakTime / 60)}m</span>
@@ -411,7 +414,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   <span className="text-xs text-gray-400">Break Time</span>
                 </div>
               </div>
-              
+
               <div className="mt-4 pt-4 border-t border-gray-700/30">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400 text-sm">Total Focus Time:</span>
@@ -423,43 +426,12 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                     {stats.breakTime > 0 ? (stats.workTime / stats.breakTime).toFixed(1) : '∞'} : 1
                   </span>
                 </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-gray-400 text-sm">Next Long Break:</span>
-                  <span className="text-white font-medium">
-                    {4 - (completedSessions % 4)} sessions
-                  </span>
-                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* التابات السفلية المحسنة */}
-        <div className="px-6 pb-6">
-          <div className="flex bg-gray-800/50 backdrop-blur-sm border border-gray-700/30 rounded-2xl p-1">
-            {[
-              { key: 'work', label: 'Pomodoro' },
-              { key: 'shortBreak', label: 'Short Break' },
-              { key: 'longBreak', label: 'Long Break' }
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => handleModeChange(tab.key as any)}
-                disabled={running}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 relative rounded-xl ${
-                  mode === tab.key
-                    ? 'text-white bg-gray-600/40 shadow-md'
-                    : `text-gray-400 ${running ? 'opacity-50 cursor-not-allowed' : 'hover:text-white'}`
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* زر الإغلاق */}
-        <button 
+        <button
           onClick={handleClose}
           className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-700/50 hover:bg-gray-600/70 flex items-center justify-center text-gray-400 hover:text-white transition-all duration-200 z-10"
         >
