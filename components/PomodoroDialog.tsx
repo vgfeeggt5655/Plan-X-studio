@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-interface PomodoroDialogProps {
+interface PomodoroTimerProps {
   open: boolean;
   onClose: () => void;
   timeLeft: number;
@@ -13,7 +13,7 @@ interface PomodoroDialogProps {
   setTimeLeft: (time: number) => void;
 }
 
-const PomodoroDialog: React.FC<PomodoroDialogProps> = ({
+const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   open,
   onClose,
   timeLeft,
@@ -26,236 +26,320 @@ const PomodoroDialog: React.FC<PomodoroDialogProps> = ({
   setTimeLeft
 }) => {
   const [customTime, setCustomTime] = useState('');
-  const [volume, setVolume] = useState(50);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [sessionComplete, setSessionComplete] = useState(false);
+
+  // مراقبة انتهاء الوقت
+  useEffect(() => {
+    if (timeLeft === 0 && !sessionComplete) {
+      setSessionComplete(true);
+      // هنا يمكن إضافة صوت التنبيه
+    }
+  }, [timeLeft, sessionComplete]);
 
   if (!open) return null;
 
-  const totalTime = mode === 'work' ? 25*60 : mode === 'shortBreak' ? 5*60 : 15*60;
-  const progress = 1 - timeLeft / totalTime;
+  const getTotalTime = () => {
+    switch(mode) {
+      case 'work': return 25 * 60;
+      case 'shortBreak': return 5 * 60;
+      case 'longBreak': return 15 * 60;
+      default: return 25 * 60;
+    }
+  };
 
-  const minutes = Math.floor(timeLeft / 60).toString().padStart(2,'0');
-  const seconds = (timeLeft % 60).toString().padStart(2,'0');
+  const totalTime = getTotalTime();
+  const progress = totalTime > 0 ? (totalTime - timeLeft) / totalTime : 0;
 
-  // تحديد الألوان حسب الوضع
-  const getModeColors = () => {
+  const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+  const seconds = (timeLeft % 60).toString().padStart(2, '0');
+
+  const getModeConfig = () => {
     switch(mode) {
       case 'work':
         return {
-          primary: '#ef4444', // أحمر للعمل
-          secondary: '#fca5a5',
-          bg: 'from-red-50 to-red-100',
-          gradient: 'from-red-500 to-red-600'
+          title: 'Work Session',
+          color: '#00D4AA', // سايان يتماشى مع الموقع
+          bgColor: 'from-slate-800 to-slate-900',
+          glowColor: 'rgba(0, 212, 170, 0.3)',
+          description: 'Focus time - Stay productive!',
+          icon: '💼'
         };
       case 'shortBreak':
         return {
-          primary: '#10b981', // أخضر للاستراحة القصيرة
-          secondary: '#86efac',
-          bg: 'from-green-50 to-green-100',
-          gradient: 'from-green-500 to-green-600'
+          title: 'Short Break',
+          color: '#60A5FA', // أزرق فاتح
+          bgColor: 'from-blue-900/50 to-slate-900',
+          glowColor: 'rgba(96, 165, 250, 0.3)',
+          description: 'Take a quick rest',
+          icon: '☕'
         };
       case 'longBreak':
         return {
-          primary: '#3b82f6', // أزرق للاستراحة الطويلة
-          secondary: '#93c5fd',
-          bg: 'from-blue-50 to-blue-100',
-          gradient: 'from-blue-500 to-blue-600'
+          title: 'Long Break',
+          color: '#A78BFA', // بنفسجي
+          bgColor: 'from-purple-900/50 to-slate-900',
+          glowColor: 'rgba(167, 139, 250, 0.3)',
+          description: 'Relax and recharge',
+          icon: '🛋️'
         };
       default:
         return {
-          primary: '#6b7280',
-          secondary: '#d1d5db',
-          bg: 'from-gray-50 to-gray-100',
-          gradient: 'from-gray-500 to-gray-600'
+          title: 'Pomodoro',
+          color: '#00D4AA',
+          bgColor: 'from-slate-800 to-slate-900',
+          glowColor: 'rgba(0, 212, 170, 0.3)',
+          description: 'Get ready to focus',
+          icon: '🍅'
         };
     }
   };
 
-  const colors = getModeColors();
+  const config = getModeConfig();
 
   const handleModeChange = (newMode: 'work' | 'shortBreak' | 'longBreak') => {
+    if (running) return; // منع التغيير أثناء التشغيل
+    
     setMode(newMode);
-    if(newMode === 'work') setTimeLeft(25*60);
-    if(newMode === 'shortBreak') setTimeLeft(5*60);
-    if(newMode === 'longBreak') setTimeLeft(15*60);
+    setSessionComplete(false);
+    
+    // تعيين الوقت الافتراضي للوضع الجديد لكن لا نبدأ العد التلقائياً
+    switch(newMode) {
+      case 'work':
+        setTimeLeft(25 * 60);
+        break;
+      case 'shortBreak':
+        setTimeLeft(5 * 60);
+        break;
+      case 'longBreak':
+        setTimeLeft(15 * 60);
+        break;
+    }
   };
 
   const applyCustomTime = () => {
     const minutesNum = parseInt(customTime);
-    if(!isNaN(minutesNum) && minutesNum > 0){
+    if (!isNaN(minutesNum) && minutesNum > 0 && minutesNum <= 120) {
       setTimeLeft(minutesNum * 60);
       setCustomTime('');
+      setShowCustomInput(false);
+      setSessionComplete(false);
     }
   };
 
-  // حساب نسبة التقدم للدائرة
-  const circumference = 2 * Math.PI * 70;
-  const strokeDashoffset = circumference * (1 - progress);
+  // حساب نسبة الدائرة
+  const radius = 85;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress * circumference);
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50">
-      <div className={`bg-gradient-to-br ${colors.bg} rounded-2xl p-8 w-96 shadow-2xl relative border border-white/20`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* خلفية مظلمة مع تأثير blur */}
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose}></div>
+      
+      {/* المكون الرئيسي */}
+      <div className={`relative z-10 bg-gradient-to-br ${config.bgColor} rounded-3xl shadow-2xl border border-slate-700/50 p-8 w-[420px]`}>
         
-        {/* زر الإغلاق */}
-        <button 
-          onClick={onClose} 
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200"
-        >
-          ✕
-        </button>
-
-        {/* زر الإعدادات */}
-        <button 
-          onClick={() => setShowSettings(!showSettings)} 
-          className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-all duration-200"
-        >
-          ⚙️
-        </button>
-
-        {/* العنوان */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-1">Pomodoro Timer</h2>
-          <p className="text-sm text-gray-600 capitalize">{mode.replace(/([A-Z])/g, ' $1').trim()} Session</p>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">{config.icon}</div>
+            <div>
+              <h2 className="text-xl font-bold text-white">{config.title}</h2>
+              <p className="text-sm text-slate-400">{config.description}</p>
+            </div>
+          </div>
+          
+          <button 
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-slate-700/50 hover:bg-slate-600/50 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-200"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
-        {/* الدائرة المحسنة */}
-        <div className="relative w-48 h-48 mx-auto mb-8">
-          <svg className="w-full h-full -rotate-90 drop-shadow-lg">
-            {/* دائرة الخلفية */}
-            <circle
-              cx="50%" 
-              cy="50%" 
-              r="70"
-              stroke="#e5e7eb"
-              strokeWidth="8"
-              fill="none"
-              className="opacity-30"
-            />
-            {/* دائرة التقدم */}
-            <circle
-              cx="50%" 
-              cy="50%" 
-              r="70"
-              stroke={colors.primary}
-              strokeWidth="8"
-              fill="none"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="transition-all duration-1000 ease-in-out"
-              style={{
-                filter: 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.4))'
-              }}
-            />
-          </svg>
-          
-          {/* العدد الزمني */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-4xl font-mono font-bold text-gray-800 mb-1">
-              {minutes}:{seconds}
-            </div>
-            <div className="text-xs text-gray-500 uppercase tracking-wider">
-              {Math.round(progress * 100)}% Complete
+        {/* الدائرة الاحترافية */}
+        <div className="flex justify-center mb-8">
+          <div className="relative">
+            <svg width="200" height="200" className="transform -rotate-90">
+              {/* دائرة الخلفية */}
+              <circle
+                cx="100"
+                cy="100"
+                r={radius}
+                stroke="rgba(148, 163, 184, 0.2)"
+                strokeWidth="8"
+                fill="none"
+              />
+              
+              {/* دائرة التقدم مع التدرج */}
+              <defs>
+                <linearGradient id={`gradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor={config.color} stopOpacity="1" />
+                  <stop offset="50%" stopColor={config.color} stopOpacity="0.8" />
+                  <stop offset="100%" stopColor={config.color} stopOpacity="0.6" />
+                </linearGradient>
+                <filter id={`glow-${mode}`}>
+                  <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              <circle
+                cx="100"
+                cy="100"
+                r={radius}
+                stroke={`url(#gradient-${mode})`}
+                strokeWidth="8"
+                fill="none"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                filter={`url(#glow-${mode})`}
+                className="transition-all duration-1000 ease-out"
+              />
+            </svg>
+            
+            {/* المحتوى الداخلي */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="text-4xl font-mono font-bold text-white mb-1">
+                {minutes}:{seconds}
+              </div>
+              <div className="text-xs text-slate-400 uppercase tracking-wider mb-2">
+                {Math.round(progress * 100)}% Complete
+              </div>
+              {sessionComplete && (
+                <div className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  Session Complete! 🎉
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* أزرار التحكم */}
-        <div className="flex justify-center gap-4 mb-6">
+        <div className="flex justify-center gap-4 mb-8">
           {running ? (
             <button 
-              onClick={pause} 
-              className="px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 rounded-xl text-white font-semibold hover:from-amber-500 hover:to-amber-600 transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center gap-2"
+              onClick={pause}
+              className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
             >
-              ⏸️ Pause
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              Pause
             </button>
           ) : (
             <button 
-              onClick={start} 
-              className={`px-6 py-3 bg-gradient-to-r ${colors.gradient} rounded-xl text-white font-semibold hover:scale-105 transform transition-all duration-200 shadow-lg flex items-center gap-2`}
+              onClick={start}
+              disabled={timeLeft === 0}
+              className={`px-8 py-3 font-semibold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2 ${
+                timeLeft === 0 
+                  ? 'bg-gray-500/50 text-gray-400 cursor-not-allowed' 
+                  : `bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white`
+              }`}
             >
-              ▶️ Start
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+              </svg>
+              {timeLeft === 0 ? 'Complete' : 'Start'}
             </button>
           )}
+          
           <button 
-            onClick={reset} 
-            className="px-6 py-3 bg-gradient-to-r from-slate-400 to-slate-500 rounded-xl text-white font-semibold hover:from-slate-500 hover:to-slate-600 transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center gap-2"
+            onClick={() => {
+              reset();
+              setSessionComplete(false);
+            }}
+            className="px-6 py-3 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
           >
-            🔄 Reset
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Reset
           </button>
         </div>
 
-        {/* اختيار نوع الجلسة */}
-        <div className="flex gap-2 mb-6">
+        {/* اختيار أنواع الجلسات */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
           {[
-            { key: 'work', label: 'Work', icon: '💼', time: '25 min' },
-            { key: 'shortBreak', label: 'Short Break', icon: '☕', time: '5 min' },
-            { key: 'longBreak', label: 'Long Break', icon: '🛋️', time: '15 min' }
+            { key: 'work', label: 'Work', time: '25m', icon: '💼' },
+            { key: 'shortBreak', label: 'Short Break', time: '5m', icon: '☕' },
+            { key: 'longBreak', label: 'Long Break', time: '15m', icon: '🛋️' }
           ].map((item) => (
             <button 
               key={item.key}
               onClick={() => handleModeChange(item.key as any)}
-              className={`flex-1 px-3 py-2 rounded-lg font-medium transition-all duration-200 text-center ${
-                mode === item.key 
-                  ? `bg-gradient-to-r ${colors.gradient} text-white shadow-lg transform scale-105` 
-                  : 'bg-white/50 text-gray-700 hover:bg-white/70'
+              disabled={running}
+              className={`p-3 rounded-xl font-medium transition-all duration-200 border ${
+                mode === item.key
+                  ? `border-[${config.color}] bg-gradient-to-br from-slate-700 to-slate-800 text-white shadow-lg`
+                  : `border-slate-600 bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 ${running ? 'opacity-50 cursor-not-allowed' : 'hover:border-slate-500'}`
               }`}
             >
-              <div className="text-sm">{item.icon}</div>
-              <div className="text-xs font-semibold">{item.label}</div>
+              <div className="text-lg mb-1">{item.icon}</div>
+              <div className="text-sm font-semibold">{item.label}</div>
               <div className="text-xs opacity-75">{item.time}</div>
             </button>
           ))}
         </div>
 
         {/* الوقت المخصص */}
-        <div className="flex gap-2 mb-4">
-          <div className="flex-1">
-            <input 
-              type="number" 
-              min={1} 
-              max={120}
-              value={customTime} 
-              onChange={(e) => setCustomTime(e.target.value)} 
-              placeholder="Custom minutes" 
-              className="w-full p-3 rounded-lg border border-gray-200 bg-white/70 backdrop-blur-sm text-center font-medium placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-          <button 
-            onClick={applyCustomTime} 
-            className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg font-medium"
-          >
-            Set ⚡
-          </button>
-        </div>
-
-        {/* الإعدادات الإضافية */}
-        {showSettings && (
-          <div className="bg-white/50 rounded-lg p-4 backdrop-blur-sm border border-white/20">
-            <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              🔧 Settings
-            </h4>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">🔊 Volume:</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={volume}
-                onChange={(e) => setVolume(parseInt(e.target.value))}
-                className="flex-1"
+        <div className="text-center">
+          {!showCustomInput ? (
+            <button 
+              onClick={() => setShowCustomInput(true)}
+              disabled={running}
+              className={`text-sm px-4 py-2 rounded-lg border border-slate-600 hover:border-slate-500 text-slate-300 transition-all duration-200 ${
+                running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/30'
+              }`}
+            >
+              ⚙️ Custom Time
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <input 
+                type="number" 
+                min="1" 
+                max="120"
+                value={customTime} 
+                onChange={(e) => setCustomTime(e.target.value)} 
+                placeholder="Minutes"
+                className="flex-1 px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-400 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400"
               />
-              <span className="text-sm text-gray-600 w-10">{volume}%</span>
+              <button 
+                onClick={applyCustomTime}
+                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-lg font-medium transition-all duration-200"
+              >
+                Set
+              </button>
+              <button 
+                onClick={() => {
+                  setShowCustomInput(false);
+                  setCustomTime('');
+                }}
+                className="px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-all duration-200"
+              >
+                ✕
+              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* شريط التقدم السفلي */}
         <div className="mt-6">
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
             <div 
-              className={`h-full bg-gradient-to-r ${colors.gradient} transition-all duration-1000 ease-out rounded-full`}
-              style={{ width: `${progress * 100}%` }}
+              className="h-full bg-gradient-to-r transition-all duration-1000 ease-out rounded-full"
+              style={{
+                width: `${progress * 100}%`,
+                background: `linear-gradient(90deg, ${config.color}80, ${config.color})`
+              }}
             ></div>
           </div>
         </div>
@@ -264,4 +348,4 @@ const PomodoroDialog: React.FC<PomodoroDialogProps> = ({
   );
 };
 
-export default PomodoroDialog;
+export default PomodoroTimer;
