@@ -13,6 +13,12 @@ interface PomodoroTimerProps {
   setTimeLeft: (time: number) => void;
 }
 
+interface SessionStats {
+  workTime: number;
+  breakTime: number;
+  sessions: number;
+}
+
 const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   open,
   onClose,
@@ -29,21 +35,34 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [initialTime, setInitialTime] = useState(timeLeft); // تخزين الوقت الإجمالي
+  const [initialTime, setInitialTime] = useState(timeLeft);
+  const [stats, setStats] = useState<SessionStats>({
+    workTime: 0,
+    breakTime: 0,
+    sessions: 0
+  });
+  const [showStats, setShowStats] = useState(false);
 
   // مراقبة انتهاء الوقت
   useEffect(() => {
     if (timeLeft === 0 && !sessionComplete) {
       setSessionComplete(true);
+      if (mode === 'work') {
+        // تحديث الإحصائيات عند انتهاء جلسة العمل
+        setStats(prev => ({
+          ...prev,
+          workTime: prev.workTime + initialTime,
+          sessions: prev.sessions + 1
+        }));
+      } else {
+        // تحديث الإحصائيات عند انتهاء جلسة الراحة
+        setStats(prev => ({
+          ...prev,
+          breakTime: prev.breakTime + initialTime
+        }));
+      }
     }
-  }, [timeLeft, sessionComplete]);
-
-  // تحديث الوقت الإجمالي عند تغيير الوضع أو الوقت المخصص
-  useEffect(() => {
-    if (!running) {
-      setInitialTime(timeLeft);
-    }
-  }, [mode, timeLeft, running]);
+  }, [timeLeft, sessionComplete, mode, initialTime]);
 
   // تأثير الإغلاق السلس
   const handleClose = () => {
@@ -51,6 +70,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     setTimeout(() => {
       onClose();
       setIsClosing(false);
+      setShowStats(false);
     }, 300);
   };
 
@@ -148,38 +168,38 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
 
+  // دوائر الإحصائيات
+  const workProgress = stats.sessions > 0 ? 1 : 0;
+  const breakProgress = stats.sessions > 0 ? stats.breakTime / (stats.workTime + stats.breakTime) : 0;
+
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
       <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-lg" onClick={handleClose}></div>
       
       <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-gray-700/30 p-0 w-full max-w-md overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95' : 'scale-100'}`}>
         
-        {/* التابات العلوية */}
-        <div className="flex bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/30">
-          {[
-            { key: 'work', label: 'Pomodoro' },
-            { key: 'shortBreak', label: 'Short Break' },
-            { key: 'longBreak', label: 'Long Break' }
-          ].map((tab, index) => (
-            <button
-              key={tab.key}
-              onClick={() => handleModeChange(tab.key as any)}
-              disabled={running}
-              className={`flex-1 px-4 py-4 text-sm font-medium transition-all duration-300 relative ${
-                mode === tab.key
-                  ? 'text-white'
-                  : `text-gray-400 hover:text-white ${running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/30'}`
-              } ${index === 0 ? 'rounded-tl-3xl' : ''} ${index === 2 ? 'rounded-tr-3xl' : ''}`}
-            >
-              {tab.label}
-              {mode === tab.key && (
-                <div 
-                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-1 rounded-full transition-all duration-300"
-                  style={{ backgroundColor: config.color }}
-                ></div>
-              )}
-            </button>
-          ))}
+        {/* التابات العلوية المحسنة */}
+        <div className="flex bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/30 px-2 pt-2">
+          <div className="flex bg-gray-700/30 rounded-2xl p-1 w-full">
+            {[
+              { key: 'work', label: 'Pomodoro' },
+              { key: 'shortBreak', label: 'Short Break' },
+              { key: 'longBreak', label: 'Long Break' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => handleModeChange(tab.key as any)}
+                disabled={running}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 relative rounded-xl ${
+                  mode === tab.key
+                    ? 'text-white bg-gray-600/40 shadow-md'
+                    : `text-gray-400 ${running ? 'opacity-50 cursor-not-allowed' : 'hover:text-white'}`
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* المحتوى الرئيسي */}
@@ -291,53 +311,119 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
             </button>
           </div>
 
-          {/* الوقت المخصص */}
-          <div className="text-center">
+          {/* الوقت المخصص بتصميم شبيه بـ iOS */}
+          <div className="text-center mb-4">
             {!showCustomInput ? (
               <button 
                 onClick={() => setShowCustomInput(true)}
                 disabled={running}
-                className={`text-sm px-6 py-2 rounded-xl border border-gray-600 text-gray-300 transition-all duration-200 font-medium ${
-                  running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/30 hover:border-gray-500 hover:text-white'
+                className={`text-sm px-6 py-2 rounded-xl bg-gray-700/40 text-gray-300 transition-all duration-200 font-medium ${
+                  running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/60 hover:text-white'
                 }`}
               >
-                ⚙️ Custom Timer
+                ⚙️ Custom Time
               </button>
             ) : (
-              <div className="flex gap-2 max-w-xs mx-auto bg-gray-800/50 p-3 rounded-xl border border-gray-700/30">
-                <input 
-                  type="number" 
-                  min="1" 
-                  max="120"
-                  value={customTime} 
-                  onChange={(e) => setCustomTime(e.target.value)} 
-                  placeholder="Minutes (1-120)"
-                  className="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 font-medium"
-                />
-                <div className="flex gap-1">
-                  <button 
-                    onClick={applyCustomTime}
-                    className="px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-lg font-medium transition-all duration-200 shadow-lg flex items-center"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+              <div className="bg-gray-800/70 p-4 rounded-2xl border border-gray-700/30 mx-auto max-w-xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-white font-medium">Set Custom Time</h3>
                   <button 
                     onClick={() => {
                       setShowCustomInput(false);
                       setCustomTime('');
                     }}
-                    className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 flex items-center"
+                    className="text-gray-400 hover:text-white"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="120"
+                    value={customTime} 
+                    onChange={(e) => setCustomTime(e.target.value)} 
+                    placeholder="Minutes (1-120)"
+                    className="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 font-medium"
+                  />
+                  <button 
+                    onClick={applyCustomTime}
+                    className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all duration-200 shadow-lg flex items-center"
+                  >
+                    Set
                   </button>
                 </div>
               </div>
             )}
           </div>
+
+          {/* زر عرض الإحصائيات */}
+          <div className="text-center">
+            <button 
+              onClick={() => setShowStats(!showStats)}
+              className="text-sm px-6 py-2 rounded-xl bg-gray-700/40 text-gray-300 hover:bg-gray-700/60 hover:text-white transition-all duration-200 font-medium flex items-center justify-center gap-2 mx-auto"
+            >
+              {showStats ? 'Hide Stats' : 'Show Stats'}
+              <svg className={`w-4 h-4 transition-transform ${showStats ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* قسم الإحصائيات */}
+          {showStats && (
+            <div className="mt-6 bg-gray-800/40 p-4 rounded-2xl border border-gray-700/30">
+              <h3 className="text-white font-medium mb-4 text-center">Session Statistics</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {/* دائرة إحصائيات وقت العمل */}
+                <div className="flex flex-col items-center">
+                  <div className="relative w-20 h-20 mb-2">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#374151" strokeWidth="2"/>
+                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#6366F1" strokeWidth="2" strokeLinecap="round"
+                        strokeDasharray={`${workProgress * 100} 100`} />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">{stats.sessions}</span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400">Sessions</span>
+                </div>
+                
+                {/* دائرة إحصائيات وقت الراحة */}
+                <div className="flex flex-col items-center">
+                  <div className="relative w-20 h-20 mb-2">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#374151" strokeWidth="2"/>
+                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round"
+                        strokeDasharray={`${breakProgress * 100} 100`} />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-white text-sm font-bold">{Math.floor(stats.breakTime / 60)}m</span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400">Break Time</span>
+                </div>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-700/30">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400 text-sm">Total Focus Time:</span>
+                  <span className="text-white font-medium">{Math.floor(stats.workTime / 60)}m</span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-gray-400 text-sm">Focus/Break Ratio:</span>
+                  <span className="text-white font-medium">
+                    {stats.breakTime > 0 ? (stats.workTime / stats.breakTime).toFixed(1) : '∞'} : 1
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* زر الإغلاق */}
