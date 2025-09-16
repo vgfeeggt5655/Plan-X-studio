@@ -1,301 +1,204 @@
-// PomodoroTimer.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 type Mode = "work" | "shortBreak" | "longBreak";
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  defaultMinutes?: {
-    work?: number;
-    shortBreak?: number;
-    longBreak?: number;
-  };
-  persistKey?: string; // اختياري لحفظ الإحصائيات في localStorage
-}
+const PomodoroTimer: React.FC = () => {
+  const [workDuration, setWorkDuration] = useState(25);
+  const [shortBreakDuration, setShortBreakDuration] = useState(5);
+  const [longBreakDuration, setLongBreakDuration] = useState(15);
 
-export default function PomodoroTimer({
-  open,
-  onClose,
-  defaultMinutes,
-  persistKey = "pomodoro_stats_v1",
-}: Props) {
-  // الافتراضيات بالدقائق
-  const defaults = {
-    work: defaultMinutes?.work ?? 25,
-    shortBreak: defaultMinutes?.shortBreak ?? 5,
-    longBreak: defaultMinutes?.longBreak ?? 15,
-  };
-
-  // durations بالثواني لكل مود
-  const [durations, setDurations] = useState<Record<Mode, number>>({
-    work: defaults.work * 60,
-    shortBreak: defaults.shortBreak * 60,
-    longBreak: defaults.longBreak * 60,
-  });
-
+  const [timeLeft, setTimeLeft] = useState(workDuration * 60);
+  const [running, setRunning] = useState(false);
   const [mode, setMode] = useState<Mode>("work");
-  const startTimeRef = useRef<number | null>(null); // ms
-  const [accumulated, setAccumulated] = useState<number>(0);
-  const [running, setRunning] = useState<boolean>(false);
-  const [appliedAnim, setAppliedAnim] = useState(false);
-  const [showStats, setShowStats] = useState(false);
-  const [sessionCompleteFlag, setSessionCompleteFlag] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // إحصائيات محفوظة (بالثواني)
-  const [stats, setStats] = useState({
-    workTime: 0,
-    breakTime: 0,
-    sessions: 0,
-  });
+  // صوت التنبيه
+  const playAlarm = () => {
+    const audio = new Audio("/data/رنين-المنبه-لشاومي.mp3");
+    audio.play();
+  };
 
-  // load saved stats
+  // تحديث العداد
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(persistKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        setStats((s) => ({ ...s, ...parsed }));
-      }
-    } catch {}
-  }, [persistKey]);
+    if (running && timeLeft > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      playAlarm();
+      setRunning(false);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [running, timeLeft]);
 
-  // save stats on change
+  // تغيير المود
+  const changeMode = (newMode: Mode) => {
+    setMode(newMode);
+    if (newMode === "work") setTimeLeft(workDuration * 60);
+    if (newMode === "shortBreak") setTimeLeft(shortBreakDuration * 60);
+    if (newMode === "longBreak") setTimeLeft(longBreakDuration * 60);
+    setRunning(false);
+  };
+
+  // تحديث الوقت بعد تعديل القيم
   useEffect(() => {
-    try {
-      localStorage.setItem(persistKey, JSON.stringify(stats));
-    } catch {}
-  }, [stats, persistKey]);
-
-  // حساب الوقت المستغرق حاليا
-  const getElapsed = () => {
-    const runningElapsed =
-      startTimeRef.current !== null
-        ? Math.floor((Date.now() - startTimeRef.current) / 1000)
-        : 0;
-    return accumulated + runningElapsed;
-  };
-
-  const getTimeLeft = () => {
-    const left = durations[mode] - getElapsed();
-    return Math.max(0, left);
-  };
-
-  // تشغيل صوت التنبيه من الملف
-  const playAlarm = async () => {
-    try {
-      const a = new Audio("/data/رنين-المنبه-لشاومي.mp3");
-      await a.play().catch(() => {});
-    } catch {}
-  };
-
-  // وظائف التشغيل
-  const start = () => {
-    if (getTimeLeft() <= 0) resetSession();
-    if (running) return;
-    startTimeRef.current = Date.now();
-    setRunning(true);
-  };
-
-  const pause = () => {
-    if (!running) return;
-    const elapsedSinceStart = Math.floor((Date.now() - (startTimeRef.current ?? 0)) / 1000);
-    setAccumulated((prev) => prev + Math.max(0, elapsedSinceStart));
-    startTimeRef.current = null;
-    setRunning(false);
-  };
-
-  const resetSession = () => {
-    startTimeRef.current = null;
-    setAccumulated(0);
-    setRunning(false);
-    setSessionCompleteFlag(false);
-  };
-
-  const endSessionAndLog = () => {
-    const elapsed = getElapsed();
-    if (elapsed > 0) {
-      if (mode === "work") {
-        setStats((s) => ({
-          ...s,
-          workTime: s.workTime + elapsed,
-          sessions: s.sessions + 1,
-        }));
-      } else {
-        setStats((s) => ({ ...s, breakTime: s.breakTime + elapsed }));
-      }
+    if (!running) {
+      if (mode === "work") setTimeLeft(workDuration * 60);
+      if (mode === "shortBreak") setTimeLeft(shortBreakDuration * 60);
+      if (mode === "longBreak") setTimeLeft(longBreakDuration * 60);
     }
-    startTimeRef.current = null;
-    setAccumulated(0);
-    setRunning(false);
-    setSessionCompleteFlag(false);
+  }, [workDuration, shortBreakDuration, longBreakDuration, mode, running]);
+
+  // فورمات الوقت
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
   };
 
-  const handleComplete = () => {
-    const full = durations[mode];
-    if (mode === "work") {
-      setStats((s) => ({ ...s, workTime: s.workTime + full, sessions: s.sessions + 1 }));
-    } else {
-      setStats((s) => ({ ...s, breakTime: s.breakTime + full }));
-    }
-    startTimeRef.current = null;
-    setAccumulated(full);
-    setRunning(false);
-    setSessionCompleteFlag(true);
-    playAlarm();
-    setTimeout(() => setSessionCompleteFlag(false), 2000);
-  };
+  // progress للدائرة
+  const total =
+    mode === "work"
+      ? workDuration * 60
+      : mode === "shortBreak"
+      ? shortBreakDuration * 60
+      : longBreakDuration * 60;
 
-  const changeMode = (next: Mode) => {
-    if (running) return;
-    setMode(next);
-    resetSession();
-  };
-
-  const applyCustomMinutes = (minutes: number) => {
-    if (minutes <= 0 || minutes > 1440) return;
-    setDurations((prev) => ({ ...prev, [mode]: Math.floor(minutes * 60) }));
-    resetSession();
-    setAppliedAnim(true);
-    setTimeout(() => setAppliedAnim(false), 1500);
-  };
-
-  const format = (s: number) => {
-    const mm = Math.floor(s / 60);
-    const ss = s % 60;
-    return `${mm.toString().padStart(2, "0")}:${ss.toString().padStart(2, "0")}`;
-  };
-
-  const timeLeft = getTimeLeft();
-
-  if (!open) return null;
+  const progress = ((total - timeLeft) / total) * 283;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md mx-4 bg-gradient-to-br from-gray-900/80 to-gray-800 rounded-2xl shadow-2xl border border-gray-700/30 overflow-hidden">
-        {/* التابات */}
-        <div className="px-4 pt-6 pb-3">
-          <div className="flex bg-gray-800/40 rounded-2xl p-1">
-            <button
-              onClick={() => changeMode("work")}
-              disabled={running}
-              className={`flex-1 py-2 rounded-xl text-sm font-medium transition ${
-                mode === "work"
-                  ? "bg-indigo-600 text-white shadow"
-                  : "text-gray-300 hover:text-white"
-              } ${running ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              Pomodoro
-            </button>
-            <button
-              onClick={() => changeMode("shortBreak")}
-              disabled={running}
-              className={`flex-1 py-2 rounded-xl ml-2 text-sm font-medium transition ${
-                mode === "shortBreak"
-                  ? "bg-emerald-600 text-white shadow"
-                  : "text-gray-300 hover:text-white"
-              } ${running ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              Short Break
-            </button>
-            <button
-              onClick={() => changeMode("longBreak")}
-              disabled={running}
-              className={`flex-1 py-2 rounded-xl ml-2 text-sm font-medium transition ${
-                mode === "longBreak"
-                  ? "bg-purple-600 text-white shadow"
-                  : "text-gray-300 hover:text-white"
-              } ${running ? "opacity-60 cursor-not-allowed" : ""}`}
-            >
-              Long Break
-            </button>
-          </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white">
+      {/* الهيدر */}
+      <h1 className="text-3xl font-bold mb-6">
+        {mode === "work"
+          ? "وقت العمل"
+          : mode === "shortBreak"
+          ? "استراحة قصيرة"
+          : "استراحة طويلة"}{" "}
+        - {formatTime(timeLeft)}
+      </h1>
+
+      {/* الدائرة المتحركة */}
+      <div className="relative w-48 h-48 mb-6">
+        <svg className="w-full h-full" viewBox="0 0 100 100">
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            stroke="#334155"
+            strokeWidth="10"
+            fill="none"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            stroke="#38bdf8"
+            strokeWidth="10"
+            fill="none"
+            strokeDasharray="283"
+            strokeDashoffset={283 - progress}
+            strokeLinecap="round"
+            transform="rotate(-90 50 50)"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
+          {formatTime(timeLeft)}
         </div>
+      </div>
 
-        {/* شاشة التايمر */}
-        <div className="px-6 pb-6 text-center">
-          <div className="text-5xl font-mono font-bold text-white mt-6">{format(timeLeft)}</div>
-          {sessionCompleteFlag && (
-            <div className="mt-2 text-xs text-emerald-300 font-medium">Session complete</div>
-          )}
-          <div className="flex justify-center gap-3 mt-6">
-            {running ? (
-              <button
-                onClick={pause}
-                className="px-5 py-2 rounded-xl bg-yellow-400 text-black font-medium shadow"
-              >
-                Pause
-              </button>
-            ) : (
-              <button
-                onClick={start}
-                className={`px-5 py-2 rounded-xl font-medium shadow ${
-                  timeLeft === 0
-                    ? "bg-gray-600 text-gray-300 cursor-not-allowed"
-                    : "bg-green-500 text-black"
-                }`}
-                disabled={timeLeft === 0}
-              >
-                Start
-              </button>
-            )}
-            <button
-              onClick={endSessionAndLog}
-              className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium"
-            >
-              End & Log
-            </button>
-            <button
-              onClick={resetSession}
-              className="px-4 py-2 rounded-xl bg-gray-700 text-white font-medium"
-            >
-              Reset
-            </button>
-          </div>
+      {/* أزرار التحكم */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => setRunning(true)}
+          className="px-4 py-2 bg-green-600 rounded-lg"
+        >
+          تشغيل
+        </button>
+        <button
+          onClick={() => setRunning(false)}
+          className="px-4 py-2 bg-yellow-600 rounded-lg"
+        >
+          إيقاف
+        </button>
+        <button
+          onClick={() => changeMode(mode)}
+          className="px-4 py-2 bg-red-600 rounded-lg"
+        >
+          إعادة
+        </button>
+      </div>
 
-          {/* تخصيص الوقت */}
-          <div className="mt-6">
-            <label className="text-sm text-gray-300">Custom time (minutes)</label>
-            <div className="flex gap-2 mt-2">
-              <input
-                type="number"
-                min={1}
-                max={1440}
-                defaultValue={Math.round(durations[mode] / 60)}
-                id="customMinutesInput"
-                className={`flex-1 px-4 py-2 rounded-xl bg-gray-800 border outline-none transition ${
-                  appliedAnim ? "ring-2 ring-green-400 animate-pulse" : "border-gray-700"
-                }`}
-              />
-              <button
-                onClick={() => {
-                  const el = document.getElementById("customMinutesInput") as HTMLInputElement;
-                  if (!el) return;
-                  const v = Number(el.value);
-                  if (!isFinite(v) || v <= 0) return;
-                  applyCustomMinutes(Math.floor(v));
-                }}
-                className="px-4 py-2 rounded-xl bg-emerald-500 text-black font-medium"
-              >
-                Apply
-              </button>
-            </div>
-          </div>
+      {/* التبويبات */}
+      <div className="flex gap-4 mb-6">
+        <button
+          onClick={() => changeMode("work")}
+          className={`px-4 py-2 rounded-full ${
+            mode === "work" ? "bg-sky-500" : "bg-slate-700"
+          }`}
+        >
+          عمل
+        </button>
+        <button
+          onClick={() => changeMode("shortBreak")}
+          className={`px-4 py-2 rounded-full ${
+            mode === "shortBreak" ? "bg-sky-500" : "bg-slate-700"
+          }`}
+        >
+          استراحة قصيرة
+        </button>
+        <button
+          onClick={() => changeMode("longBreak")}
+          className={`px-4 py-2 rounded-full ${
+            mode === "longBreak" ? "bg-sky-500" : "bg-slate-700"
+          }`}
+        >
+          استراحة طويلة
+        </button>
+      </div>
 
-          {/* إحصائيات */}
-          <div className="mt-6 border-t border-gray-700/30 pt-4 text-sm text-white">
-            Work: {format(stats.workTime)} | Break: {format(stats.breakTime)} | Sessions:{" "}
-            {stats.sessions}
-          </div>
-
-          <div className="flex justify-end mt-4">
-            <button onClick={onClose} className="px-4 py-2 rounded-xl bg-gray-700 text-white">
-              Close
-            </button>
-          </div>
+      {/* تخصيص الوقت */}
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center gap-2">
+          <label>عمل:</label>
+          <input
+            type="number"
+            min="1"
+            value={workDuration}
+            onChange={(e) => setWorkDuration(Number(e.target.value))}
+            className="w-20 p-2 rounded bg-slate-800 text-center"
+          />
+          دقيقة
+        </div>
+        <div className="flex items-center gap-2">
+          <label>استراحة قصيرة:</label>
+          <input
+            type="number"
+            min="1"
+            value={shortBreakDuration}
+            onChange={(e) => setShortBreakDuration(Number(e.target.value))}
+            className="w-20 p-2 rounded bg-slate-800 text-center"
+          />
+          دقيقة
+        </div>
+        <div className="flex items-center gap-2">
+          <label>استراحة طويلة:</label>
+          <input
+            type="number"
+            min="1"
+            value={longBreakDuration}
+            onChange={(e) => setLongBreakDuration(Number(e.target.value))}
+            className="w-20 p-2 rounded bg-slate-800 text-center"
+          />
+          دقيقة
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default PomodoroTimer;
