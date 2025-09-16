@@ -86,8 +86,9 @@ const Header: React.FC = () => {
     const interval = setInterval(() => {
       setPomodoroTimeLeft(prev => {
         if (prev <= 1) {
-          // عند انتهاء الوقت
-          new Audio('/sounds/alert.mp3').play().catch(()=>{});
+          // تشغيل الصوت عند انتهاء الوقت
+          new Audio('/data/رنين-المنبه-لشاومي.mp3').play().catch(() => {});
+
           let nextMode: typeof pomodoroMode = pomodoroMode;
           let nextCount = pomodoroCount;
 
@@ -166,6 +167,12 @@ const Header: React.FC = () => {
         className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
       >
         Pomodoro
+        {pomodoroRunning && (
+          <span className="ml-2 text-sm font-mono">
+            {Math.floor(pomodoroTimeLeft / 60).toString().padStart(2,'0')}:
+            {(pomodoroTimeLeft % 60).toString().padStart(2,'0')}
+          </span>
+        )}
       </button>
 
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
@@ -223,8 +230,6 @@ const Header: React.FC = () => {
                 )}
               </div>
             )}
-
-            {/* Mobile Menu Button */}
             <div className="md:hidden">
               <button onClick={() => setMenuOpen(!isMenuOpen)} className="p-2 rounded-md text-text-secondary hover:text-primary hover:bg-primary/20">
                 {isMenuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
@@ -245,18 +250,7 @@ const Header: React.FC = () => {
       {user && <TodoDialog isOpen={isTodoOpen} onClose={() => setTodoOpen(false)} updateProgress={loadProgressFromLocal} />}
       <SearchDialog open={isSearchOpen} onClose={() => setSearchOpen(false)} />
       <TimetableDialog open={isTimetableOpen} onClose={() => setTimetableOpen(false)} timetable={timetable} />
-      <PomodoroDialog
-        open={isPomodoroOpen}
-        onClose={() => setPomodoroOpen(false)}
-        pomodoroMode={pomodoroMode}
-        pomodoroTimeLeft={pomodoroTimeLeft}
-        pomodoroRunning={pomodoroRunning}
-        setPomodoroRunning={setPomodoroRunning}
-        setPomodoroMode={setPomodoroMode}
-        setPomodoroTimeLeft={setPomodoroTimeLeft}
-        pomodoroCount={pomodoroCount}
-        setPomodoroCount={setPomodoroCount}
-      />
+      <PomodoroDialog open={isPomodoroOpen} onClose={() => setPomodoroOpen(false)} />
     </>
   );
 };
