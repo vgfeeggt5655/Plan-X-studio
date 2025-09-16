@@ -5,6 +5,7 @@ import { LogoutIcon, TachometerIcon, UserCircleIcon, ChevronDownIcon, MenuIcon, 
 import TodoDialog from './TodoDialog';
 import SearchDialog from './SearchDialog';
 import TimetableDialog from './TimetableDialog'; // ✨ استدعاء ديالوج الجدول الجديد
+import PomodoroDialog from './PomodoroDialog'; // ✨ استدعاء ديالوج البومودورو
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
@@ -14,6 +15,7 @@ const Header: React.FC = () => {
   const [isTodoOpen, setTodoOpen] = useState(false);
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [isTimetableOpen, setTimetableOpen] = useState(false); // ✨ حالة الديالوج الجديد
+  const [isPomodoroOpen, setPomodoroOpen] = useState(false); // ✨ حالة البومودورو
   const [timetable, setTimetable] = useState({});
   const [progress, setProgress] = useState(0);
   const [totalTasks, setTotalTasks] = useState(0);
@@ -119,6 +121,14 @@ const Header: React.FC = () => {
         Table
       </button>
 
+      {/* ✨ زر Pomodoro Timer */}
+      <button
+        onClick={() => setPomodoroOpen(true)}
+        className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
+      >
+        Pomodoro
+      </button>
+
       {(user?.role === 'admin' || user?.role === 'super_admin') && (
         <NavLink
           to="/admin"
@@ -201,6 +211,9 @@ const Header: React.FC = () => {
 
       {/* ✨ Timetable Dialog */}
       <TimetableDialog open={isTimetableOpen} onClose={() => setTimetableOpen(false)} timetable={timetable} />
+
+      {/* ✨ Pomodoro Dialog */}
+      <PomodoroDialog open={isPomodoroOpen} onClose={() => setPomodoroOpen(false)} />
     </>
   );
 };
