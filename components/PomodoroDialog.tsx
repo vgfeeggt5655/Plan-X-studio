@@ -125,7 +125,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   // حساب نسبة الدائرة - الدائرة تبدأ كاملة وتقل
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progress * circumference);
+  // عكس الحساب عشان الدائرة تبدأ كاملة وتقل
+  const strokeDashoffset = circumference * (1 - progress);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -170,48 +171,33 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
             <p className="text-slate-400 text-sm">{config.description}</p>
           </div>
 
-          {/* الدائرة */}
+          {/* الدائرة المحسنة */}
           <div className="flex justify-center mb-8">
-            <div className="relative">
-              <svg width="220" height="220" className="transform -rotate-90">
-                {/* دائرة الخلفية */}
-                <circle
-                  cx="110"
-                  cy="110"
-                  r={radius}
-                  stroke="rgba(148, 163, 184, 0.1)"
-                  strokeWidth="6"
-                  fill="none"
-                />
-                
-                {/* دائرة التقدم */}
+            <div className="relative w-56 h-56">
+              {/* دائرة الخلفية */}
+              <div className="absolute inset-0 rounded-full border-8 border-slate-600/20"></div>
+              
+              {/* دائرة التقدم */}
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
                 <defs>
-                  <linearGradient id={`gradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={config.color} stopOpacity="1" />
-                    <stop offset="50%" stopColor={config.color} stopOpacity="0.9" />
+                  <linearGradient id={`progress-gradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor={config.color} />
                     <stop offset="100%" stopColor={config.color} stopOpacity="0.7" />
                   </linearGradient>
-                  <filter id={`glow-${mode}`}>
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge> 
-                      <feMergeNode in="coloredBlur"/>
-                      <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                  </filter>
                 </defs>
-                
                 <circle
-                  cx="110"
-                  cy="110"
-                  r={radius}
-                  stroke={`url(#gradient-${mode})`}
-                  strokeWidth="6"
+                  cx="50%"
+                  cy="50%"
+                  r="44%"
                   fill="none"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
+                  stroke={`url(#progress-gradient-${mode})`}
+                  strokeWidth="8"
                   strokeLinecap="round"
-                  filter={`url(#glow-${mode})`}
-                  className="transition-all duration-1000 ease-linear"
+                  strokeDasharray={`${progress * 283} 283`}
+                  className="transition-all duration-1000 ease-out"
+                  style={{
+                    filter: `drop-shadow(0 0 10px ${config.color}40)`
+                  }}
                 />
               </svg>
               
@@ -219,6 +205,9 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <div className="text-5xl font-mono font-bold text-white mb-2">
                   {minutes}:{seconds}
+                </div>
+                <div className="text-sm text-slate-400 mb-1">
+                  {Math.round(progress * 100)}%
                 </div>
                 {running && (
                   <div className="text-xs text-slate-400 uppercase tracking-widest animate-pulse">
