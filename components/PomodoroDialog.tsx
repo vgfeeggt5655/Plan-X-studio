@@ -27,11 +27,19 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 }) => {
   const [totalTime, setTotalTime] = useState(timeLeft);
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [customMinutes, setCustomMinutes] = useState<number>(25);
+  const [applied, setApplied] = useState(false); // للتأثير
   const [stats, setStats] = useState({
     workTime: 0,
     breakTime: 0,
     sessions: 0,
   });
+
+  const defaultTimes: Record<'work' | 'shortBreak' | 'longBreak', number> = {
+    work: 25 * 60,
+    shortBreak: 5 * 60,
+    longBreak: 15 * 60,
+  };
 
   useEffect(() => {
     setTotalTime(timeLeft);
@@ -40,8 +48,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   useEffect(() => {
     if (timeLeft === 0 && !sessionComplete) {
       setSessionComplete(true);
-
-      const spentTime = totalTime - timeLeft; // الوقت المستهلك فعلياً
+      const spentTime = totalTime;
       if (mode === 'work') {
         setStats(prev => ({
           ...prev,
@@ -71,7 +78,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
       <div className="bg-gray-900/95 text-white rounded-3xl shadow-2xl w-[90%] max-w-lg border border-gray-700/30">
         {/* Tabs */}
-        <div className="flex bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/30 px-2 pt-6 mt-4">
+        <div className="flex bg-gray-800/50 border-b border-gray-700/30 px-2 pt-6 mt-4">
           <div className="flex bg-gray-700/30 rounded-2xl p-1 w-full">
             {['work', 'shortBreak', 'longBreak'].map(tab => (
               <button
@@ -80,6 +87,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   setMode(tab as PomodoroTimerProps['mode']);
                   setSessionComplete(false);
                   reset();
+                  setCustomTime(defaultTimes[tab as keyof typeof defaultTimes] / 60);
                 }}
                 className={`flex-1 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 ${
                   mode === tab
@@ -135,13 +143,33 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           <label className="block text-sm text-gray-300 mb-2">
             تخصيص الوقت (دقائق)
           </label>
-          <input
-            type="number"
-            min={1}
-            max={120}
-            onChange={e => setCustomTime(Number(e.target.value))}
-            className="w-full px-4 py-2 rounded-xl bg-gray-800 text-white border border-gray-700 focus:border-indigo-500 outline-none"
-          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={1}
+              max={120}
+              value={customMinutes}
+              onChange={e => setCustomMinutes(Number(e.target.value))}
+              className={`flex-1 px-4 py-2 rounded-xl border outline-none transition-all duration-500
+                ${
+                  applied
+                    ? 'bg-green-900/40 border-green-400 shadow-lg shadow-green-500/30'
+                    : 'bg-gray-800 text-white border-gray-700 focus:border-indigo-500'
+                }`}
+            />
+            <button
+              onClick={() => {
+                setCustomTime(customMinutes);
+                setSessionComplete(false);
+                reset();
+                setApplied(true);
+                setTimeout(() => setApplied(false), 2000); // يرجع للون الطبيعي
+              }}
+              className="px-4 py-2 bg-indigo-500 rounded-xl hover:bg-indigo-400 transition"
+            >
+              تعيين
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
