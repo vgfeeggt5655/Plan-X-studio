@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 
+// The DayEvent type has been updated to include new types and the 'instructors' property.
 type DayEvent = {
-  type: "lecture" | "practical" | "exam" | "holiday";
+  type: "lecture" | "practical" | "exam" | "holiday" | "tutorial" | "office_hour" | "cbl" | "lab" | "field_training";
   title: string;
   time?: string;
   location?: string;
+  instructors?: string[];
 };
 
 type Timetable = Record<string, DayEvent[]>;
@@ -82,6 +84,7 @@ export default function TimetableDialog({
 
   const getEvents = (date: string): DayEvent[] => timetable[date] || [];
 
+  // This function has been updated to handle the new event types.
   const getEventStyle = (type: DayEvent["type"]) => {
     switch (type) {
       case "lecture":
@@ -92,8 +95,18 @@ export default function TimetableDialog({
         return { dot: "bg-red-500", icon: "📝", badge: "Exam" };
       case "holiday":
         return { dot: "bg-green-500", icon: "🎉", badge: "Holiday" };
+      case "tutorial":
+        return { dot: "bg-orange-500", icon: "✍️", badge: "Tutorial" };
+      case "office_hour":
+        return { dot: "bg-teal-500", icon: "👨‍🏫", badge: "Office Hour" };
+      case "cbl":
+        return { dot: "bg-cyan-500", icon: "🧠", badge: "CBL" };
+      case "lab":
+        return { dot: "bg-fuchsia-500", icon: "🧪", badge: "Lab" };
+      case "field_training":
+        return { dot: "bg-lime-500", icon: "🗺️", badge: "Field Training" };
       default:
-        return { dot: "bg-slate-400", icon: "", badge: "" };
+        return { dot: "bg-slate-400", icon: "🗓️", badge: "" };
     }
   };
 
@@ -187,7 +200,7 @@ export default function TimetableDialog({
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-fade-in">
       <div className="bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-4xl lg:max-w-6xl max-h-[95vh] overflow-hidden border border-slate-700 flex flex-col transform transition-transform duration-300">
-        
+
         {/* Header */}
         <div className="bg-slate-800 p-3 sm:p-4 border-b border-slate-700 flex justify-between items-center">
           <h1 className="text-xl sm:text-2xl font-extrabold text-white">Timetable</h1>
@@ -291,6 +304,15 @@ export default function TimetableDialog({
                             <span className="font-light">{event.location}</span>
                           </div>
                         )}
+                        {/* A new check for the 'instructors' property has been added here. */}
+                        {event.instructors && event.instructors.length > 0 && (
+                          <div className="flex items-center text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292m0 5.292a4 4 0 110 5.292M12 4.354v5.292m0 5.292V4.354m0 5.292h-4.243m4.243 0h4.243m-4.243 0a2 2 0 100 4 2 2 0 000-4z" />
+                            </svg>
+                            <span className="font-light">{event.instructors.join(", ")}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -298,7 +320,7 @@ export default function TimetableDialog({
               ) : (
                 <div className="text-center py-6 sm:py-10 text-slate-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 0 002-2V7a2 0 00-2-2H5a2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <p className="text-sm sm:text-base font-medium">No events on this day</p>
                   <p className="mt-1 text-xs text-slate-500">Select another date from the calendar</p>
