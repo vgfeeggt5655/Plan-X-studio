@@ -104,9 +104,6 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 <div className="text-5xl font-mono font-bold text-white mb-2">
                   {minutes}:{seconds}
                 </div>
-                <div className="text-sm text-gray-400 mb-1">
-                  {Math.round(progress * 100)}% Complete
-                </div>
                 {running && (
                   <div className="text-xs px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 border border-gray-600/30 uppercase tracking-widest mt-2">
                     FOCUS TIME
