@@ -7,8 +7,6 @@ type Props = {
 
 type Mode = "work" | "shortBreak" | "longBreak";
 
-const STORAGE_KEY = "planx_pomodoro_v1";
-
 export default function PomodoroDialog({ open, onClose }: Props) {
   // default settings
   const [workMin, setWorkMin] = useState<number>(60);
@@ -25,21 +23,18 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   const [completedRounds, setCompletedRounds] = useState<number>(0);
 
   const tickRef = useRef<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // load/save settings
+  // load/save settings - using memory storage only
+  const settingsData = useRef({ workMin: 60, shortMin: 5, longMin: 15, roundsBeforeLong: 4, autoStartNext: false });
+  
   useEffect(() => {
-    const raw = localStorage?.getItem?.(STORAGE_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed.workMin) setWorkMin(parsed.workMin);
-        if (parsed.shortMin) setShortMin(parsed.shortMin);
-        if (parsed.longMin) setLongMin(parsed.longMin);
-        if (parsed.roundsBeforeLong) setRoundsBeforeLong(parsed.roundsBeforeLong);
-        if (parsed.autoStartNext !== undefined) setAutoStartNext(parsed.autoStartNext);
-      } catch {}
-    }
+    // Initialize from memory storage
+    const saved = settingsData.current;
+    setWorkMin(saved.workMin);
+    setShortMin(saved.shortMin);
+    setLongMin(saved.longMin);
+    setRoundsBeforeLong(saved.roundsBeforeLong);
+    setAutoStartNext(saved.autoStartNext);
   }, []);
 
   useEffect(() => {
@@ -52,12 +47,8 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   }, [mode, workMin, shortMin, longMin, running]);
 
   useEffect(() => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ workMin, shortMin, longMin, roundsBeforeLong, autoStartNext })
-      );
-    }
+    // Save to memory storage
+    settingsData.current = { workMin, shortMin, longMin, roundsBeforeLong, autoStartNext };
   }, [workMin, shortMin, longMin, roundsBeforeLong, autoStartNext]);
 
   // timer loop
@@ -84,17 +75,41 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   useEffect(() => {
     if (timeLeft !== 0) return;
     
-    // Play sound
+    // Play notification sound using Web Audio API
     try {
-      if (!audioRef.current) {
-        audioRef.current = new Audio("/data/رنين-المنبه-لشاومي.mp3");
-      }
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(() => {
-        console.log("Could not play audio");
-      });
+      // Create a simple beep sound using Web Audio API
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // 800 Hz frequency
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 1);
+      
+      // Play multiple beeps
+      setTimeout(() => {
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioContext.destination);
+        osc2.frequency.setValueAtTime(600, audioContext.currentTime);
+        osc2.type = 'sine';
+        gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+        osc2.start();
+        osc2.stop(audioContext.currentTime + 0.8);
+      }, 200);
+      
     } catch (error) {
-      console.log("Audio error:", error);
+      console.log("Audio notification not supported:", error);
     }
 
     if (mode === "work") {
@@ -786,11 +801,15 @@ export default function PomodoroDialog({ open, onClose }: Props) {
 
             <div style={styles.quickActions}>
               <h4 style={styles.settingsTitle}>🗑️ Quick Actions</h4>
-              <button 
+                              <button 
                 onClick={() => { 
-                  if (typeof localStorage !== 'undefined') {
-                    localStorage.removeItem(STORAGE_KEY); 
-                  }
+                  // Reset to defaults
+                  settingsData.current = { workMin: 60, shortMin: 5, longMin: 15, roundsBeforeLong: 4, autoStartNext: false };
+                  setWorkMin(60);
+                  setShortMin(5);
+                  setLongMin(15);
+                  setRoundsBeforeLong(4);
+                  setAutoStartNext(false);
                   alert('Settings cleared successfully! 🎉'); 
                 }} 
                 style={styles.quickButton}
