@@ -1,13 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
-export interface SessionStats {
-  workTime: number;
-  breakTime: number;
-  sessions: number;
-  totalTime: number;
-}
-
-export interface TimerMode {
+interface TimerMode {
   title: string;
   color: string;
   secondaryColor: string;
@@ -15,7 +8,14 @@ export interface TimerMode {
   glowColor: string;
   description: string;
   ringColor: string;
-  defaultTime: number;
+  defaultTime: number; // بالثواني
+}
+
+interface SessionStats {
+  workTime: number;
+  breakTime: number;
+  sessions: number;
+  totalTime: number;
 }
 
 interface PomodoroTimerProps {
@@ -31,36 +31,36 @@ interface PomodoroTimerProps {
   setTimeLeft: (time: number) => void;
 }
 
-const MODES: Record<"work" | "shortBreak" | "longBreak", TimerMode> = {
+const defaultModes: Record<"work" | "shortBreak" | "longBreak", TimerMode> = {
   work: {
     title: "Work 🍅",
-    color: "text-indigo-600",
-    secondaryColor: "text-indigo-400",
-    bgGradient: "from-indigo-500 to-indigo-700",
+    color: "text-indigo-500",
+    secondaryColor: "text-indigo-300",
+    bgGradient: "from-indigo-600 to-indigo-400",
     glowColor: "shadow-indigo-500/50",
-    description: "Focus on your work!",
+    description: "Focus time",
     ringColor: "stroke-indigo-500",
-    defaultTime: 25,
+    defaultTime: 25 * 60,
   },
   shortBreak: {
     title: "Short Break ☕",
-    color: "text-emerald-600",
-    secondaryColor: "text-emerald-400",
-    bgGradient: "from-emerald-400 to-emerald-600",
+    color: "text-emerald-500",
+    secondaryColor: "text-emerald-300",
+    bgGradient: "from-emerald-400 to-emerald-200",
     glowColor: "shadow-emerald-400/50",
-    description: "Take a short break!",
+    description: "Relax a bit",
     ringColor: "stroke-emerald-500",
-    defaultTime: 5,
+    defaultTime: 5 * 60,
   },
   longBreak: {
     title: "Long Break 🛋️",
-    color: "text-purple-600",
-    secondaryColor: "text-purple-400",
-    bgGradient: "from-purple-500 to-purple-700",
+    color: "text-purple-500",
+    secondaryColor: "text-purple-300",
+    bgGradient: "from-purple-500 to-purple-300",
     glowColor: "shadow-purple-500/50",
-    description: "Take a long break!",
+    description: "Take a long rest",
     ringColor: "stroke-purple-500",
-    defaultTime: 15,
+    defaultTime: 15 * 60,
   },
 };
 
@@ -76,232 +76,228 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   setMode,
   setTimeLeft,
 }) => {
-  const [customTime, setCustomTime] = useState<number>(MODES[mode].defaultTime);
   const [stats, setStats] = useState<SessionStats>({
     workTime: 0,
     breakTime: 0,
     sessions: 0,
     totalTime: 0,
   });
-  const [completed, setCompleted] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const totalTime = MODES[mode].defaultTime * 60;
-  const progress = ((totalTime - timeLeft) / totalTime) * 100;
+  const [customTime, setCustomTime] = useState<number>(defaultModes[mode].defaultTime / 60);
+  const [showStats, setShowStats] = useState(false);
+  const [badge, setBadge] = useState(false);
 
-  const handleSessionEnd = useCallback(() => {
-    if (mode === "work") {
-      setStats((prev) => ({
-        ...prev,
-        workTime: prev.workTime + totalTime,
-        sessions: prev.sessions + 1,
-        totalTime: prev.totalTime + totalTime,
-      }));
-      if ((stats.sessions + 1) % 4 === 0) {
-        setMode("longBreak");
-        setTimeLeft(MODES.longBreak.defaultTime * 60);
-      } else {
-        setMode("shortBreak");
-        setTimeLeft(MODES.shortBreak.defaultTime * 60);
-      }
-    } else {
-      setStats((prev) => ({
-        ...prev,
-        breakTime: prev.breakTime + totalTime,
-        totalTime: prev.totalTime + totalTime,
-      }));
-      setMode("work");
-      setTimeLeft(MODES.work.defaultTime * 60);
-    }
-    setCompleted(true);
-    if (typeof Notification !== "undefined") {
-      new Notification("Pomodoro Timer", {
-        body: `${MODES[mode].title} finished!`,
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const modeData = defaultModes[mode];
+
+  const progress = 1 - timeLeft / defaultModes[mode].defaultTime;
+
+  const handleStart = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(intervalRef.current!);
+          handleSessionEnd();
+          return 0;
+        }
+        return prev - 1;
       });
+    }, 1000);
+    start();
+  }, [start, setTimeLeft]);
+
+  const handlePause = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    pause();
+  }, [pause]);
+
+  const handleReset = useCallback(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    reset();
+    setTimeLeft(defaultModes[mode].defaultTime);
+    setBadge(false);
+  }, [reset, setTimeLeft, mode]);
+
+  const handleSessionEnd = () => {
+    setBadge(true);
+    const isWork = mode === "work";
+    setStats((prev) => ({
+      workTime: prev.workTime + (isWork ? defaultModes.work.defaultTime : 0),
+      breakTime: prev.breakTime + (isWork ? 0 : defaultModes[mode].defaultTime),
+      sessions: isWork ? prev.sessions + 1 : prev.sessions,
+      totalTime: prev.totalTime + defaultModes[mode].defaultTime,
+    }));
+
+    // إشعار
+    if (Notification.permission === "granted") {
+      new Notification(`${modeData.title} ended!`);
     }
-  }, [mode, setMode, setTimeLeft, stats.sessions, totalTime]);
+
+    // تبديل الوضع
+    if (mode === "work") {
+      const nextMode = (stats.sessions + 1) % 4 === 0 ? "longBreak" : "shortBreak";
+      setMode(nextMode as "shortBreak" | "longBreak");
+      setTimeLeft(defaultModes[nextMode as "shortBreak" | "longBreak"].defaultTime);
+    } else {
+      setMode("work");
+      setTimeLeft(defaultModes.work.defaultTime);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   useEffect(() => {
-    if (running && timeLeft > 0) {
-      timerRef.current = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-    } else if (running && timeLeft === 0) {
-      handleSessionEnd();
+    if (open && Notification.permission !== "granted") {
+      Notification.requestPermission();
     }
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [running, timeLeft, setTimeLeft, handleSessionEnd]);
-
-  const handleCustomTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = Math.max(1, Math.min(180, Number(e.target.value)));
-    setCustomTime(val);
-    setTimeLeft(val * 60);
-  };
-
-  const resetStats = () => {
-    setStats({ workTime: 0, breakTime: 0, sessions: 0, totalTime: 0 });
-  };
+  }, [open]);
 
   if (!open) return null;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-all duration-300 ease-in-out ${
-        open ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
-    >
-      <div
-        className={`bg-gradient-to-br ${MODES[mode].bgGradient} p-6 rounded-2xl shadow-2xl w-96 max-w-full transform transition-transform duration-300 ease-in-out ${
-          open ? "scale-100" : "scale-95"
-        } ${MODES[mode].glowColor} shadow-xl`}
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className={`text-2xl font-bold text-white`}>
-            {MODES[mode].title}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-white text-xl font-bold hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Progress Circle */}
-        <div className="relative w-48 h-48 mx-auto mb-6">
-          <svg className="w-full h-full rotate-[-90deg]">
-            <circle
-              cx="96"
-              cy="96"
-              r="86"
-              stroke="rgba(255,255,255,0.2)"
-              strokeWidth="10"
-              fill="none"
-            />
-            <circle
-              cx="96"
-              cy="96"
-              r="86"
-              stroke="white"
-              strokeWidth="10"
-              fill="none"
-              strokeDasharray={2 * Math.PI * 86}
-              strokeDashoffset={(1 - progress / 100) * 2 * Math.PI * 86}
-              strokeLinecap="round"
-              className="transition-all duration-1000 ease-in-out"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-bold text-white">
-              {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:
-              {String(timeLeft % 60).padStart(2, "0")}
-            </span>
-            <span className="text-white/80 text-sm mt-1">
-              {running ? "Running" : "Paused"}
-            </span>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex justify-center gap-4 mb-6">
-          {running ? (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-80 sm:w-96 max-w-full transform transition-transform duration-300 scale-100">
+        {/* Tabs */}
+        <div className="flex justify-between mb-4">
+          {(["work", "shortBreak", "longBreak"] as const).map((m) => (
             <button
-              onClick={pause}
-              className="px-5 py-2.5 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 active:scale-95 transition-all duration-200 shadow-md"
-            >
-              Pause
-            </button>
-          ) : (
-            <button
-              onClick={start}
-              className="px-5 py-2.5 bg-white text-gray-800 rounded-lg font-semibold hover:bg-gray-100 active:scale-95 transition-all duration-200 shadow-md"
-            >
-              Start
-            </button>
-          )}
-          <button
-            onClick={reset}
-            className="px-5 py-2.5 bg-white/20 text-white rounded-lg font-semibold hover:bg-white/30 active:scale-95 transition-all duration-200 shadow-md"
-          >
-            Reset
-          </button>
-        </div>
-
-        {/* Mode Tabs */}
-        <div className="flex justify-around mb-6 bg-white/10 p-1 rounded-xl">
-          {Object.entries(MODES).map(([key, value]) => (
-            <button
-              key={key}
+              key={m}
               onClick={() => {
-                setMode(key as any);
-                setTimeLeft(value.defaultTime * 60);
-                setCustomTime(value.defaultTime);
+                setMode(m);
+                setTimeLeft(defaultModes[m].defaultTime);
               }}
-              className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 ${
-                mode === key
-                  ? "bg-white text-gray-800 shadow-md"
-                  : "bg-transparent text-white/80 hover:text-white"
+              className={`flex-1 py-2 mx-1 rounded-lg font-semibold ${
+                mode === m ? "bg-gradient-to-r " + defaultModes[m].bgGradient + " text-white" : "bg-gray-200 dark:bg-gray-800"
               }`}
             >
-              {value.title.split(" ")[0]}
+              {defaultModes[m].title}
             </button>
           ))}
         </div>
 
+        {/* Progress Circle */}
+        <div className="flex flex-col items-center justify-center relative my-4">
+          <svg className="w-40 h-40">
+            <circle
+              cx="80"
+              cy="80"
+              r="70"
+              className="stroke-gray-200"
+              strokeWidth="10"
+              fill="none"
+            />
+            <circle
+              cx="80"
+              cy="80"
+              r="70"
+              strokeDasharray={2 * Math.PI * 70}
+              strokeDashoffset={2 * Math.PI * 70 * (1 - progress)}
+              className={`${modeData.ringColor} transition-all duration-500 transform -rotate-90 origin-center`}
+              strokeWidth="10"
+              strokeLinecap="round"
+              fill="none"
+            />
+          </svg>
+          <div className="absolute text-3xl font-bold">{formatTime(timeLeft)}</div>
+        </div>
+
+        {/* Controls */}
+        <div className="flex justify-center space-x-3 my-2">
+          {!running ? (
+            <button onClick={handleStart} className="px-4 py-2 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600">
+              Start
+            </button>
+          ) : (
+            <button onClick={handlePause} className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600">
+              Pause
+            </button>
+          )}
+          <button onClick={handleReset} className="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-700 hover:bg-gray-400">
+            Reset
+          </button>
+        </div>
+
         {/* Custom Time */}
-        <div className="mb-6 flex flex-col items-center">
-          <label className="text-white/80 text-sm mb-2">Custom Time (Minutes)</label>
-          <div className="flex items-center gap-2">
+        <div className="flex justify-between items-center mt-4">
+          <label>
+            Custom Time (min):
             <input
-              type="range"
+              type="number"
               min={1}
               max={180}
               value={customTime}
-              onChange={handleCustomTimeChange}
-              className="w-32 accent-white"
+              onChange={(e) => setCustomTime(Number(e.target.value))}
+              className="ml-2 px-2 py-1 border rounded w-20"
             />
-            <span className="text-white font-medium w-10">{customTime}</span>
-          </div>
+          </label>
+          <button
+            onClick={() => {
+              const newSeconds = Math.min(Math.max(customTime, 1), 180) * 60;
+              setTimeLeft(newSeconds);
+            }}
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Set
+          </button>
         </div>
 
-        {/* Statistics */}
-        <div className="bg-white/10 p-4 rounded-xl mb-4 text-white backdrop-blur-sm">
-          <h3 className="font-bold mb-3 text-center text-lg border-b border-white/20 pb-2">
-            Session Stats
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white/5 p-2 rounded-lg text-center">
-              <p className="text-sm text-white/80">Work Time</p>
-              <p className="font-semibold">{Math.floor(stats.workTime / 60)} min</p>
-            </div>
-            <div className="bg-white/5 p-2 rounded-lg text-center">
-              <p className="text-sm text-white/80">Break Time</p>
-              <p className="font-semibold">{Math.floor(stats.breakTime / 60)} min</p>
-            </div>
-            <div className="bg-white/5 p-2 rounded-lg text-center">
-              <p className="text-sm text-white/80">Sessions</p>
-              <p className="font-semibold">{stats.sessions}</p>
-            </div>
-            <div className="bg-white/5 p-2 rounded-lg text-center">
-              <p className="text-sm text-white/80">Total Time</p>
-              <p className="font-semibold">{Math.floor(stats.totalTime / 60)} min</p>
-            </div>
-          </div>
+        {/* Stats */}
+        <div className="flex justify-between mt-4">
           <button
-            onClick={resetStats}
-            className="mt-3 w-full py-2 bg-white/20 text-white rounded-lg font-semibold hover:bg-white/30 active:scale-95 transition-all duration-200"
+            onClick={() => setShowStats(!showStats)}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            {showStats ? "Hide Stats" : "Show Stats"}
+          </button>
+          <button
+            onClick={() =>
+              setStats({
+                workTime: 0,
+                breakTime: 0,
+                sessions: 0,
+                totalTime: 0,
+              })
+            }
+            className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500"
           >
             Reset Stats
           </button>
         </div>
 
-        {/* Completion Badge */}
-        {completed && (
-          <div className="text-center text-xl font-bold text-white animate-bounce mb-2 bg-white/20 py-2 rounded-lg">
-            🎉 Session Complete!
+        {showStats && (
+          <div className="mt-4 p-2 rounded bg-gray-100 dark:bg-gray-800">
+            <p>Work Time: {Math.floor(stats.workTime / 60)} min</p>
+            <p>Break Time: {Math.floor(stats.breakTime / 60)} min</p>
+            <p>Sessions: {stats.sessions}</p>
+            <p>Total Time: {Math.floor(stats.totalTime / 60)} min</p>
+            <p>
+              Work/Break Ratio:{" "}
+              {stats.breakTime > 0 ? (stats.workTime / stats.breakTime).toFixed(2) : "∞"}
+            </p>
           </div>
         )}
+
+        {/* Badge */}
+        {badge && <div className="mt-2 text-green-500 font-bold text-center animate-bounce">🎉 Session Completed!</div>}
+
+        {/* Close */}
+        <button
+          onClick={() => {
+            handleReset();
+            onClose();
+          }}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        >
+          ✕
+        </button>
       </div>
     </div>
   );
