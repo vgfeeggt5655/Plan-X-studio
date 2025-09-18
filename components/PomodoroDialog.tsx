@@ -11,7 +11,7 @@ const STORAGE_KEY = "planx_pomodoro_v1";
 
 export default function PomodoroDialog({ open, onClose }: Props) {
   // default settings
-  const [workMin, setWorkMin] = useState<number>(60); // user wanted default 1 hour
+  const [workMin, setWorkMin] = useState<number>(60);
   const [shortMin, setShortMin] = useState<number>(5);
   const [longMin, setLongMin] = useState<number>(15);
   const [roundsBeforeLong, setRoundsBeforeLong] = useState<number>(4);
@@ -95,7 +95,7 @@ export default function PomodoroDialog({ open, onClose }: Props) {
       setMode("work");
       setRunning(autoStartNext);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft]);
 
   // keep a stable display time when dialog opens
@@ -109,7 +109,7 @@ export default function PomodoroDialog({ open, onClose }: Props) {
     if (mode === "work") setTimeLeft(workMin * 60);
     if (mode === "shortBreak") setTimeLeft(shortMin * 60);
     if (mode === "longBreak") setTimeLeft(longMin * 60);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // keyboard shortcuts
@@ -127,7 +127,7 @@ export default function PomodoroDialog({ open, onClose }: Props) {
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode, workMin, shortMin, longMin]);
 
   function start() {
@@ -163,160 +163,161 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl p-6">
-        <header className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Pomodoro Timer</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 font-sans">
+      <div className="w-full max-w-2xl rounded-2xl bg-[#0A192F] text-white shadow-2xl p-6 border border-gray-700/50">
+        <header className="flex items-center justify-between border-b border-gray-700/50 pb-4 mb-4">
+          <h3 className="text-xl font-bold text-gray-200">Pomodoro Timer ⏱️</h3>
           <div className="flex gap-2">
             <button
               onClick={() => { setMode("work"); reset(); }}
-              className={`px-3 py-1 rounded ${mode === "work" ? "bg-gray-100" : "hover:bg-gray-50"}`}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${mode === "work" ? "bg-teal-500 text-[#0A192F]" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}
             >
               Work
             </button>
             <button
               onClick={() => { setMode("shortBreak"); reset(); }}
-              className={`px-3 py-1 rounded ${mode === "shortBreak" ? "bg-gray-100" : "hover:bg-gray-50"}`}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${mode === "shortBreak" ? "bg-teal-500 text-[#0A192F]" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}
             >
               Short
             </button>
             <button
               onClick={() => { setMode("longBreak"); reset(); }}
-              className={`px-3 py-1 rounded ${mode === "longBreak" ? "bg-gray-100" : "hover:bg-gray-50"}`}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${mode === "longBreak" ? "bg-teal-500 text-[#0A192F]" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}
             >
               Long
             </button>
-            <button onClick={() => { onClose(); }} className="px-3 py-1 rounded hover:bg-gray-50">Close</button>
+            <button onClick={() => { onClose(); }} className="px-3 py-1 rounded-full bg-transparent border border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200 transition-colors text-sm">Close</button>
           </div>
         </header>
 
-        <main className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+        <main className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           {/* center visual */}
-          <div className="col-span-1 md:col-span-2 flex flex-col items-center gap-4">
+          <div className="col-span-1 md:col-span-2 flex flex-col items-center gap-6">
             <div className="relative">
               <svg width="220" height="220" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="50" strokeWidth="10" stroke="#e6e6e6" fill="none"></circle>
+                <circle cx="60" cy="60" r="50" strokeWidth="8" stroke="#1F2A40" fill="none"></circle>
                 <circle
                   cx="60"
                   cy="60"
                   r="50"
-                  strokeWidth="10"
+                  strokeWidth="8"
                   strokeLinecap="round"
-                  stroke="currentColor"
+                  stroke="#20C5C3"
                   style={{ strokeDasharray: 314, strokeDashoffset: 314 - progress * 314 }}
                   transform="rotate(-90 60 60)"
                 />
-                <text x="60" y="60" textAnchor="middle" dominantBaseline="middle" className="text-sm" fontSize={12}>
+                <text x="60" y="60" textAnchor="middle" dominantBaseline="middle" className="text-4xl font-light text-white" fill="currentColor">
                   {format(timeLeft)}
                 </text>
               </svg>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               {!running ? (
-                <button onClick={start} className="px-4 py-2 rounded bg-green-600 text-white">Start</button>
+                <button onClick={start} className="px-6 py-2 rounded-full font-semibold bg-teal-500 text-[#0A192F] hover:bg-teal-400 transition-colors transform hover:scale-105">Start</button>
               ) : (
-                <button onClick={pause} className="px-4 py-2 rounded bg-yellow-500 text-white">Pause</button>
+                <button onClick={pause} className="px-6 py-2 rounded-full font-semibold bg-orange-500 text-white hover:bg-orange-400 transition-colors transform hover:scale-105">Pause</button>
               )}
-              <button onClick={reset} className="px-4 py-2 rounded border">Reset</button>
+              <button onClick={reset} className="px-6 py-2 rounded-full border border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200 transition-colors">Reset</button>
               <button
                 onClick={() => {
                   // skip to end
                   setTimeLeft(0);
                 }}
-                className="px-4 py-2 rounded border"
+                className="px-6 py-2 rounded-full border border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200 transition-colors"
               >
                 Skip
               </button>
             </div>
 
-            <div className="text-sm text-gray-600">Mode: {mode} · Rounds done: {completedRounds}</div>
+            <div className="text-sm text-gray-400 mt-2">Mode: **{mode}** · Rounds done: **{completedRounds}**</div>
           </div>
 
           {/* settings */}
-          <aside className="col-span-1 border-l pl-4">
-            <div className="space-y-3">
+          <aside className="col-span-1 border-l border-gray-700/50 pl-4">
+            <div className="space-y-4">
+              <div className="text-xs text-gray-400 font-medium tracking-wide uppercase">Settings</div>
               <div>
-                <label className="block text-xs">Work (minutes)</label>
+                <label className="block text-xs text-gray-400">Work (minutes)</label>
                 <input
                   type="number"
                   min={1}
                   value={workMin}
                   onChange={(e) => setWorkMin(Math.max(1, Number(e.target.value)))}
-                  className="w-full mt-1 px-2 py-1 border rounded"
+                  className="w-full mt-1 px-3 py-1 bg-[#1F2A40] text-gray-200 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs">Short break (minutes)</label>
+                <label className="block text-xs text-gray-400">Short break (minutes)</label>
                 <input
                   type="number"
                   min={1}
                   value={shortMin}
                   onChange={(e) => setShortMin(Math.max(1, Number(e.target.value)))}
-                  className="w-full mt-1 px-2 py-1 border rounded"
+                  className="w-full mt-1 px-3 py-1 bg-[#1F2A40] text-gray-200 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs">Long break (minutes)</label>
+                <label className="block text-xs text-gray-400">Long break (minutes)</label>
                 <input
                   type="number"
                   min={1}
                   value={longMin}
                   onChange={(e) => setLongMin(Math.max(1, Number(e.target.value)))}
-                  className="w-full mt-1 px-2 py-1 border rounded"
+                  className="w-full mt-1 px-3 py-1 bg-[#1F2A40] text-gray-200 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs">Rounds before long break</label>
+                <label className="block text-xs text-gray-400">Rounds before long break</label>
                 <input
                   type="number"
                   min={1}
                   value={roundsBeforeLong}
                   onChange={(e) => setRoundsBeforeLong(Math.max(1, Number(e.target.value)))}
-                  className="w-full mt-1 px-2 py-1 border rounded"
+                  className="w-full mt-1 px-3 py-1 bg-[#1F2A40] text-gray-200 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500"
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <input id="auto" type="checkbox" checked={autoStartNext} onChange={(e) => setAutoStartNext(e.target.checked)} />
-                <label htmlFor="auto" className="text-xs">Auto start next</label>
+              <div className="flex items-center gap-2 pt-2">
+                <input id="auto" type="checkbox" checked={autoStartNext} onChange={(e) => setAutoStartNext(e.target.checked)} className="form-checkbox text-teal-500 bg-[#1F2A40] border-gray-700 rounded" />
+                <label htmlFor="auto" className="text-xs text-gray-300 select-none">Auto start next</label>
               </div>
 
               <div className="pt-2">
-                <div className="text-xs text-gray-500 mb-1">Presets</div>
+                <div className="text-xs text-gray-500 mb-2 font-medium tracking-wide uppercase">Presets</div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setWorkMin(25); setShortMin(5); setLongMin(15); }}
-                    className="px-2 py-1 rounded border text-sm"
+                    className="px-3 py-1 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-500 transition-colors"
                   >25/5</button>
                   <button
                     onClick={() => { setWorkMin(50); setShortMin(10); setLongMin(20); }}
-                    className="px-2 py-1 rounded border text-sm"
+                    className="px-3 py-1 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-500 transition-colors"
                   >50/10</button>
                   <button
                     onClick={() => { setWorkMin(60); setShortMin(5); setLongMin(15); }}
-                    className="px-2 py-1 rounded border text-sm"
+                    className="px-3 py-1 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-500 transition-colors"
                   >60/5</button>
                 </div>
               </div>
 
               <div className="pt-2">
-                <div className="text-xs text-gray-500">Shortcuts</div>
-                <div className="text-xs text-gray-600">Space: start/pause · R: reset</div>
-              </div>
-
-              <div className="pt-2 flex gap-2">
-                <button onClick={() => { localStorage.removeItem(STORAGE_KEY); }} className="px-2 py-1 rounded border text-sm">Clear saved</button>
-                <button onClick={() => { onClose(); }} className="px-2 py-1 rounded bg-gray-100 text-sm">Done</button>
+                <div className="text-xs text-gray-500 font-medium tracking-wide uppercase">Shortcuts</div>
+                <div className="text-xs text-gray-400 mt-1">
+                  <span className="bg-gray-700 px-2 py-0.5 rounded-md font-mono text-gray-200">Space</span>: start/pause
+                  <span className="bg-gray-700 px-2 py-0.5 rounded-md font-mono text-gray-200 ml-2">R</span>: reset
+                </div>
               </div>
             </div>
           </aside>
         </main>
 
-        <footer className="mt-6 text-xs text-gray-500">Tip: اضغط Space للتشغيل/الإيقاف المؤقت. الاحساس العام راقي وخفيف.</footer>
+        <footer className="mt-6 text-xs text-gray-500 text-center border-t border-gray-700/50 pt-4">
+          Tip: اضغط Space للتشغيل/الإيقاف المؤقت.
+        </footer>
       </div>
     </div>
   );
