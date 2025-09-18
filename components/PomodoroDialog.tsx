@@ -162,48 +162,320 @@ export default function PomodoroDialog({ open, onClose }: Props) {
 
   if (!open) return null;
 
+  // CSS-in-JS Styles
+  const styles = {
+    overlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 50,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      padding: '1rem',
+      fontFamily: 'sans-serif',
+      MozOsxFontSmoothing: 'grayscale',
+      WebkitFontSmoothing: 'antialiased'
+    },
+    dialog: {
+      width: '100%',
+      maxWidth: '60rem',
+      borderRadius: '1.5rem',
+      backgroundColor: '#0A192F',
+      color: '#fff',
+      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+      padding: '2rem',
+      border: '1px solid #1f2937'
+    },
+    header: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingBottom: '1.5rem',
+      borderBottom: '1px solid #1f2937',
+      marginBottom: '1.5rem'
+    },
+    title: {
+      fontSize: '1.875rem',
+      fontWeight: '800',
+      color: '#e5e7eb',
+      letterSpacing: '-0.025em'
+    },
+    closeButton: {
+      backgroundColor: 'transparent',
+      border: 'none',
+      color: '#9ca3af',
+      fontSize: '2rem',
+      cursor: 'pointer',
+      transition: 'color 0.2s',
+      outline: 'none',
+    },
+    mainGrid: {
+      display: 'grid',
+      gridTemplateColumns: '1fr',
+      gap: '2.5rem',
+      alignItems: 'flex-start',
+    },
+    section: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2rem',
+      borderRadius: '1rem',
+      backgroundColor: '#15253F',
+      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
+      border: '1px solid #374151'
+    },
+    modeButtonsContainer: {
+      display: 'flex',
+      gap: '0.75rem',
+      backgroundColor: '#0A192F',
+      padding: '0.5rem',
+      borderRadius: '9999px',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+    },
+    button: {
+      padding: '0.5rem 1.25rem',
+      borderRadius: '9999px',
+      fontSize: '0.875rem',
+      fontWeight: '600',
+      transition: 'all 0.2s',
+      cursor: 'pointer',
+      border: 'none',
+      outline: 'none',
+    },
+    modeButtonActive: {
+      backgroundColor: '#20C5C3',
+      color: '#0A192F',
+      boxShadow: '0 10px 15px -3px rgba(32, 197, 195, 0.3), 0 4px 6px -2px rgba(32, 197, 195, 0.1)'
+    },
+    modeButtonInactive: {
+      color: '#9ca3af',
+      backgroundColor: 'transparent',
+    },
+    timerCircleContainer: {
+      position: 'relative',
+      width: '16rem',
+      height: '16rem',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    timerSvg: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%'
+    },
+    timerText: {
+      position: 'relative',
+      textAlign: 'center',
+      color: '#fff'
+    },
+    timerTime: {
+      fontSize: '4rem',
+      fontWeight: '300',
+      lineHeight: '1'
+    },
+    timerDescription: {
+      fontSize: '0.875rem',
+      color: '#9ca3af',
+      marginTop: '0.5rem'
+    },
+    controlButtonsContainer: {
+      display: 'flex',
+      gap: '1rem',
+      marginTop: '1.5rem'
+    },
+    controlButton: {
+      padding: '0.75rem 2rem',
+      borderRadius: '9999px',
+      fontWeight: '700',
+      transition: 'all 0.2s',
+      cursor: 'pointer',
+      border: '1px solid #374151',
+      color: '#d1d5db',
+      backgroundColor: 'transparent',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      outline: 'none'
+    },
+    startButton: {
+      backgroundColor: '#059669',
+      color: '#0A192F',
+      border: 'none',
+      boxShadow: '0 10px 15px -3px rgba(5, 150, 105, 0.3), 0 4px 6px -2px rgba(5, 150, 105, 0.1)',
+    },
+    pauseButton: {
+      backgroundColor: '#f59e0b',
+      color: '#fff',
+      border: 'none',
+      boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.3), 0 4px 6px -2px rgba(245, 158, 11, 0.1)',
+    },
+    settingsSection: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '2rem',
+      padding: '2rem',
+      borderRadius: '1rem',
+      backgroundColor: '#15253F',
+      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
+      border: '1px solid #374151'
+    },
+    settingsTitle: {
+      fontSize: '1.25rem',
+      fontWeight: '700',
+      color: '#e5e7eb',
+      marginBottom: '1rem'
+    },
+    settingItem: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    },
+    settingLabel: {
+      fontSize: '0.875rem',
+      color: '#d1d5db'
+    },
+    settingInput: {
+      width: '6rem',
+      padding: '0.25rem 0.75rem',
+      backgroundColor: '#0A192F',
+      color: '#20C5C3',
+      border: '1px solid #374151',
+      borderRadius: '0.5rem',
+      textAlign: 'right',
+      fontSize: '1.125rem',
+      fontFamily: 'monospace',
+      outline: 'none',
+    },
+    checkboxContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      paddingTop: '0.5rem',
+    },
+    checkbox: {
+      height: '1.25rem',
+      width: '1.25rem',
+      color: '#20C5C3',
+      backgroundColor: '#0A192F',
+      border: '1px solid #374151',
+      borderRadius: '0.25rem',
+      outline: 'none',
+      cursor: 'pointer'
+    },
+    checkboxLabel: {
+      fontSize: '0.875rem',
+      color: '#d1d5db',
+      cursor: 'pointer',
+      userSelect: 'none',
+    },
+    presetsContainer: {
+      display: 'flex',
+      gap: '0.75rem',
+    },
+    presetsButton: {
+      padding: '0.5rem 1rem',
+      borderRadius: '9999px',
+      border: '1px solid #374151',
+      color: '#9ca3af',
+      fontSize: '0.875rem',
+      cursor: 'pointer',
+      backgroundColor: 'transparent',
+      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+      outline: 'none'
+    },
+    shortcutsContainer: {
+      paddingTop: '0.5rem',
+      textAlign: 'center',
+      borderTop: '1px solid #1f2937',
+      padding: '1.5rem 0'
+    },
+    shortcutTitle: {
+      fontSize: '0.875rem',
+      color: '#6b7280',
+      fontWeight: '500',
+      marginBottom: '0.5rem'
+    },
+    shortcutText: {
+      fontSize: '0.75rem',
+      color: '#9ca3af',
+      display: 'flex',
+      justifyContent: 'center',
+      gap: '0.5rem'
+    },
+    shortcutKey: {
+      backgroundColor: '#374151',
+      padding: '0.25rem 0.625rem',
+      borderRadius: '0.375rem',
+      fontFamily: 'monospace',
+      color: '#e5e7eb',
+      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'
+    },
+    footer: {
+      marginTop: '2rem',
+      fontSize: '0.875rem',
+      color: '#6b7280',
+      textAlign: 'center',
+      borderTop: '1px solid #1f2937',
+      paddingTop: '1.5rem'
+    },
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 font-sans antialiased">
-      <div className="w-full max-w-4xl rounded-3xl bg-[#0A192F] text-white shadow-xl p-8 border border-gray-800">
-        <header className="flex items-center justify-between pb-6 border-b border-gray-800 mb-6">
-          <h3 className="text-3xl font-extrabold text-gray-100 tracking-tight">Pomodoro Timer</h3>
+    <div style={styles.overlay}>
+      <div style={styles.dialog}>
+        <header style={styles.header}>
+          <h3 style={styles.title}>Pomodoro Timer</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-teal-400 transition-colors text-2xl"
+            style={styles.closeButton}
             aria-label="Close"
           >
             &times;
           </button>
         </header>
 
-        <main className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+        <main style={{...styles.mainGrid, '@media (min-width: 1024px)': {gridTemplateColumns: '1fr 1fr'}}}>
           {/* Main Timer Section */}
-          <section className="flex flex-col items-center justify-center space-y-8 bg-[#15253F] p-8 rounded-2xl shadow-inner border border-gray-700">
-            {/* Mode selection buttons */}
-            <div className="flex gap-3 bg-[#0A192F] p-2 rounded-full shadow-md">
+          <section style={styles.section}>
+            <div style={styles.modeButtonsContainer}>
               <button
                 onClick={() => { setMode("work"); reset(); }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${mode === "work" ? "bg-teal-500 text-[#0A192F] shadow-lg" : "text-gray-400 hover:text-gray-200"}`}
+                style={{
+                  ...styles.button,
+                  ...(mode === "work" ? styles.modeButtonActive : styles.modeButtonInactive)
+                }}
               >
                 Work
               </button>
               <button
                 onClick={() => { setMode("shortBreak"); reset(); }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${mode === "shortBreak" ? "bg-teal-500 text-[#0A192F] shadow-lg" : "text-gray-400 hover:text-gray-200"}`}
+                style={{
+                  ...styles.button,
+                  ...(mode === "shortBreak" ? styles.modeButtonActive : styles.modeButtonInactive)
+                }}
               >
                 Short Break
               </button>
               <button
                 onClick={() => { setMode("longBreak"); reset(); }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${mode === "longBreak" ? "bg-teal-500 text-[#0A192F] shadow-lg" : "text-gray-400 hover:text-gray-200"}`}
+                style={{
+                  ...styles.button,
+                  ...(mode === "longBreak" ? styles.modeButtonActive : styles.modeButtonInactive)
+                }}
               >
                 Long Break
               </button>
             </div>
 
-            {/* Timer Circle */}
-            <div className="relative w-64 h-64 flex items-center justify-center">
-              <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 120 120">
+            <div style={{...styles.timerCircleContainer, marginTop: '2rem'}}>
+              <svg style={styles.timerSvg} viewBox="0 0 120 120">
                 <circle cx="60" cy="60" r="54" strokeWidth="8" stroke="#1F2A40" fill="none"></circle>
                 <circle
                   cx="60"
@@ -212,502 +484,124 @@ export default function PomodoroDialog({ open, onClose }: Props) {
                   strokeWidth="8"
                   strokeLinecap="round"
                   stroke="#20C5C3"
-                  style={{ strokeDasharray: 339.292, strokeDashoffset: 339.292 - progress * 339.292 }}
+                  style={{ strokeDasharray: 339.292, strokeDashoffset: 339.292 - progress * 339.292, transition: 'stroke-dashoffset 1s linear' }}
                   transform="rotate(-90 60 60)"
                 />
               </svg>
-              <div className="relative text-center">
-                <p className="text-6xl font-light text-white leading-none">{format(timeLeft)}</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  {mode === "work" ? "Focus Time" : "Break Time"}
-                </p>
+              <div style={styles.timerText}>
+                <p style={styles.timerTime}>{format(timeLeft)}</p>
+                <p style={styles.timerDescription}>{mode === "work" ? "Focus Time" : "Break Time"}</p>
               </div>
             </div>
 
-            {/* Control Buttons */}
-            <div className="flex gap-4 mt-6">
+            <div style={styles.controlButtonsContainer}>
               {!running ? (
-                <button onClick={start} className="px-8 py-3 rounded-full font-bold bg-teal-600 text-[#0A192F] hover:bg-teal-500 transition-colors transform hover:scale-105 shadow-lg">Start</button>
+                <button onClick={start} style={{...styles.controlButton, ...styles.startButton}}>Start</button>
               ) : (
-                <button onClick={pause} className="px-8 py-3 rounded-full font-bold bg-orange-600 text-white hover:bg-orange-500 transition-colors transform hover:scale-105 shadow-lg">Pause</button>
+                <button onClick={pause} style={{...styles.controlButton, ...styles.pauseButton}}>Pause</button>
               )}
-              <button onClick={reset} className="px-8 py-3 rounded-full border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-gray-100 transition-colors shadow-md">Reset</button>
-              <button
-                onClick={() => setTimeLeft(0)}
-                className="px-8 py-3 rounded-full border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-gray-100 transition-colors shadow-md"
-              >
-                Skip
-              </button>
+              <button onClick={reset} style={styles.controlButton}>Reset</button>
+              <button onClick={() => setTimeLeft(0)} style={styles.controlButton}>Skip</button>
             </div>
 
-            <p className="text-sm text-gray-400 mt-4">
-              Completed Rounds: <span className="font-semibold text-teal-400">{completedRounds}</span>
+            <p style={{...styles.timerDescription, marginTop: '1rem'}}>
+              Completed Rounds: <span style={{fontWeight: '600', color: '#5eead4'}}>{completedRounds}</span>
             </p>
           </section>
 
           {/* Settings Section */}
-          <aside className="flex flex-col gap-8 bg-[#15253F] p-8 rounded-2xl shadow-inner border border-gray-700">
+          <aside style={styles.settingsSection}>
             <div>
-              <h4 className="text-xl font-bold text-gray-200 mb-4">Timer Settings</h4>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label htmlFor="workMin" className="text-sm text-gray-300">Work Duration (minutes)</label>
+              <h4 style={styles.settingsTitle}>Timer Settings</h4>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                <div style={styles.settingItem}>
+                  <label htmlFor="workMin" style={styles.settingLabel}>Work Duration (minutes)</label>
                   <input
                     id="workMin"
                     type="number"
                     min={1}
                     value={workMin}
                     onChange={(e) => setWorkMin(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1 bg-[#0A192F] text-teal-400 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 text-right text-lg font-mono"
+                    style={styles.settingInput}
                   />
                 </div>
-
-                <div className="flex justify-between items-center">
-                  <label htmlFor="shortMin" className="text-sm text-gray-300">Short Break (minutes)</label>
+                <div style={styles.settingItem}>
+                  <label htmlFor="shortMin" style={styles.settingLabel}>Short Break (minutes)</label>
                   <input
                     id="shortMin"
                     type="number"
                     min={1}
                     value={shortMin}
                     onChange={(e) => setShortMin(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1 bg-[#0A192F] text-teal-400 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 text-right text-lg font-mono"
+                    style={styles.settingInput}
                   />
                 </div>
-
-                <div className="flex justify-between items-center">
-                  <label htmlFor="longMin" className="text-sm text-gray-300">Long Break (minutes)</label>
+                <div style={styles.settingItem}>
+                  <label htmlFor="longMin" style={styles.settingLabel}>Long Break (minutes)</label>
                   <input
                     id="longMin"
                     type="number"
                     min={1}
                     value={longMin}
                     onChange={(e) => setLongMin(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1 bg-[#0A192F] text-teal-400 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 text-right text-lg font-mono"
+                    style={styles.settingInput}
                   />
                 </div>
-
-                <div className="flex justify-between items-center">
-                  <label htmlFor="roundsBeforeLong" className="text-sm text-gray-300">Rounds before Long Break</label>
+                <div style={styles.settingItem}>
+                  <label htmlFor="roundsBeforeLong" style={styles.settingLabel}>Rounds before Long Break</label>
                   <input
                     id="roundsBeforeLong"
                     type="number"
                     min={1}
                     value={roundsBeforeLong}
                     onChange={(e) => setRoundsBeforeLong(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1 bg-[#0A192F] text-teal-400 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 text-right text-lg font-mono"
+                    style={styles.settingInput}
                   />
                 </div>
-
-                <div className="flex items-center gap-3 pt-2">
+                <div style={styles.checkboxContainer}>
                   <input
                     id="autoStartNext"
                     type="checkbox"
                     checked={autoStartNext}
                     onChange={(e) => setAutoStartNext(e.target.checked)}
-                    className="form-checkbox h-5 w-5 text-teal-500 bg-[#0A192F] border-gray-700 rounded focus:ring-teal-500 cursor-pointer"
+                    style={styles.checkbox}
                   />
-                  <label htmlFor="autoStartNext" className="text-sm text-gray-300 cursor-pointer select-none">Auto start next round</label>
+                  <label htmlFor="autoStartNext" style={styles.checkboxLabel}>Auto start next round</label>
                 </div>
               </div>
             </div>
 
             <div>
-              <h4 className="text-xl font-bold text-gray-200 mb-4">Presets</h4>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setWorkMin(25); setShortMin(5); setLongMin(15); }}
-                  className="px-4 py-2 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-400 transition-colors shadow-sm"
-                >25/5/15</button>
-                <button
-                  onClick={() => { setWorkMin(50); setShortMin(10); setLongMin(20); }}
-                  className="px-4 py-2 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-400 transition-colors shadow-sm"
-                >50/10/20</button>
-                <button
-                  onClick={() => { setWorkMin(60); setShortMin(5); setLongMin(15); }}
-                  className="px-4 py-2 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-400 transition-colors shadow-sm"
-                >60/5/15</button>
+              <h4 style={styles.settingsTitle}>Presets</h4>
+              <div style={styles.presetsContainer}>
+                <button onClick={() => { setWorkMin(25); setShortMin(5); setLongMin(15); }} style={styles.presetsButton}>25/5/15</button>
+                <button onClick={() => { setWorkMin(50); setShortMin(10); setLongMin(20); }} style={styles.presetsButton}>50/10/20</button>
+                <button onClick={() => { setWorkMin(60); setShortMin(5); setLongMin(15); }} style={styles.presetsButton}>60/5/15</button>
               </div>
             </div>
 
             <div>
-              <h4 className="text-xl font-bold text-gray-200 mb-4">Quick Actions</h4>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { localStorage.removeItem(STORAGE_KEY); alert('Settings cleared!'); }}
-                  className="px-4 py-2 rounded-full bg-red-600 text-white text-sm hover:bg-red-500 transition-colors shadow-md"
-                >Clear Saved Settings</button>
-              </div>
+              <h4 style={styles.settingsTitle}>Quick Actions</h4>
+              <button
+                onClick={() => { localStorage.removeItem(STORAGE_KEY); alert('Settings cleared!'); }}
+                style={{...styles.button, padding: '0.5rem 1rem', backgroundColor: '#dc2626', color: '#fff', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'}}
+              >
+                Clear Saved Settings
+              </button>
             </div>
 
-            <div className="pt-2 text-center border-t border-gray-800 pt-6">
-              <div className="text-sm text-gray-500 font-medium mb-2">Keyboard Shortcuts</div>
-              <div className="text-xs text-gray-400 space-x-2">
-                <span className="bg-gray-700 px-2.5 py-1 rounded-md font-mono text-gray-200 shadow-inner">Space</span>: Start/Pause
-                <span className="bg-gray-700 px-2.5 py-1 rounded-md font-mono text-gray-200 shadow-inner">R</span>: Reset Timer
+            <div style={styles.shortcutsContainer}>
+              <div style={styles.shortcutTitle}>Keyboard Shortcuts</div>
+              <div style={styles.shortcutText}>
+                <span style={styles.shortcutKey}>Space</span>: Start/Pause
+                <span style={styles.shortcutKey}>R</span>: Reset Timer
               </div>
             </div>
           </aside>
         </main>
 
-        <footer className="mt-8 text-sm text-gray-500 text-center border-t border-gray-800 pt-6">
-          Designed with <span className="text-red-500">&hearts;</span> for productivity.
-        </footer>
-      </div>
-    </div>
-  );
-}import React, { useEffect, useRef, useState } from "react";
-
-type Props = {
-  open: boolean;
-  onClose: () => void;
-};
-
-type Mode = "work" | "shortBreak" | "longBreak";
-
-const STORAGE_KEY = "planx_pomodoro_v1";
-
-export default function PomodoroDialog({ open, onClose }: Props) {
-  // default settings
-  const [workMin, setWorkMin] = useState<number>(60);
-  const [shortMin, setShortMin] = useState<number>(5);
-  const [longMin, setLongMin] = useState<number>(15);
-  const [roundsBeforeLong, setRoundsBeforeLong] = useState<number>(4);
-  const [autoStartNext, setAutoStartNext] = useState<boolean>(false);
-
-  // runtime state
-  const [mode, setMode] = useState<Mode>("work");
-  const [timeLeft, setTimeLeft] = useState<number>(workMin * 60);
-  const [running, setRunning] = useState<boolean>(false);
-  const [completedRounds, setCompletedRounds] = useState<number>(0);
-
-  const tickRef = useRef<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // load/save settings
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed.workMin) setWorkMin(parsed.workMin);
-        if (parsed.shortMin) setShortMin(parsed.shortMin);
-        if (parsed.longMin) setLongMin(parsed.longMin);
-        if (parsed.roundsBeforeLong) setRoundsBeforeLong(parsed.roundsBeforeLong);
-        if (parsed.autoStartNext !== undefined) setAutoStartNext(parsed.autoStartNext);
-      } catch {}
-    }
-  }, []);
-
-  useEffect(() => {
-    // update timeLeft when settings or mode changes
-    if (mode === "work") setTimeLeft(workMin * 60);
-    if (mode === "shortBreak") setTimeLeft(shortMin * 60);
-    if (mode === "longBreak") setTimeLeft(longMin * 60);
-  }, [mode, workMin, shortMin, longMin]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ workMin, shortMin, longMin, roundsBeforeLong, autoStartNext })
-    );
-  }, [workMin, shortMin, longMin, roundsBeforeLong, autoStartNext]);
-
-  // timer loop
-  useEffect(() => {
-    if (!running) return;
-    tickRef.current = window.setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) {
-          // stop tick here and handle finish in next effect
-          window.clearInterval(tickRef.current || undefined);
-          tickRef.current = null;
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => {
-      if (tickRef.current) window.clearInterval(tickRef.current);
-      tickRef.current = null;
-    };
-  }, [running]);
-
-  // when timeLeft hits zero
-  useEffect(() => {
-    if (timeLeft !== 0) return;
-    // play sound
-    if (!audioRef.current) {
-      audioRef.current = new Audio("/data/رنين-المنبه-لشاومي.mp3");
-    }
-    audioRef.current.currentTime = 0;
-    audioRef.current.play().catch(() => {});
-
-    // change mode
-    if (mode === "work") {
-      setCompletedRounds((r) => r + 1);
-      const nextIsLong = (completedRounds + 1) % roundsBeforeLong === 0;
-      setMode(nextIsLong ? "longBreak" : "shortBreak");
-      setRunning(autoStartNext);
-    } else {
-      setMode("work");
-      setRunning(autoStartNext);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft]);
-
-  // keep a stable display time when dialog opens
-  useEffect(() => {
-    if (!open) {
-      // pause on close
-      setRunning(false);
-      return;
-    }
-    // ensure time reflects mode
-    if (mode === "work") setTimeLeft(workMin * 60);
-    if (mode === "shortBreak") setTimeLeft(shortMin * 60);
-    if (mode === "longBreak") setTimeLeft(longMin * 60);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  // keyboard shortcuts
-  useEffect(() => {
-    function handler(e: KeyboardEvent) {
-      if (!open) return;
-      if (e.code === "Space") {
-        e.preventDefault();
-        setRunning((r) => !r);
-      }
-      if (e.key.toLowerCase() === "r") {
-        e.preventDefault();
-        reset();
-      }
-    }
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mode, workMin, shortMin, longMin]);
-
-  function start() {
-    if (timeLeft <= 0) {
-      // restart session length
-      if (mode === "work") setTimeLeft(workMin * 60);
-      if (mode === "shortBreak") setTimeLeft(shortMin * 60);
-      if (mode === "longBreak") setTimeLeft(longMin * 60);
-    }
-    setRunning(true);
-  }
-
-  function pause() {
-    setRunning(false);
-  }
-
-  function reset() {
-    setRunning(false);
-    if (mode === "work") setTimeLeft(workMin * 60);
-    if (mode === "shortBreak") setTimeLeft(shortMin * 60);
-    if (mode === "longBreak") setTimeLeft(longMin * 60);
-  }
-
-  function format(sec: number) {
-    const m = Math.floor(sec / 60).toString().padStart(2, "0");
-    const s = Math.floor(sec % 60).toString().padStart(2, "0");
-    return `${m}:${s}`;
-  }
-
-  const total = mode === "work" ? workMin * 60 : mode === "shortBreak" ? shortMin * 60 : longMin * 60;
-  const progress = total > 0 ? (1 - timeLeft / total) : 0;
-
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 font-sans antialiased">
-      <div className="w-full max-w-4xl rounded-3xl bg-[#0A192F] text-white shadow-xl p-8 border border-gray-800">
-        <header className="flex items-center justify-between pb-6 border-b border-gray-800 mb-6">
-          <h3 className="text-3xl font-extrabold text-gray-100 tracking-tight">Pomodoro Timer</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-teal-400 transition-colors text-2xl"
-            aria-label="Close"
-          >
-            &times;
-          </button>
-        </header>
-
-        <main className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-          {/* Main Timer Section */}
-          <section className="flex flex-col items-center justify-center space-y-8 bg-[#15253F] p-8 rounded-2xl shadow-inner border border-gray-700">
-            {/* Mode selection buttons */}
-            <div className="flex gap-3 bg-[#0A192F] p-2 rounded-full shadow-md">
-              <button
-                onClick={() => { setMode("work"); reset(); }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${mode === "work" ? "bg-teal-500 text-[#0A192F] shadow-lg" : "text-gray-400 hover:text-gray-200"}`}
-              >
-                Work
-              </button>
-              <button
-                onClick={() => { setMode("shortBreak"); reset(); }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${mode === "shortBreak" ? "bg-teal-500 text-[#0A192F] shadow-lg" : "text-gray-400 hover:text-gray-200"}`}
-              >
-                Short Break
-              </button>
-              <button
-                onClick={() => { setMode("longBreak"); reset(); }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${mode === "longBreak" ? "bg-teal-500 text-[#0A192F] shadow-lg" : "text-gray-400 hover:text-gray-200"}`}
-              >
-                Long Break
-              </button>
-            </div>
-
-            {/* Timer Circle */}
-            <div className="relative w-64 h-64 flex items-center justify-center">
-              <svg className="absolute top-0 left-0 w-full h-full" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="54" strokeWidth="8" stroke="#1F2A40" fill="none"></circle>
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  stroke="#20C5C3"
-                  style={{ strokeDasharray: 339.292, strokeDashoffset: 339.292 - progress * 339.292 }}
-                  transform="rotate(-90 60 60)"
-                />
-              </svg>
-              <div className="relative text-center">
-                <p className="text-6xl font-light text-white leading-none">{format(timeLeft)}</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  {mode === "work" ? "Focus Time" : "Break Time"}
-                </p>
-              </div>
-            </div>
-
-            {/* Control Buttons */}
-            <div className="flex gap-4 mt-6">
-              {!running ? (
-                <button onClick={start} className="px-8 py-3 rounded-full font-bold bg-teal-600 text-[#0A192F] hover:bg-teal-500 transition-colors transform hover:scale-105 shadow-lg">Start</button>
-              ) : (
-                <button onClick={pause} className="px-8 py-3 rounded-full font-bold bg-orange-600 text-white hover:bg-orange-500 transition-colors transform hover:scale-105 shadow-lg">Pause</button>
-              )}
-              <button onClick={reset} className="px-8 py-3 rounded-full border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-gray-100 transition-colors shadow-md">Reset</button>
-              <button
-                onClick={() => setTimeLeft(0)}
-                className="px-8 py-3 rounded-full border border-gray-700 text-gray-300 hover:border-gray-500 hover:text-gray-100 transition-colors shadow-md"
-              >
-                Skip
-              </button>
-            </div>
-
-            <p className="text-sm text-gray-400 mt-4">
-              Completed Rounds: <span className="font-semibold text-teal-400">{completedRounds}</span>
-            </p>
-          </section>
-
-          {/* Settings Section */}
-          <aside className="flex flex-col gap-8 bg-[#15253F] p-8 rounded-2xl shadow-inner border border-gray-700">
-            <div>
-              <h4 className="text-xl font-bold text-gray-200 mb-4">Timer Settings</h4>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label htmlFor="workMin" className="text-sm text-gray-300">Work Duration (minutes)</label>
-                  <input
-                    id="workMin"
-                    type="number"
-                    min={1}
-                    value={workMin}
-                    onChange={(e) => setWorkMin(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1 bg-[#0A192F] text-teal-400 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 text-right text-lg font-mono"
-                  />
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <label htmlFor="shortMin" className="text-sm text-gray-300">Short Break (minutes)</label>
-                  <input
-                    id="shortMin"
-                    type="number"
-                    min={1}
-                    value={shortMin}
-                    onChange={(e) => setShortMin(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1 bg-[#0A192F] text-teal-400 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 text-right text-lg font-mono"
-                  />
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <label htmlFor="longMin" className="text-sm text-gray-300">Long Break (minutes)</label>
-                  <input
-                    id="longMin"
-                    type="number"
-                    min={1}
-                    value={longMin}
-                    onChange={(e) => setLongMin(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1 bg-[#0A192F] text-teal-400 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 text-right text-lg font-mono"
-                  />
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <label htmlFor="roundsBeforeLong" className="text-sm text-gray-300">Rounds before Long Break</label>
-                  <input
-                    id="roundsBeforeLong"
-                    type="number"
-                    min={1}
-                    value={roundsBeforeLong}
-                    onChange={(e) => setRoundsBeforeLong(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1 bg-[#0A192F] text-teal-400 border border-gray-700 rounded-lg focus:outline-none focus:border-teal-500 text-right text-lg font-mono"
-                  />
-                </div>
-
-                <div className="flex items-center gap-3 pt-2">
-                  <input
-                    id="autoStartNext"
-                    type="checkbox"
-                    checked={autoStartNext}
-                    onChange={(e) => setAutoStartNext(e.target.checked)}
-                    className="form-checkbox h-5 w-5 text-teal-500 bg-[#0A192F] border-gray-700 rounded focus:ring-teal-500 cursor-pointer"
-                  />
-                  <label htmlFor="autoStartNext" className="text-sm text-gray-300 cursor-pointer select-none">Auto start next round</label>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-xl font-bold text-gray-200 mb-4">Presets</h4>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setWorkMin(25); setShortMin(5); setLongMin(15); }}
-                  className="px-4 py-2 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-400 transition-colors shadow-sm"
-                >25/5/15</button>
-                <button
-                  onClick={() => { setWorkMin(50); setShortMin(10); setLongMin(20); }}
-                  className="px-4 py-2 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-400 transition-colors shadow-sm"
-                >50/10/20</button>
-                <button
-                  onClick={() => { setWorkMin(60); setShortMin(5); setLongMin(15); }}
-                  className="px-4 py-2 rounded-full border border-gray-700 text-gray-400 text-sm hover:border-teal-500 hover:text-teal-400 transition-colors shadow-sm"
-                >60/5/15</button>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-xl font-bold text-gray-200 mb-4">Quick Actions</h4>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { localStorage.removeItem(STORAGE_KEY); alert('Settings cleared!'); }}
-                  className="px-4 py-2 rounded-full bg-red-600 text-white text-sm hover:bg-red-500 transition-colors shadow-md"
-                >Clear Saved Settings</button>
-              </div>
-            </div>
-
-            <div className="pt-2 text-center border-t border-gray-800 pt-6">
-              <div className="text-sm text-gray-500 font-medium mb-2">Keyboard Shortcuts</div>
-              <div className="text-xs text-gray-400 space-x-2">
-                <span className="bg-gray-700 px-2.5 py-1 rounded-md font-mono text-gray-200 shadow-inner">Space</span>: Start/Pause
-                <span className="bg-gray-700 px-2.5 py-1 rounded-md font-mono text-gray-200 shadow-inner">R</span>: Reset Timer
-              </div>
-            </div>
-          </aside>
-        </main>
-
-        <footer className="mt-8 text-sm text-gray-500 text-center border-t border-gray-800 pt-6">
-          Designed with <span className="text-red-500">&hearts;</span> for productivity.
+        <footer style={styles.footer}>
+          Designed with <span style={{color: '#ef4444'}}>&hearts;</span> for productivity.
         </footer>
       </div>
     </div>
