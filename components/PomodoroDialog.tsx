@@ -23,8 +23,8 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   const [completedRounds, setCompletedRounds] = useState<number>(0);
 
   const tickRef = useRef<number | null>(null);
-
-  // load/save settings - using memory storage only
+  
+  // Memory storage for settings
   const settingsData = useRef({ workMin: 60, shortMin: 5, longMin: 15, roundsBeforeLong: 4, autoStartNext: false });
   
   useEffect(() => {
@@ -355,7 +355,8 @@ export default function PomodoroDialog({ open, onClose }: Props) {
       backdropFilter: 'blur(10px)',
       position: 'relative' as const,
       overflow: 'hidden',
-      minWidth: '6rem'
+      minWidth: '6rem',
+      outline: 'none'
     },
     startButton: {
       backgroundColor: 'rgba(5, 150, 105, 0.2)', 
@@ -478,25 +479,6 @@ export default function PomodoroDialog({ open, onClose }: Props) {
       backgroundColor: 'rgba(255, 255, 255, 0.03)',
       borderRadius: '1rem',
       border: '1px solid rgba(255, 255, 255, 0.08)'
-    }
-  };
-
-  // Enhanced hover effects
-  const hoverEffects = {
-    iconButton: {
-      ...styles.iconButton,
-      ':hover': {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        transform: 'translateY(-1px)',
-        boxShadow: '0 8px 25px -5px rgba(0, 0, 0, 0.3)'
-      }
-    },
-    controlButton: {
-      ...styles.controlButton,
-      ':hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.4)'
-      }
     }
   };
 
@@ -801,7 +783,7 @@ export default function PomodoroDialog({ open, onClose }: Props) {
 
             <div style={styles.quickActions}>
               <h4 style={styles.settingsTitle}>🗑️ Quick Actions</h4>
-                              <button 
+              <button 
                 onClick={() => { 
                   // Reset to defaults
                   settingsData.current = { workMin: 60, shortMin: 5, longMin: 15, roundsBeforeLong: 4, autoStartNext: false };
@@ -833,7 +815,7 @@ export default function PomodoroDialog({ open, onClose }: Props) {
         <footer style={styles.footer}>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
             <span>Crafted with</span>
-            <span style={{color: '#ef4444', fontSize: '1.25rem', animation: 'pulse 2s infinite'}}>♥</span>
+            <span style={{color: '#ef4444', fontSize: '1.25rem'}}>♥</span>
             <span>for productivity</span>
           </div>
           <div style={{marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7}}>
@@ -842,7 +824,9 @@ export default function PomodoroDialog({ open, onClose }: Props) {
           </div>
         </footer>
       </div>
-    </div>195, 0.3)'}
+    </div>
+  );
+}
                   />
                 </div>
                 <div style={styles.settingItem}>
@@ -855,4 +839,4 @@ export default function PomodoroDialog({ open, onClose }: Props) {
                     onChange={(e) => setShortMin(Math.max(1, Number(e.target.value)))} 
                     style={styles.settingInput}
                     onFocus={(e) => e.target.style.borderColor = 'rgba(32, 197, 195, 0.5)'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(32, 197,
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(32, 197, 195, 0.3)'}
