@@ -1,23 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-
-// أنواع TypeScript
-interface SessionStats {
-  workTime: number;
-  breakTime: number;
-  sessions: number;
-  totalTime: number;
-}
-
-interface TimerMode {
-  title: string;
-  color: string;
-  secondaryColor: string;
-  bgGradient: string;
-  glowColor: string;
-  description: string;
-  ringColor: string;
-  defaultTime: number;
-}
+import React, { useState, useEffect } from 'react';
 
 interface PomodoroTimerProps {
   open: boolean;
@@ -32,39 +13,15 @@ interface PomodoroTimerProps {
   setTimeLeft: (time: number) => void;
 }
 
-// تعريف الأوضاع
-const timerModes: Record<'work' | 'shortBreak' | 'longBreak', TimerMode> = {
-  work: {
-    title: 'Work',
-    color: 'text-indigo-600',
-    secondaryColor: 'text-indigo-400',
-    bgGradient: 'from-indigo-500 to-purple-500',
-    glowColor: 'rgba(99, 102, 241, 0.5)',
-    description: 'Focus on your task',
-    ringColor: '#4f46e5',
-    defaultTime: 25 * 60
-  },
-  shortBreak: {
-    title: 'Short Break',
-    color: 'text-emerald-600',
-    secondaryColor: 'text-emerald-400',
-    bgGradient: 'from-emerald-400 to-emerald-600',
-    glowColor: 'rgba(5, 150, 105, 0.5)',
-    description: 'Take a short break',
-    ringColor: '#059669',
-    defaultTime: 5 * 60
-  },
-  longBreak: {
-    title: 'Long Break',
-    color: 'text-purple-600',
-    secondaryColor: 'text-purple-400',
-    bgGradient: 'from-purple-500 to-indigo-700',
-    glowColor: 'rgba(139, 92, 246, 0.5)',
-    description: 'Take a longer break',
-    ringColor: '#7c3aed',
-    defaultTime: 15 * 60
-  }
-};
+interface SessionStats {
+  workTime: number;
+  breakTime: number;
+  sessions: number;
+  dailySessions: number;
+  dailyGoal: number;
+  streak: number;
+  lastCompletedDate: string | null;
+}
 
 const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   open,
@@ -78,397 +35,524 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   setMode,
   setTimeLeft
 }) => {
-  const [sessionStats, setSessionStats] = useState<SessionStats>({
-    workTime: 0,
-    breakTime: 0,
-    sessions: 0,
-    totalTime: 0
-  });
-  const [showCustomTime, setShowCustomTime] = useState(false);
-  const [customMinutes, setCustomMinutes] = useState('');
+  const [customTime, setCustomTime] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [sessionComplete, setSessionComplete] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [initialTime, setInitialTime] = useState(timeLeft);
   const [showStats, setShowStats] = useState(false);
-  const [completedSession, setCompletedSession] = useState(false);
-  const [sessionCount, setSessionCount] = useState(0);
-  const [notificationPermission, setNotificationPermission] = useState('default');
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // طلب إذن الإشعارات
-  useEffect(() => {
-    if ('Notification' in window) {
-      if (Notification.permission !== 'granted') {
-        Notification.requestPermission().then(permission => {
-          setNotificationPermission(permission);
-        });
-      } else {
-        setNotificationPermission('granted');
-      }
-    }
-  }, []);
-
-  // إنشاء عنصر الصوت
-  useEffect(() => {
-    // إنشاء صوت بسيط باستخدام Base64 (نغمة بسيطة)
-    audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbVtfdJivrJBhNjVgodDbq2EcBStztfLNjEMMACVnqN3QlGEmASVeh8bHnG8wBSdffrS8oHcyCilkc6i0o3cvCilfaZqumnUuCidZXJGmlnEsCSVUVYWhj2wpByRPTnuchmcnBSNMSXWYgGElAyNJRXGYeFwhASNHQG2WdVkfACJFPWuUc1cdACFDOmmTcVYcACBDOGeQb1YcACBBOGaPblYcACBAOGWObVYcACA/OGSNbFYcACA+OGONbFYcACA9OGKNbFYcACA8OGGNbFYcACA7OGCNbFYcACA6OF+NbFYcACA5OF6NbFYcACA4OF2NbFYcACA3OFyNbFYcACA2OFuNbFYcACA1OFqNbFYcACA0OFmNbFYcACAyOFiNbFYcACAxOFeNbFYcACAwOFaNbFYcACAvOFWNbFYcACAuOFSMbFYcACAtOFOMbFYcACAsOFKJbFYcACArOFF/bFYcACAqOE9+bFYcACApOE59bFYcACAoOE18bFYcACAnOEx7bFYcACAmOEp6bFYcACAlOEl5bFYcACAkOEh4bFYcACAjOEd3bFYcACAiOEV2bFYcACAhOER1bFYcACAgOEJ0bFYcAB8fOEBzbFYcAB8eOD5ybFYcAB8dOD1xbFYcAB8cODxwbFYcAB8bODtvbFYcAB8aODpu7FYcAB8ZODlt7FYcAB8YODhs7FYcAB8XODdr7FYcAB8WODZq7FYcAB8VODVp7FYcAB8UODRo7FYcAB8TODNn7FYcAB8SODJm7FYcAB8RODFl7FYcAB8QODBk7FYcAB8POC9j7FYcAB8OOC5i7FYcAB8NOC1h7FYcAB8MOCxg7FYcAB8LOCtf7FYcAB8KOCpe7FYcAB8JOCld7FYcAB8IOCdc7FYcAB8HOCZb7FYcAB8GOCVa7FYcAB8FOCRZ7FYcAB8EOCNY7FYcAB8DOCJX7FYcAB8COCFW7FYcAB8BOCBV7FYcAB8AOB9U7FYcAB7/OB5T7FYcAB7+OB1S7FYcAB79OBxR7FYcAB78OBtQ7FYcAB77OBpP7FYcAB76OBlO7FYcAB75OBhN7FYcAB74OBdM7FYcAB73OBZL7FYcAB72OBVK7FYcAB71OBRJ7FYcAB70OBNI7FYcAB7zOBJH7FYcAB7yOBFG7FYcAB7xOBBF7FYcAB7wOA9E7FYcAB7vOA5D7FYcAB7uOA1C7FYcAB7tOAxB7FYcAB7sOAtA7FYcAB7rOApA7FYcAB7qOAk/7FYcAB7pOAg+7FYcAB7oOAc97FYcAB7nOAY87FYcAB7mOAU77FYcAB7lOAQ67FYcAB7kOAM57FYcAB7jOAI47FYcAB7iOAE37FYcAB7hOAA27FYcAB7gN/817FYcAB7fN/417FYcAB7eN/007FYcAB7dN/wz7FYcAB7cN/sy7FYcAB7bN/ox7FYcAB7aN/kw7FYcAB7ZN/gv7FYcAB7YN/cu7FYcAB7XN/Yt7FYcAB7WN/Us7FYcAB7VN/Qr7FYcAB7UN/Mq7FYcAB7TN/Ip7FYcAB7SN/Eo7FYcAB7RN/An7FYcAB7QN+8m7FYcAB7PN+4l7FYcAB7ON+0k7FYcAB7NN+wj7FYcAB7MN+si7FYcAB7LN+oh7FYcAB7KN+kg7FYcAB7JN+gf7FYcAB7IN+ce7FYcAB7HN+Yd7FYcAB7GN+Uc7FYcAB7FN+Qb7FYcAB7EN+Ma7FYcAB7DN+IZ7FYcAB7CN+EY7FYcAB7BN+AX7FYcAB7AN98W7FYcAB6/N94V7FYcAB6+N9wU7FYcAB69N9sT7FYcAB68N9oS7FYcAB67N9kR7FYcAB66N9gQ7FYcAB65N9cP7FYcAB64N9YO7FYcAB63N9UN7FYcAB62N9QM7FYcAB61N9ML7FYcAB60N9IK7FYcAB6zN9EJ7FYcAB6yN9AI7FYcAB6xN88H7FYcAB6wN84G7FYcAB6vN80F7FYcAB6uN8wE7FYcAB6tN8sD7FYcAB6sN8oC7FYcAB6rN8kB7FYcAB6qN8gA7FYcAB6pN8c");
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-    };
-  }, []);
-
-  // إغلاق الـ dialog عند النقر خارج المحتوى
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [open, onClose]);
-
-  // إدارة المؤقت
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (running && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && running) {
-      // عند انتهاء الوقت
-      if (audioRef.current) {
-        audioRef.current.play();
-      }
-
-      // إشعار عند انتهاء الجلسة
-      if (notificationPermission === 'granted') {
-        new Notification(`Pomodoro Timer - ${timerModes[mode].title} Finished`, {
-          body: mode === 'work' ? 'Time for a break!' : 'Time to get back to work!',
-          icon: '/favicon.ico'
-        });
-      }
-
-      // تحديث الإحصائيات
-      if (mode === 'work') {
-        const newSessionCount = sessionCount + 1;
-        setSessionCount(newSessionCount);
+  // نظام الإحصائيات الجديد والمحسّن
+  const [stats, setStats] = useState<SessionStats>(() => {
+    const savedStats = localStorage.getItem('pomodoro-stats');
+    const today = new Date().toDateString();
+    
+    if (savedStats) {
+      const parsedStats = JSON.parse(savedStats);
+      
+      // التحقق من التتابع (streak)
+      if (parsedStats.lastCompletedDate) {
+        const lastDate = new Date(parsedStats.lastCompletedDate);
+        const todayDate = new Date();
+        const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        setSessionStats(prev => ({
-          ...prev,
-          workTime: prev.workTime + timerModes.work.defaultTime,
-          sessions: prev.sessions + 1,
-          totalTime: prev.totalTime + timerModes.work.defaultTime
-        }));
-        setCompletedSession(true);
-        setTimeout(() => setCompletedSession(false), 3000);
-
-        // التبديل التلقائي بين أوضاع الراحة
-        if (newSessionCount % 4 === 0) {
-          setMode('longBreak');
-        } else {
-          setMode('shortBreak');
+        // إذا مر أكثر من يوم، نعيد ضبط الجلسات اليومية
+        if (diffDays > 1) {
+          parsedStats.dailySessions = 0;
         }
-      } else {
-        setSessionStats(prev => ({
-          ...prev,
-          breakTime: prev.breakTime + timerModes[mode].defaultTime,
-          totalTime: prev.totalTime + timerModes[mode].defaultTime
-        }));
-        setMode('work');
+        
+        // إذا كان آخر تاريخ إكمال هو أمس، نزيد التتابع
+        if (diffDays === 1 && lastDate.getDate() === todayDate.getDate() - 1) {
+          parsedStats.streak += 1;
+        } else if (diffDays > 1) {
+          parsedStats.streak = 0; // كسر التتابع
+        }
       }
-
-      pause();
+      
+      // إذا كان اليوم مختلفاً، نعيد ضبط الجلسات اليومية
+      if (parsedStats.lastResetDate !== today) {
+        parsedStats.dailySessions = 0;
+        parsedStats.lastResetDate = today;
+      }
+      
+      return {
+        workTime: parsedStats.workTime || 0,
+        breakTime: parsedStats.breakTime || 0,
+        sessions: parsedStats.sessions || 0,
+        dailySessions: parsedStats.dailySessions || 0,
+        dailyGoal: parsedStats.dailyGoal || 4,
+        streak: parsedStats.streak || 0,
+        lastCompletedDate: parsedStats.lastCompletedDate || null
+      };
     }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [running, timeLeft, mode, setMode, pause, setTimeLeft, sessionStats, notificationPermission, sessionCount]);
-
-  // إعادة التعيين عند الإغلاق
-  useEffect(() => {
-    if (!open) {
-      pause();
-      setShowCustomTime(false);
-      setShowStats(false);
-    }
-  }, [open, pause]);
-
-  // تنسيق الوقت
-  const formatTime = useCallback((seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }, []);
-
-  // حساب النسبة المئوية للتقدم
-  const progressPercentage = useCallback(() => {
-    const totalTime = timerModes[mode].defaultTime;
-    return ((totalTime - timeLeft) / totalTime) * 100;
-  }, [timeLeft, mode]);
-
-  // تطبيق الوقت المخصص
-  const handleCustomTimeSubmit = () => {
-    const minutes = parseInt(customMinutes, 10);
-    if (minutes >= 1 && minutes <= 180) {
-      setTimeLeft(minutes * 60);
-      setShowCustomTime(false);
-      setCustomMinutes('');
-    }
-  };
-
-  // إعادة تعيين الإحصائيات
-  const resetStats = () => {
-    setSessionStats({
+    
+    return {
       workTime: 0,
       breakTime: 0,
       sessions: 0,
-      totalTime: 0
-    });
-    setSessionCount(0);
+      dailySessions: 0,
+      dailyGoal: 4,
+      streak: 0,
+      lastCompletedDate: null
+    };
+  });
+
+  // تحديث الإحصائيات في الوقت الفعلي
+  useEffect(() => {
+    if (running) {
+      const interval = setInterval(() => {
+        setStats(prev => {
+          const newStats = { ...prev };
+          if (mode === 'work') {
+            newStats.workTime += 1;
+          } else {
+            newStats.breakTime += 1;
+          }
+          localStorage.setItem('pomodoro-stats', JSON.stringify(newStats));
+          return newStats;
+        });
+      }, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [running, mode]);
+
+  useEffect(() => {
+    setInitialTime(timeLeft);
+  }, [timeLeft]);
+
+  useEffect(() => {
+    if (timeLeft === 0 && running) {
+      pause();
+      setSessionComplete(true);
+
+      if (mode === 'work') {
+        setStats(prev => {
+          const today = new Date().toDateString();
+          const newStats = {
+            ...prev,
+            sessions: prev.sessions + 1,
+            dailySessions: prev.dailySessions + 1,
+            lastCompletedDate: today
+          };
+          
+          // زيادة التتابع إذا تم تحقيق الهدف اليومي
+          if (newStats.dailySessions >= newStats.dailyGoal) {
+            const lastDate = prev.lastCompletedDate ? new Date(prev.lastCompletedDate) : null;
+            const todayDate = new Date();
+            
+            if (!lastDate || lastDate.toDateString() !== today) {
+              newStats.streak = prev.streak + 1;
+            }
+          }
+          
+          localStorage.setItem('pomodoro-stats', JSON.stringify(newStats));
+          return newStats;
+        });
+      }
+    }
+  }, [timeLeft, running, mode, pause]);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+      setShowStats(false);
+    }, 300);
   };
 
-  // إعادة تعيين المؤقت
-  const handleReset = () => {
-    reset();
-    setTimeLeft(timerModes[mode].defaultTime);
+  if (!open && !isClosing) return null;
+
+  const totalTime = initialTime;
+  const progress = totalTime > 0 ? (totalTime - timeLeft) / totalTime : 0;
+
+  const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+  const seconds = (timeLeft % 60).toString().padStart(2, '0');
+
+  const getModeConfig = () => {
+    switch (mode) {
+      case 'work':
+        return {
+          title: 'Pomodoro',
+          color: '#6366F1',
+          secondaryColor: '#818CF8',
+          bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
+          glowColor: 'rgba(99, 102, 241, 0.5)',
+          description: 'Focus & Work',
+          ringColor: 'ring-indigo-500/30'
+        };
+      case 'shortBreak':
+        return {
+          title: 'Short Break',
+          color: '#10B981',
+          secondaryColor: '#34D399',
+          bgGradient: 'from-emerald-900/20 via-gray-900 to-gray-900',
+          glowColor: 'rgba(16, 185, 129, 0.5)',
+          description: 'Take a Break',
+          ringColor: 'ring-emerald-500/30'
+        };
+      case 'longBreak':
+        return {
+          title: 'Long Break',
+          color: '#8B5CF6',
+          secondaryColor: '#A78BFA',
+          bgGradient: 'from-purple-900/20 via-gray-900 to-gray-900',
+          glowColor: 'rgba(139, 92, 246, 0.5)',
+          description: 'Long Rest',
+          ringColor: 'ring-purple-500/30'
+        };
+      default:
+        return {
+          title: 'Pomodoro',
+          color: '#6366F1',
+          secondaryColor: '#818CF8',
+          bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
+          glowColor: 'rgba(99, 102, 241, 0.5)',
+          description: 'Focus & Work',
+          ringColor: 'ring-indigo-500/30'
+        };
+    }
   };
 
-  if (!open) return null;
+  const config = getModeConfig();
+
+  const handleModeChange = (newMode: 'work' | 'shortBreak' | 'longBreak') => {
+    if (running) return;
+
+    setMode(newMode);
+    setSessionComplete(false);
+
+    switch (newMode) {
+      case 'work':
+        setTimeLeft(25 * 60);
+        setInitialTime(25 * 60);
+        break;
+      case 'shortBreak':
+        setTimeLeft(5 * 60);
+        setInitialTime(5 * 60);
+        break;
+      case 'longBreak':
+        setTimeLeft(15 * 60);
+        setInitialTime(15 * 60);
+        break;
+    }
+  };
+
+  const applyCustomTime = () => {
+    const minutesNum = parseInt(customTime);
+    if (!isNaN(minutesNum) && minutesNum > 0 && minutesNum <= 120) {
+      const newTime = minutesNum * 60;
+      setTimeLeft(newTime);
+      setInitialTime(newTime);
+      setCustomTime('');
+      setShowCustomInput(false);
+      setSessionComplete(false);
+    }
+  };
+
+  // Calculate progress circle
+  const radius = 90;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - progress);
+
+  // Format time for display
+  const formatTime = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hrs > 0) {
+      return `${hrs}h ${mins}m`;
+    }
+    return `${mins}m ${secs}s`;
+  };
+
+  // Calculate progress percentages
+  const dailyProgress = Math.min(stats.dailySessions / stats.dailyGoal, 1);
+  const totalFocusTime = stats.workTime;
+  const totalBreakTime = stats.breakTime;
+  const totalTimeTracked = totalFocusTime + totalBreakTime;
+  const focusPercentage = totalTimeTracked > 0 ? (totalFocusTime / totalTimeTracked) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
-      <div 
-        ref={dialogRef}
-        className={`relative bg-white rounded-2xl shadow-xl transform transition-all duration-300 scale-100 opacity-100 w-full max-w-md mx-4 p-6 ${showStats ? 'h-5/6' : 'h-auto'}`}
-        style={{
-          boxShadow: `0 0 25px 5px ${timerModes[mode].glowColor}`
-        }}
-      >
-        {/* زر الإغلاق */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
+      <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-lg" onClick={handleClose}></div>
 
-        {showStats ? (
-          // عرض الإحصائيات
-          <div className="h-full flex flex-col">
-            <h2 className="text-2xl font-bold text-center mb-6">Session Statistics</h2>
-            
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-100 p-4 rounded-lg text-center">
-                <p className="text-lg font-semibold">Work Time</p>
-                <p className="text-2xl">{formatTime(sessionStats.workTime)}</p>
-              </div>
-              
-              <div className="bg-gray-100 p-4 rounded-lg text-center">
-                <p className="text-lg font-semibold">Break Time</p>
-                <p className="text-2xl">{formatTime(sessionStats.breakTime)}</p>
-              </div>
-              
-              <div className="bg-gray-100 p-4 rounded-lg text-center">
-                <p className="text-lg font-semibold">Sessions</p>
-                <p className="text-2xl">{sessionStats.sessions}</p>
-              </div>
-              
-              <div className="bg-gray-100 p-4 rounded-lg text-center">
-                <p className="text-lg font-semibold">Total Time</p>
-                <p className="text-2xl">{formatTime(sessionStats.totalTime)}</p>
-              </div>
-            </div>
-            
-            <div className="bg-gray-100 p-4 rounded-lg mb-6">
-              <p className="text-lg font-semibold mb-2">Work/Break Ratio</p>
-              <div className="w-full bg-gray-300 rounded-full h-4">
-                <div 
-                  className="bg-indigo-600 h-4 rounded-full" 
-                  style={{ width: `${sessionStats.totalTime > 0 ? (sessionStats.workTime / sessionStats.totalTime) * 100 : 0}%` }}
-                ></div>
-              </div>
-              <p className="text-center mt-2">
-                {sessionStats.totalTime > 0 ? Math.round((sessionStats.workTime / sessionStats.totalTime) * 100) : 0}% Work
-              </p>
-            </div>
-            
-            <div className="bg-gray-100 p-4 rounded-lg mb-6">
-              <p className="text-lg font-semibold">Average Session</p>
-              <p className="text-xl text-center">
-                {sessionStats.sessions > 0 ? formatTime(sessionStats.workTime / sessionStats.sessions) : '0:00'}
-              </p>
-            </div>
-            
-            <div className="mt-auto flex justify-between">
+      <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-gray-700/30 p-0 w-full max-w-md overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95' : 'scale-100'}`}>
+        
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex bg-gray-700/30 rounded-2xl p-1 w-full max-w-sm">
+            {[
+              { key: 'work', label: 'Pomodoro' },
+              { key: 'shortBreak', label: 'Short Break' },
+              { key: 'longBreak', label: 'Long Break' }
+            ].map((tab) => (
               <button
-                onClick={() => setShowStats(false)}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
+                key={tab.key}
+                onClick={() => handleModeChange(tab.key as any)}
+                disabled={running}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 relative rounded-xl ${
+                  mode === tab.key
+                    ? 'text-white bg-gray-600/40 shadow-md'
+                    : `text-gray-400 ${running ? 'opacity-50 cursor-not-allowed' : 'hover:text-white'}`
+                }`}
               >
-                Back to Timer
+                {tab.label}
               </button>
-              <button
-                onClick={resetStats}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-              >
-                Reset Stats
-              </button>
-            </div>
+            ))}
           </div>
-        ) : (
-          // عرض المؤقت
-          <>
-            {/* تبويبات الأوضاع */}
-            <div className="flex justify-center mb-6">
-              {(['work', 'shortBreak', 'longBreak'] as const).map(m => (
-                <button
-                  key={m}
-                  onClick={() => {
-                    setMode(m);
-                    setTimeLeft(timerModes[m].defaultTime);
-                    if (running) pause();
-                  }}
-                  className={`mx-1 px-4 py-2 rounded-lg transition-colors ${mode === m 
-                    ? `bg-${timerModes[m].color.split('-')[1]}-100 ${timerModes[m].color} font-semibold` 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                >
-                  {m === 'work' ? 'Work 🍅' : m === 'shortBreak' ? 'Short Break ☕' : 'Long Break 🛋️'}
-                </button>
-              ))}
-            </div>
+        </div>
 
-            {/* دائرة التقدم */}
-            <div className="relative w-64 h-64 mx-auto mb-6">
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                {/* الخلفية */}
+        {/* Main Content */}
+        <div className="p-8 pt-24">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2" style={{ color: config.color }}>{config.title}</h2>
+            <p className="text-gray-400 text-sm">{config.description}</p>
+          </div>
+
+          <div className="flex justify-center mb-8">
+            <div className="relative w-64 h-64">
+              <div className="absolute inset-0 rounded-full border-8 border-gray-700/20"></div>
+
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 200 200">
+                <defs>
+                  <linearGradient id={`progress-gradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor={config.color} />
+                    <stop offset="100%" stopColor={config.secondaryColor} />
+                  </linearGradient>
+                </defs>
                 <circle
-                  className="text-gray-200 stroke-current"
-                  strokeWidth="8"
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="transparent"
-                />
-                {/* التقدم */}
-                <circle
-                  className={`stroke-current ${timerModes[mode].color}`}
+                  cx="100"
+                  cy="100"
+                  r="90"
+                  fill="none"
+                  stroke={`url(#progress-gradient-${mode})`}
                   strokeWidth="8"
                   strokeLinecap="round"
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  fill="transparent"
-                  strokeDasharray="251.2"
-                  strokeDashoffset={251.2 - (progressPercentage() * 251.2) / 100}
-                  transform="rotate(-90 50 50)"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  className="transition-all duration-1000 ease-out"
+                  style={{
+                    filter: `drop-shadow(0 0 8px ${config.glowColor})`
+                  }}
                 />
               </svg>
-              
-              {/* الوقت المتبقي */}
+
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className={`text-4xl font-bold ${timerModes[mode].color}`}>
-                  {formatTime(timeLeft)}
+                <div className="text-5xl font-mono font-bold text-white mb-2">
+                  {minutes}:{seconds}
                 </div>
-                <div className={`text-sm ${timerModes[mode].secondaryColor}`}>
-                  {timerModes[mode].description}
+                <div className="text-sm text-gray-400 mb-1">
+                  {Math.round(progress * 100)}% Complete
                 </div>
+                {running && (
+                  <div className="text-xs px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 border border-gray-600/30 uppercase tracking-widest mt-2">
+                    {mode === 'work' ? 'FOCUS TIME' : 'BREAK TIME'}
+                  </div>
+                )}
+                {sessionComplete && (
+                  <div className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse mt-2">
+                    Session Complete! 🎉
+                  </div>
+                )}
               </div>
             </div>
+          </div>
 
-            {/* أزرار التحكم */}
-            <div className="flex justify-center space-x-4 mb-6">
-              {running ? (
-                <button
-                  onClick={pause}
-                  className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  Pause
-                </button>
-              ) : (
-                <button
-                  onClick={start}
-                  className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                  </svg>
-                  Start
-                </button>
-              )}
-              
+          <div className="flex justify-center gap-4 mb-6">
+            {running ? (
               <button
-                onClick={handleReset}
-                className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors flex items-center"
+                onClick={pause}
+                className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2 min-w-[120px] justify-center"
               >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
-                Reset
+                Pause
               </button>
-            </div>
-
-            {/* الأزرار الإضافية */}
-            <div className="flex justify-between">
+            ) : (
               <button
-                onClick={() => setShowCustomTime(!showCustomTime)}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                onClick={start}
+                disabled={timeLeft === 0}
+                className={`px-8 py-3 font-bold rounded-xl shadow-lg transform transition-all duration-200 flex items-center gap-2 min-w-[120px] justify-center ${
+                  timeLeft === 0
+                    ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
+                    : 'hover:scale-105 text-white'
+                }`}
+                style={timeLeft > 0 ? {
+                  background: `linear-gradient(135deg, ${config.color}, ${config.secondaryColor})`
+                } : {}}
               >
-                Custom Time
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                </svg>
+                {timeLeft === 0 ? 'Done' : 'Start'}
               </button>
-              
-              <button
-                onClick={() => setShowStats(true)}
-                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
-              >
-                View Stats
-              </button>
-            </div>
+            )}
 
-            {/* إدخال الوقت المخصص */}
-            {showCustomTime && (
-              <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-                <p className="mb-2 font-semibold">Set custom time (minutes):</p>
-                <div className="flex">
+            <button
+              onClick={() => {
+                reset();
+                setSessionComplete(false);
+                setInitialTime(mode === 'work' ? 25 * 60 : mode === 'shortBreak' ? 5 * 60 : 15 * 60);
+              }}
+              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Reset
+            </button>
+          </div>
+
+          <div className="text-center mb-4">
+            {!showCustomInput ? (
+              <button
+                onClick={() => setShowCustomInput(true)}
+                disabled={running}
+                className={`text-sm px-6 py-2 rounded-xl bg-gray-700/40 text-gray-300 transition-all duration-200 font-medium ${
+                  running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/60 hover:text-white'
+                }`}
+              >
+                ⚙️ Custom Time
+              </button>
+            ) : (
+              <div className="bg-gray-800/70 p-4 rounded-2xl border border-gray-700/30 mx-auto max-w-xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-white font-medium">Set Custom Time</h3>
+                  <button
+                    onClick={() => {
+                      setShowCustomInput(false);
+                      setCustomTime('');
+                    }}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
                   <input
                     type="number"
                     min="1"
-                    max="180"
-                    value={customMinutes}
-                    onChange={(e) => setCustomMinutes(e.target.value)}
-                    className="flex-grow px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="1-180"
+                    max="120"
+                    value={customTime}
+                    onChange={(e) => setCustomTime(e.target.value)}
+                    placeholder="Minutes (1-120)"
+                    className="flex-1 px-4 py-2 bg-gray-700/50 border border-gray-600 rounded-xl text-white placeholder:text-gray-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 font-medium"
                   />
                   <button
-                    onClick={handleCustomTimeSubmit}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition-colors"
+                    onClick={applyCustomTime}
+                    className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all duration-200 shadow-lg flex items-center"
                   >
                     Set
                   </button>
                 </div>
               </div>
             )}
+          </div>
 
-            {/* شارة النجاح */}
-            {completedSession && (
-              <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-lg text-center animate-pulse">
-                🎉 Great job! Session completed! 🎉
+          <div className="text-center">
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="text-sm px-6 py-2 rounded-xl bg-gray-700/40 text-gray-300 hover:bg-gray-700/60 hover:text-white transition-all duration-200 font-medium flex items-center justify-center gap-2 mx-auto"
+            >
+              {showStats ? 'Hide Stats' : 'Show Stats'}
+              <svg className={`w-4 h-4 transition-transform ${showStats ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+
+          {showStats && (
+            <div className="mt-6 bg-gray-800/40 p-6 rounded-2xl border border-gray-700/30">
+              <h3 className="text-white font-medium mb-6 text-center text-lg flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Session Statistics
+              </h3>
+
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div className="bg-gray-700/30 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-white mb-1">{stats.sessions}</div>
+                  <div className="text-xs text-gray-400">Total Sessions</div>
+                </div>
+                
+                <div className="bg-gray-700/30 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-white mb-1">{stats.streak}</div>
+                  <div className="text-xs text-gray-400">Day Streak</div>
+                </div>
+                
+                <div className="bg-gray-700/30 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-white mb-1">{formatTime(stats.workTime)}</div>
+                  <div className="text-xs text-gray-400">Focus Time</div>
+                </div>
+                
+                <div className="bg-gray-700/30 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-white mb-1">{formatTime(stats.breakTime)}</div>
+                  <div className="text-xs text-gray-400">Break Time</div>
+                </div>
               </div>
-            )}
-          </>
-        )}
+
+              {/* Daily Progress */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-400 text-sm">Daily Progress</span>
+                  <span className="text-white text-sm">{stats.dailySessions}/{stats.dailyGoal} sessions</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2.5">
+                  <div 
+                    className="bg-indigo-500 h-2.5 rounded-full transition-all duration-500" 
+                    style={{ width: `${dailyProgress * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Focus/Break Ratio */}
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-400 text-sm">Focus/Break Ratio</span>
+                  <span className="text-white text-sm">{focusPercentage.toFixed(1)}% Focus</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2.5">
+                  <div 
+                    className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500" 
+                    style={{ width: `${focusPercentage}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Stats Summary */}
+              <div className="pt-4 border-t border-gray-700/30 text-xs text-gray-400">
+                <div className="flex justify-between items-center mb-1">
+                  <span>Productivity Score:</span>
+                  <span className="text-white font-medium">
+                    {stats.sessions > 0 ? Math.min(Math.round((stats.sessions / 10) * 100), 100) : 0}/100
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Last Session:</span>
+                  <span className="text-white">
+                    {stats.lastCompletedDate ? new Date(stats.lastCompletedDate).toLocaleDateString() : 'Never'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-700/50 hover:bg-gray-600/70 flex items-center justify-center text-gray-400 hover:text-white transition-all duration-200 z-10"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
     </div>
   );
