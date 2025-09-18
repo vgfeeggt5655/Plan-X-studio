@@ -1,56 +1,1908 @@
 {
-  "2025-09-15": [
-    {
-      "title": "Morning Lecture",
-      "time": "08:00 AM",
-      "location": "Auditorium A",
-      "type": "lecture"
-    },
-    {
-      "title": "Lab Session",
-      "time": "02:00 PM",
-      "location": "Lab 3",
-      "type": "lab"
-    }
-  ],
-  "2025-09-16": [
-    {
-      "title": "Seminar",
-      "time": "11:00 AM",
-      "location": "Conference Room",
-      "type": "seminar"
-    }
-  ],
-  "2025-09-18": [
-    {
-      "title": "Exam",
-      "time": "09:00 AM",
-      "location": "Main Hall",
-      "type": "exam"
-    }
-  ],
-  "2025-09-19": [
-    {
-      "title": "Exam",
-      "time": "09:00 AM",
-      "location": "Main Hall",
-      "type": "exam"
-    }
-  ],
-  "2025-09-20": [
-    {
-      "title": "Exam",
-      "time": "09:00 AM",
-      "location": "Main Hall",
-      "type": "exam"
-    }
-  ],
-  "2025-09-21": [
-    {
-      "title": "Exam",
-      "time": "09:00 AM",
-      "location": "Main Hall",
-      "type": "exam"
-    }
-  ]
+"2025-09-20": [
+{
+"title": "Internal Medicine: Heart failure approach -1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Amira Allam", "Yomna Hassan"]
+},
+{
+"title": "Internal Medicine: Heart failure approach -2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Amira Allam", "Yomna Hassan"]
+},
+{
+"title": "Internal Medicine: Infective endocarditis",
+"time": "11:00 AM - 11:30 AM",
+"location": "Office Hour",
+"type": "office_hour",
+"instructors": ["Maysara", "Megahed", "Amira Allam", "Yomna Hassan"]
+},
+{
+"title": "Internal Medicine: Approach to chest pain",
+"time": "11:30 AM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial",
+"instructors": ["Maysara", "Megahed", "Amira Allam", "Yomna Hassan"]
+}
+],
+"2025-09-21": [
+{
+"title": "Cardiac history - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Mona Soliman", "Gout", "Ahmed", "Zainab Gaber"]
+},
+{
+"title": "History taking (sheet) - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Cardiac history - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Mona Soliman", "Gout", "Ahmed", "Zainab Gaber"]
+},
+{
+"title": "History taking (sheet) - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-09-22": [
+{
+"title": "Surgery: Trauma",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Water, Electrolytes & Acid base regulation",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Wounds and tissue repair",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Surgical Ethics (doctor, patient and friends)",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-09-23": [
+{
+"title": "Cardiac history - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Heba Ahmed", "Rehab Rabie", "Nashwa Hammad"]
+},
+{
+"title": "History taking (sheet) - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Cardiac history - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Heba Ahmed", "Rehab Rabie", "Nashwa Hammad"]
+},
+{
+"title": "History taking (sheet) - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-09-24": [
+{
+"title": "Community: Introduction, Health and General Epidemiology I",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: General Epidemiology II (Epidemiological triad, infectious cycle)",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Pattern of spread of disease, carriers",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Investigation of epidemic & epidemic curve",
+"time": "12:30 PM - 02:30 PM",
+"location": "Practical Lab",
+"type": "practical"
+}
+],
+"2025-09-25": [
+{
+"title": "Skill Lab - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Skills Lab",
+"type": "lab"
+},
+{
+"title": "Field training - Group C (Not your group)",
+"time": "11:00 AM - 02:30 PM",
+"location": "Field",
+"type": "field_training"
+}
+],
+"2025-09-27": [
+{
+"title": "Internal Medicine: Pulmonary hypertension",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Layla Nabil", "Heba Ahmed"]
+},
+{
+"title": "Internal Medicine: Cor-pulmonale",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Layla Nabil", "Heba Ahmed"]
+},
+{
+"title": "Internal Medicine: Pericardial disease",
+"time": "11:00 AM - 11:30 AM",
+"location": "Office Hour",
+"type": "office_hour",
+"instructors": ["Maysara", "Megahed", "Layla Nabil", "Heba Ahmed"]
+},
+{
+"title": "Internal Medicine: CBL: Rheumatic heart disease",
+"time": "11:30 AM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl",
+"instructors": ["Maysara", "Megahed", "Layla Nabil", "Heba Ahmed"]
+}
+],
+"2025-09-28": [
+{
+"title": "Cardiac examination 1 - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Gout Ahmed", "Rehab Rabie", "Zainab Gaber"]
+},
+{
+"title": "Surgical Clinical examination - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Cardiac examination 1 - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Gout Ahmed", "Rehab Rabie", "Zainab Gaber"]
+},
+{
+"title": "Surgical Clinical examination - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-09-29": [
+{
+"title": "Surgery: Hemostasis",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Hemorrhage & blood transfusion",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Shock",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: CBL: Shock",
+"time": "12:30 PM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl"
+}
+],
+"2025-09-30": [
+{
+"title": "Cardiac examination 1 - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Yomna Hassan", "Shaimaa Tawfik", "Samar Nasef"]
+},
+{
+"title": "Surgical Clinical examination - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Cardiac examination 1 - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Yomna Hassan", "Shaimaa Tawfik", "Samar Nasef"]
+},
+{
+"title": "Surgical Clinical examination - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-10-01": [
+{
+"title": "Community: General Epidemiology II (Mode of transmission of diseases)",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Immunity (Types, herd immunity)",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Vaccination",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Expanded program of Immunization (EPI)",
+"time": "12:30 PM - 02:30 PM",
+"location": "Practical Lab",
+"type": "practical"
+}
+],
+"2025-10-02": [
+{
+"title": "Skill Lab - Group B",
+"time": "09:00 AM - 11:00 AM",
+"location": "Skills Lab",
+"type": "lab"
+},
+{
+"title": "Field training - Group D (Not your group)",
+"time": "11:00 AM - 02:30 PM",
+"location": "Field",
+"type": "field_training"
+}
+],
+"2025-10-04": [
+{
+"title": "Internal Medicine: Approach to brady-arrhythmia",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Mona Soliman", "Zainab Gaber"]
+},
+{
+"title": "Internal Medicine: Approach to tachy-arrhythmia",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Mona Soliman", "Zainab Gaber"]
+},
+{
+"title": "Internal Medicine: ECG reading & how to use ECG",
+"time": "11:00 AM - 11:30 AM",
+"location": "Practical Lab",
+"type": "practical"
+},
+{
+"title": "Internal Medicine: ECG reading",
+"time": "11:30 AM - 02:30 PM",
+"location": "Practical Lab",
+"type": "practical",
+"instructors": ["Maysara", "Megahed", "Mona Soliman", "Zainab Gaber"]
+}
+],
+"2025-10-05": [
+{
+"title": "Cardiac examination 2 - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Mona Soliman", "Heba Ahmed", "Layla Nabil", "Gout Ahmed"]
+},
+{
+"title": "Swelling sheet - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Cardiac examination 2 - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Mona Soliman", "Heba Ahmed", "Layla Nabil", "Gout Ahmed"]
+},
+{
+"title": "Swelling sheet - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-10-06": [
+{
+"title": "Surgery: Skin & SC tissues Swelling 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Skin & SC tissues Swelling 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Surgical infection",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: T: Disinfection & Sterilization",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-10-07": [
+{
+"title": "Cardiac examination 2 - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Yomna Hassan", "Amira Allam", "Gout Ahmed"]
+},
+{
+"title": "Swelling sheet - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Cardiac examination 2 - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Yomna Hassan", "Amira Allam", "Gout Ahmed"]
+},
+{
+"title": "Swelling sheet - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-10-08": [
+{
+"title": "Community: Seroprophylaxis & Chemoprophylaxis",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Levels of disease prevention",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Control measures of infections",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: T: Surveillance of diseases",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-10-11": [
+{
+"title": "Internal Medicine: Congenital heart diseases",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Mona Soliman", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Cardiomyopathy",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Mona Soliman", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Approach to HTN 1",
+"time": "11:00 AM - 11:30 AM",
+"location": "Office Hour",
+"type": "office_hour",
+"instructors": ["Maysara", "Megahed", "Mona Soliman", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Approach to HTN 2",
+"time": "11:30 AM - 02:30 PM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Mona Soliman", "Shaimaa Tawfik"]
+}
+],
+"2025-10-12": [
+{
+"title": "Mitral valve disease - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Heba Ahmed", "Gout Ahmed"]
+},
+{
+"title": "Swelling (Dermoid cyst & Sebaceous cyst) - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Mitral valve disease - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Heba Ahmed", "Gout Ahmed"]
+},
+{
+"title": "Swelling (Dermoid cyst & Sebaceous cyst) - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-10-13": [
+{
+"title": "Surgery: Ulcers",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Soft tissues; Muscle & Tendons",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Burns",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: T: Principles of Plastic & reconstructive Surgery",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-10-14": [
+{
+"title": "Mitral valve disease - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Zainab Gaber"]
+},
+{
+"title": "Swelling (Dermoid cyst & Sebaceous cyst) - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Mitral valve disease - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Zainab Gaber"]
+},
+{
+"title": "Swelling (Dermoid cyst & Sebaceous cyst) - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-10-15": [
+{
+"title": "Community: Nosocomial infection",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Air borne infections (meningitis)",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Air borne infections Measles, Mumps & rubella",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: P: Infection control",
+"time": "12:30 PM - 02:30 PM",
+"location": "Practical Lab",
+"type": "practical"
+}
+],
+"2025-10-16": [
+{
+"title": "Skill Lab - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Skills Lab",
+"type": "lab"
+},
+{
+"title": "Field training - Group A",
+"time": "11:00 AM - 02:30 PM",
+"location": "Field",
+"type": "field_training"
+}
+],
+"2025-10-18": [
+{
+"title": "Internal Medicine: Broncho-obstructive disorders",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Yomna Hassan", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Pneumonia 1",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Yomna Hassan", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Pneumonia 2",
+"time": "11:00 AM - 11:30 AM",
+"location": "Office Hour",
+"type": "office_hour",
+"instructors": ["Maysara", "Megahed", "Yomna Hassan", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: CBL: COPD",
+"time": "11:30 AM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl",
+"instructors": ["Maysara", "Megahed", "Yomna Hassan", "Shaimaa Tawfik"]
+}
+],
+"2025-10-19": [
+{
+"title": "Aortic valve disease - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Gout Ahmed", "Mona Soliman", "Amira Allam", "Shaimaa Tawfik"]
+},
+{
+"title": "Swelling (ganglion, hemangioma & lipoma) - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Swelling (ganglion, hemangioma & lipoma) - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-10-20": [
+{
+"title": "Surgery: Facio-maxillary Surgery 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Facio-maxillary Surgery 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Surgical nutrition",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: CBL: Swellings",
+"time": "12:30 PM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl"
+}
+],
+"2025-10-21": [
+{
+"title": "Aortic valve disease - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Rehab Rabie"]
+},
+{
+"title": "Swelling (ganglion, hemangioma & lipoma) - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Aortic valve disease - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Rehab Rabie"]
+},
+{
+"title": "Swelling (ganglion, hemangioma & lipoma) - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-10-22": [
+{
+"title": "Community: Air borne infections Pertussis & RH fever",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Air borne infections T.B",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Avian & swine Influenza & COVID-19",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: T: T.B control program in Egypt",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-10-23": [
+{
+"title": "Skill Lab - Group D (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Skills Lab",
+"type": "lab"
+},
+{
+"title": "Field training - Group B",
+"time": "11:00 AM - 02:30 PM",
+"location": "Field",
+"type": "field_training"
+}
+],
+"2025-10-25": [
+{
+"title": "Internal Medicine: Approach to interstitial lung diseases",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Shaimaa Tawfik", "Maysara", "Megahed", "Mona Soliman"]
+},
+{
+"title": "Internal Medicine: Approach to suppurative lung syndrome",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Shaimaa Tawfik", "Maysara", "Megahed", "Mona Soliman"]
+},
+{
+"title": "Internal Medicine: T: Pulmonary function tests",
+"time": "11:00 AM - 11:30 AM",
+"location": "Tutorial Room",
+"type": "tutorial",
+"instructors": ["Shaimaa Tawfik", "Maysara", "Megahed", "Mona Soliman"]
+},
+{
+"title": "Internal Medicine: chest X Ray",
+"time": "11:30 AM - 02:30 PM",
+"location": "Radiology Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Maysara", "Megahed", "Mona Soliman"]
+}
+],
+"2025-10-26": [
+{
+"title": "Prosthetic valve - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Heba Ahmed", "Gout Ahmed"]
+},
+{
+"title": "Ulcers (rodent, venous, diabetic foot ulcers) - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Prosthetic valve - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Heba Ahmed", "Gout Ahmed"]
+},
+{
+"title": "Ulcers (rodent, venous, diabetic foot ulcers) - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-10-27": [
+{
+"title": "Surgery: Salivary gland Swelling 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Salivary gland Swelling 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Oral Cavity surgery (larynx)",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Oral Cavity surgery (pharynx)",
+"time": "12:30 PM - 02:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+}
+],
+"2025-10-28": [
+{
+"title": "Prosthetic valve - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Nashwa Hammad", "Amira Allam", "Shaimaa Tawfik", "Yomna Hassan"]
+},
+{
+"title": "Ulcers (rodent, venous, diabetic foot ulcers) - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Prosthetic valve - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Nashwa Hammad", "Amira Allam", "Shaimaa Tawfik", "Yomna Hassan"]
+},
+{
+"title": "Ulcers (rodent, venous, diabetic foot ulcers) - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-10-29": [
+{
+"title": "Community: Air borne infections Poliomyelitis",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Food borne infection Typhoid fever",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Food borne infection Cholera",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: T: Food poisoning & food borne epidemics",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-10-30": [
+{
+"title": "Formative exam of Community- 321",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+],
+"2025-11-01": [
+{
+"title": "Continuous assessment of Community- 321",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+],
+"2025-11-02": [
+{
+"title": "History of chest case - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Mona Soliman", "Gout Ahmed"]
+},
+{
+"title": "Abscess drainage & Wound dressing - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "History of chest case - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Mona Soliman", "Gout Ahmed"]
+},
+{
+"title": "Abscess drainage & Wound dressing - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-11-03": [
+{
+"title": "Surgery: Neck surgery 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Neck surgery 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Principles of laparoscopy & Robotic Surgery",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: T: Stem cell therapy",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-11-04": [
+{
+"title": "History of chest case - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Aya Nabil", "Yomna Hassan"]
+},
+{
+"title": "Abscess drainage & Wound dressing - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "History of chest case - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Aya Nabil", "Yomna Hassan"]
+},
+{
+"title": "Abscess drainage & Wound dressing - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-11-05": [
+{
+"title": "Community: Diarrheal diseases & food poisoning",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Contact borne infections Rabies",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Contact borne infections Tetanus, gas gangrene",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: T: Contact borne infections STDs, leprosy",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-11-06": [
+{
+"title": "Formative exam of Surgery I- 322",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+],
+"2025-11-08": [
+{
+"title": "Continuous assessment of Surgery I- 322",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+],
+"2025-11-09": [
+{
+"title": "Chest examination I - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Amira Allam", "Gout Ahmed", "Mona Soliman"]
+},
+{
+"title": "Oral cavity (tongue mass) - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Chest examination I - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Amira Allam", "Gout Ahmed", "Mona Soliman"]
+},
+{
+"title": "Oral cavity (tongue mass) - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-11-10": [
+{
+"title": "Surgery: Principles of Oncology 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Principles of Oncology 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+}
+],
+"2025-11-11": [
+{
+"title": "Chest examination I - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Amira Allam", "Yomna Hassan", "Zainab Gaber"]
+},
+{
+"title": "Oral cavity (tongue mass) - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Chest examination I - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Amira Allam", "Yomna Hassan", "Zainab Gaber"]
+},
+{
+"title": "Oral cavity (tongue mass) - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-11-12": [
+{
+"title": "Community: Non-communicable diseases (HTN & IHD)",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Arthropod borne infections Yellow fever",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Arthropod borne infections Malaria",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Viral hepatitis (B&C)",
+"time": "12:30 PM - 02:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+}
+],
+"2025-11-13": [
+{
+"title": "Formative exam of Medicine I- 323",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+],
+"2025-11-15": [
+{
+"title": "Continuous assessment of MEDICINE I- 323",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+],
+"2025-11-16": [
+{
+"title": "Chest examination 2 - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Amira Allam", "Rehab Rabie", "Mona Soliman"]
+},
+{
+"title": "Oral cavity (tongue ulcers) - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Oral cavity (tongue ulcers) - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-11-17": [
+{
+"title": "Surgery: Diagnostic imaging tools 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Diagnostic imaging tools 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+}
+],
+"2025-11-18": [
+{
+"title": "Chest examination 2 - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Amira Allam", "Aya Nabil", "Yomna Hassan"]
+},
+{
+"title": "Oral cavity (tongue ulcers) - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Oral cavity (tongue ulcers) - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-11-19": [
+{
+"title": "Community: Non-communicable disease (DM)",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Non-communicable disease (Cancer)",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Non-communicable health problem (Smoking)",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Skin Lab G A",
+"time": "12:30 PM - 02:30 PM",
+"location": "Lab",
+"type": "lab"
+}
+],
+"2025-11-20": [
+{
+"title": "Field training - Group C (Not your group)",
+"time": "09:00 AM - 02:30 PM",
+"location": "Field",
+"type": "field_training"
+}
+],
+"2025-11-22": [
+{
+"title": "Internal Medicine: Cystic fibrosis",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Shaimaa Tawfik", "Maysara", "Megahed", "Mona Soliman"]
+},
+{
+"title": "Internal Medicine: Lung tumors",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Shaimaa Tawfik", "Maysara", "Megahed", "Mona Soliman"]
+},
+{
+"title": "Internal Medicine: ABG readings & ABG sampling",
+"time": "11:00 AM - 11:30 AM",
+"location": "Lab",
+"type": "lab",
+"instructors": ["Shaimaa Tawfik", "Maysara", "Megahed", "Mona Soliman"]
+},
+{
+"title": "Internal Medicine: T: how to read CT chest?",
+"time": "11:30 AM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial",
+"instructors": ["Shaimaa Tawfik", "Maysara", "Megahed", "Mona Soliman"]
+}
+],
+"2025-11-23": [
+{
+"title": "Pleural effusion - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Amira Allam", "Heba Ahmed", "Gout Ahmed"]
+},
+{
+"title": "Salivary gland Swelling - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Pleural effusion - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Amira Allam", "Heba Ahmed", "Gout Ahmed"]
+},
+{
+"title": "Salivary gland Swelling - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-11-24": [
+{
+"title": "Surgery: Diagnostic imaging tools 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Diagnostic imaging tools 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Day Case Surgery",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: T: Surgical Audit",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-11-25": [
+{
+"title": "Pleural effusion - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Nashwa Hammad"]
+},
+{
+"title": "Salivary gland Swelling - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Surgical Lab",
+"type": "practical"
+},
+{
+"title": "Pleural effusion - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Nashwa Hammad"]
+},
+{
+"title": "Salivary gland Swelling - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Surgical Lab",
+"type": "practical"
+}
+],
+"2025-11-26": [
+{
+"title": "Community: Health services PHC",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Maternal health services",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Child health services",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: T: evaluation of MCH services",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-11-27": [
+{
+"title": "Skill Lab - Group B",
+"time": "09:00 AM - 11:00 AM",
+"location": "Skills Lab",
+"type": "lab"
+},
+{
+"title": "Field training - Group D (Not your group)",
+"time": "11:00 AM - 02:30 PM",
+"location": "Field",
+"type": "field_training"
+}
+],
+"2025-11-29": [
+{
+"title": "Internal Medicine: Approach to Mediastinal syndrome",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Zainab Gaber", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Respiratory failure",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Zainab Gaber", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Hematuria approach",
+"time": "11:00 AM - 11:30 AM",
+"location": "Office Hour",
+"type": "office_hour",
+"instructors": ["Maysara", "Megahed", "Zainab Gaber", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: CBL: AKI",
+"time": "11:30 AM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl",
+"instructors": ["Maysara", "Megahed", "Zainab Gaber", "Shaimaa Tawfik"]
+}
+],
+"2025-11-30": [
+{
+"title": "Pulmonary fibrosis case - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Gout Ahmed", "Rehab Rabie"]
+},
+{
+"title": "Renal history - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Pulmonary fibrosis case - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Gout Ahmed", "Rehab Rabie"]
+},
+{
+"title": "Renal history - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-12-01": [
+{
+"title": "Surgery: Tissue diagnosis 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Tissue diagnosis 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Preoperative care",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: CBL: Salivary glands swelling",
+"time": "12:30 PM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl"
+}
+],
+"2025-12-02": [
+{
+"title": "Pulmonary fibrosis case - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Mona Soliman"]
+},
+{
+"title": "Renal history - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Pulmonary fibrosis case - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Mona Soliman"]
+},
+{
+"title": "Renal history - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-12-03": [
+{
+"title": "Community: School health services",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Rural health services",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Geriatric health services",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: T: health indicators for evaluation of health services",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-12-04": [
+{
+"title": "Skill Lab - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Skills Lab",
+"type": "lab"
+},
+{
+"title": "Field training - Group A",
+"time": "11:00 AM - 02:30 PM",
+"location": "Field",
+"type": "field_training"
+}
+],
+"2025-12-06": [
+{
+"title": "Internal Medicine: Nephrotic & nephritic syndrome",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Zainab Gaber", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Edema approach",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Zainab Gaber", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Proteinuria approach",
+"time": "11:00 AM - 11:30 AM",
+"location": "Office Hour",
+"type": "office_hour",
+"instructors": ["Maysara", "Megahed", "Zainab Gaber", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: CBL: UTI",
+"time": "11:30 AM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl",
+"instructors": ["Maysara", "Megahed", "Zainab Gaber", "Shaimaa Tawfik"]
+}
+],
+"2025-12-07": [
+{
+"title": "Bronchiectasis case - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Heba Ahmed", "Rehab Rabie"]
+},
+{
+"title": "Renal examination - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Bronchiectasis case - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Heba Ahmed", "Rehab Rabie"]
+},
+{
+"title": "Renal examination - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-12-08": [
+{
+"title": "Surgery: Endoscopy",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: Pain relief",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Surgery: CBL: Neck swelling",
+"time": "11:30 AM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl"
+}
+],
+"2025-12-09": [
+{
+"title": "Bronchiectasis case - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Nashwa Hammad"]
+},
+{
+"title": "Renal examination - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Bronchiectasis case - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Nashwa Hammad"]
+},
+{
+"title": "Renal examination - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-12-10": [
+{
+"title": "Community: Environmental health Air sanitation & air pollution",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Environmental health water sanitation & pollution",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Urine examination test",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lab",
+"type": "lab"
+},
+{
+"title": "Community: Disaster management",
+"time": "12:30 PM - 02:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+}
+],
+"2025-12-11": [
+{
+"title": "Skill Lab - Group D (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Skills Lab",
+"type": "lab"
+},
+{
+"title": "Field training - Group B",
+"time": "11:00 AM - 02:30 PM",
+"location": "Field",
+"type": "field_training"
+}
+],
+"2025-12-13": [
+{
+"title": "Internal Medicine: Glomerulonephritis 1",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Nashwa Hammad", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Glomerulonephritis 2",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Maysara", "Megahed", "Nashwa Hammad", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Oliguria approach",
+"time": "11:00 AM - 11:30 AM",
+"location": "Office Hour",
+"type": "office_hour",
+"instructors": ["Maysara", "Megahed", "Nashwa Hammad", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: CBL: CKD",
+"time": "11:30 AM - 02:30 PM",
+"location": "CBL Room",
+"type": "cbl",
+"instructors": ["Maysara", "Megahed", "Nashwa Hammad", "Shaimaa Tawfik"]
+}
+],
+"2025-12-14": [
+{
+"title": "Lung abscess case - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Aya Nabil", "Gout Ahmed"]
+},
+{
+"title": "Nephrotic syndrome case - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Lung abscess case - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Aya Nabil", "Gout Ahmed"]
+},
+{
+"title": "Nephrotic syndrome case - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-12-15": [
+{
+"title": "Internal Medicine: Inherited renal disorders",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Rehab Rabie", "Amira Allam", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Tubulo-interstitial nephritis",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Rehab Rabie", "Amira Allam", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: Renal replacement therapy",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture",
+"instructors": ["Rehab Rabie", "Amira Allam", "Shaimaa Tawfik"]
+},
+{
+"title": "Internal Medicine: T: kidney function test",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial",
+"instructors": ["Rehab Rabie", "Amira Allam", "Shaimaa Tawfik"]
+}
+],
+"2025-12-16": [
+{
+"title": "Lung abscess case - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Mona Soliman"]
+},
+{
+"title": "Nephrotic syndrome case - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "Lung abscess case - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Yomna Hassan", "Mona Soliman"]
+},
+{
+"title": "Nephrotic syndrome case - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-12-17": [
+{
+"title": "Community: Environmental physical hazards Heat disorders",
+"time": "09:00 AM - 10:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Environmental physical hazards Radiation",
+"time": "10:00 AM - 11:00 AM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: Environmental physical hazards Noise & vibration",
+"time": "11:30 AM - 12:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+},
+{
+"title": "Community: T: Food sanitation",
+"time": "12:30 PM - 02:30 PM",
+"location": "Tutorial Room",
+"type": "tutorial"
+}
+],
+"2025-12-18": [
+{
+"title": "Skill Lab revision",
+"time": "09:00 AM - 02:30 PM",
+"location": "Skills Lab",
+"type": "lab"
+}
+],
+"2025-12-20": [
+{
+"title": "CKD case - Group A",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Zainab Gaber", "Mona Soliman"]
+},
+{
+"title": "Urinary catheter insertion - Group B (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "CKD case - Group B (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Shaimaa Tawfik", "Zainab Gaber", "Mona Soliman"]
+},
+{
+"title": "Urinary catheter insertion - Group A",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-12-21": [
+{
+"title": "CKD case - Group C (Not your group)",
+"time": "09:00 AM - 11:00 AM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Gout Ahmed", "Heba Ahmed"]
+},
+{
+"title": "Urinary catheter insertion - Group D (Not your group)",
+"time": "11:00 AM - 11:30 AM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+},
+{
+"title": "CKD case - Group D (Not your group)",
+"time": "11:30 AM - 01:00 PM",
+"location": "Clinical Skills Lab",
+"type": "practical",
+"instructors": ["Amira Allam", "Shaimaa Tawfik", "Gout Ahmed", "Heba Ahmed"]
+},
+{
+"title": "Urinary catheter insertion - Group C (Not your group)",
+"time": "01:00 PM - 02:30 PM",
+"location": "Clinical Skills Lab",
+"type": "practical"
+}
+],
+"2025-12-22": [
+{
+"title": "Revision",
+"time": "09:00 AM - 02:30 PM",
+"location": "Lecture Hall",
+"type": "lecture"
+}
+],
+"2025-12-23": [
+{
+"title": "Formative Exam of community medicine",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+],
+"2025-12-24": [
+{
+"title": "Practical exam of Community Medicine",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+],
+"2025-12-25": [
+{
+"title": "Final Exam of The Elective Courses",
+"time": "09:00 AM - 02:30 PM",
+"location": "Exam Hall",
+"type": "exam"
+}
+]
 }
