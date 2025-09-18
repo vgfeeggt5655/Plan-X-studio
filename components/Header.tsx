@@ -144,9 +144,11 @@ const Header: React.FC = () => {
         className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
       >
         Pomodoro
-        <span className="ml-2 text-sm font-mono">
-          {Math.floor(pomodoroTimeLeft/60).toString().padStart(2,'0')}:{(pomodoroTimeLeft%60).toString().padStart(2,'0')}
-        </span>
+        {pomodoroRunning && (
+          <span className="ml-2 text-sm font-mono">
+            {Math.floor(pomodoroTimeLeft/60).toString().padStart(2,'0')}:{(pomodoroTimeLeft%60).toString().padStart(2,'0')}
+          </span>
+        )}
       </button>
 
       {(user?.role==='admin'||user?.role==='super_admin') && (
