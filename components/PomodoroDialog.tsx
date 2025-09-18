@@ -64,11 +64,18 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) return JSON.parse(raw) as SessionStats;
-    } catch (e) {}
+    } catch (e) { }
     return { workTime: 0, breakTime: 0, sessions: 0, totalTime: 0 };
   });
 
-  const [completedWorkSessions, setCompletedWorkSessions] = useState<number>(0);
+  const [completedWorkSessions, setCompletedWorkSessions] = useState<number>(() => {
+    // Also persist this state so the cycle count isn't lost on refresh
+    try {
+      const raw = localStorage.getItem("completed_work_sessions");
+      if (raw) return parseInt(raw, 10);
+    } catch (e) { }
+    return 0;
+  });
 
   // mode configs
   const getModeConfig = useCallback((): TimerMode => {
@@ -107,12 +114,13 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     return configs[mode] ?? configs.work;
   }, [mode]);
 
-  // Persist stats
+  // Persist stats and completed work sessions
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
-    } catch (e) {}
-  }, [stats]);
+      localStorage.setItem("completed_work_sessions", completedWorkSessions.toString());
+    } catch (e) { }
+  }, [stats, completedWorkSessions]);
 
   // When mode changes and timer is idle, reset timeLeft to mode default
   useEffect(() => {
@@ -151,7 +159,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
       // stop the timer
       try {
         pause();
-      } catch (e) {}
+      } catch (e) { }
 
       setSessionComplete(true);
 
@@ -169,25 +177,20 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
         return next;
       });
 
-      // increment completed work counter and schedule auto-switch if it was a work session
+      // --- Change for Problem #1 ---
+      // Update completed work counter and set the next mode, but DON'T start the timer.
       if (mode === "work") {
         setCompletedWorkSessions((prev) => {
           const nextCount = prev + 1;
+          const isLong = nextCount % 4 === 0;
+          const newMode = isLong ? "longBreak" : "shortBreak";
 
-          // schedule auto-switch to the correct break type
+          // Schedule a small delay to smoothly switch the UI
           if (autoSwitchTimeout.current) {
             window.clearTimeout(autoSwitchTimeout.current);
-            autoSwitchTimeout.current = null;
           }
-
           autoSwitchTimeout.current = window.setTimeout(() => {
-            const isLong = nextCount % 4 === 0;
-            const newMode = isLong ? "longBreak" : "shortBreak";
             setMode(newMode);
-            const cfg = getModeConfig();
-            setTimeLeft(cfg.defaultTime);
-            initialTimeRef.current = cfg.defaultTime;
-            setSessionComplete(false);
           }, 700) as unknown as number;
 
           return nextCount;
@@ -204,7 +207,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
             body: mode === "work" ? "Time for a break!" : "Ready to focus again?",
           });
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     prevTimeRef.current = timeLeft;
@@ -221,9 +224,9 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   useEffect(() => {
     try {
       if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission().catch(() => {});
+        Notification.requestPermission().catch(() => { });
       }
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   // Handlers
@@ -259,7 +262,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const handleReset = useCallback(() => {
     try {
       reset();
-    } catch (e) {}
+    } catch (e) { }
     const cfg = getModeConfig();
     setTimeLeft(cfg.defaultTime);
     initialTimeRef.current = cfg.defaultTime;
@@ -284,7 +287,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     setCompletedWorkSessions(0);
     try {
       localStorage.removeItem(STORAGE_KEY);
-    } catch (e) {}
+      localStorage.removeItem("completed_work_sessions");
+    } catch (e) { }
   }, []);
 
   // helpers
@@ -311,18 +315,25 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const workPercentage = totalProductiveTime > 0 ? (stats.workTime / totalProductiveTime) * 100 : 0;
   const avgSessionTime = stats.sessions > 0 ? Math.round(stats.workTime / stats.sessions / 60) : 0;
 
+  // --- Change for Problem #3 ---
+  const currentCycleProgress = (completedWorkSessions % 4) || (completedWorkSessions > 0 ? 4 : 0);
+  const sessionsToLongBreak = 4 - currentCycleProgress;
+
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${isClosing ? "opacity-0" : "opacity-100"}`}>
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={handleClose} />
 
-      <div className={`relative z-10 bg-gradient-to-br ${cfg.bgGradient} rounded-3xl shadow-2xl border border-slate-700/50 p-0 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isClosing ? "scale-95 opacity-0" : "scale-100 opacity-100"}`}>
+      {/* --- Change for Problem #2 --- */}
+      {/* Added flex and flex-col to enable scrolling on the container */}
+      <div className={`relative z-10 bg-gradient-to-br ${cfg.bgGradient} rounded-3xl shadow-2xl border border-slate-700/50 p-0 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isClosing ? "scale-95 opacity-0" : "scale-100 opacity-100"} flex flex-col`}>
         <button onClick={handleClose} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-800/50 hover:bg-slate-700/70 flex items-center justify-center text-slate-400 hover:text-white transition-all duration-200 z-20 backdrop-blur-sm">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        <div className="p-6 pb-0">
+        {/* This div will now grow and take up available space, enabling proper scrolling */}
+        <div className="p-6 pb-6 flex-1 flex flex-col">
           <div className="flex bg-slate-800/40 rounded-2xl p-1.5 mb-6">
             {[
               { key: "work", label: "Focus", icon: "🍅" },
@@ -344,9 +355,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
               </button>
             ))}
           </div>
-        </div>
 
-        <div className="px-6 pb-6">
+
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-2" style={{ color: cfg.color }}>
               {cfg.title}
@@ -366,10 +376,10 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                       <stop offset="100%" stopColor={cfg.secondaryColor} />
                     </linearGradient>
                     <filter id="glow">
-                      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                      <feGaussianBlur stdDeviation="4" result="coloredBlur" />
                       <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
+                        <feMergeNode in="coloredBlur" />
+                        <feMergeNode in="SourceGraphic" />
                       </feMerge>
                     </filter>
                   </defs>
@@ -505,8 +515,9 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   <span className="text-white font-medium">{(completedWorkSessions + 1) % 4 === 0 ? '🛋️ Long Break' : '☕ Short Break'}</span>
                 </div>
                 <div className="flex justify-between items-center">
+                  {/* --- Change for Problem #3 --- */}
                   <span className="text-slate-400">Sessions to Long Break:</span>
-                  <span className="text-white font-medium">{4 - ((completedWorkSessions) % 4)} sessions</span>
+                  <span className="text-white font-medium">{sessionsToLongBreak === 0 ? 4 : sessionsToLongBreak} sessions</span>
                 </div>
               </div>
 
@@ -522,11 +533,12 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 <div className="flex gap-2 justify-center">
                   {[1, 2, 3, 4].map((session) => (
                     <div key={session} className="flex flex-col items-center gap-1">
+                      {/* --- Change for Problem #3 --- */}
                       <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all ${
-                        session <= (completedWorkSessions % 4 || (completedWorkSessions > 0 ? 4 : 0))
+                        session <= currentCycleProgress
                           ? 'bg-indigo-500 border-indigo-400 text-white'
                           : 'border-slate-600 text-slate-400'
-                      }`}>
+                        }`}>
                         🍅
                       </div>
                       <div className="text-xs text-slate-500">{session < 4 ? 'Work' : 'Long'}</div>
