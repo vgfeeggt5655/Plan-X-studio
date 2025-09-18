@@ -817,26 +817,25 @@ export default function PomodoroDialog({ open, onClose }: Props) {
             <span>Crafted with</span>
             <span style={{color: '#ef4444', fontSize: '1.25rem'}}>♥</span>
             <span>for productivity</span>
-          </div>
-          <div style={{marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7}}>
-            Press <kbd style={{padding: '0.25rem 0.5rem', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '0.25rem', fontSize: '0.75rem'}}>Space</kbd> to start/pause • 
-            <kbd style={{padding: '0.25rem 0.5rem', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '0.25rem', fontSize: '0.75rem', marginLeft: '0.25rem'}}>R</kbd> to reset
-          </div>
-        </footer>
-      </div>
-    </div>
-  );
-}
-                  />
-                </div>
-                <div style={styles.settingItem}>
-                  <label htmlFor="shortMin" style={styles.settingLabel}>☕ Short Break (minutes)</label>
-                  <input 
-                    id="shortMin" 
-                    type="number" 
-                    min={1} 
-                    value={shortMin} 
-                    onChange={(e) => setShortMin(Math.max(1, Number(e.target.value)))} 
-                    style={styles.settingInput}
-                    onFocus={(e) => e.target.style.borderColor = 'rgba(32, 197, 195, 0.5)'}
-                    onBlur={(e) => e.target.style.borderColor = 'rgba(32, 197, 195, 0.3)'}
+        </div>
+<div style={{marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7}}>
+  Press <kbd style={{padding: '0.25rem 0.5rem', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '0.25rem', fontSize: '0.75rem'}}>Space</kbd> to start/pause • 
+  <kbd style={{padding: '0.25rem 0.5rem', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '0.25rem', fontSize: '0.75rem', marginLeft: '0.25rem'}}>R</kbd> to reset
+</div>
+</footer>
+</div>
+</div>
+
+<div style={styles.settingItem}>
+  <label htmlFor="shortMin" style={styles.settingLabel}>☕ Short Break (minutes)</label>
+  <input 
+    id="shortMin" 
+    type="number" 
+    min={1} 
+    value={shortMin} 
+    onChange={(e) => setShortMin(Math.max(1, Number(e.target.value)))} 
+    style={styles.settingInput}
+    onFocus={(e) => e.target.style.borderColor = 'rgba(32, 197, 195, 0.5)'}
+    onBlur={(e) => e.target.style.borderColor = 'rgba(32, 197, 195, 0.3)'}
+  />
+</div>
