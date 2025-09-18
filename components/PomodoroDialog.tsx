@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    MdPlayArrow,
-    MdPause,
-    MdRefresh,
-    MdSettings,
-    MdBarChart,
-    MdClose,
-} from 'react-icons/md';
+import './PomodoroTimer.css'; // تأكد من وجود هذا الملف
 
 // Interfaces for better type safety
 interface TimerProps {
@@ -109,7 +101,7 @@ const PomodoroTimer: React.FC<TimerProps> = ({ open, onClose }) => {
         };
     }, [running, timeLeft]);
 
-    // Cleanup when component unmounts or dialog is closed
+    // Cleanup when dialog is closed
     useEffect(() => {
         if (!open) {
             if (timerRef.current) clearInterval(timerRef.current);
@@ -144,7 +136,6 @@ const PomodoroTimer: React.FC<TimerProps> = ({ open, onClose }) => {
         setRunning(false);
         setIsSessionEnded(true);
 
-        // Send a notification
         if ("Notification" in window && Notification.permission === "granted") {
             new Notification(`Session ended! ${MODES[mode].title}`, {
                 body: MODES[mode].description,
@@ -152,7 +143,6 @@ const PomodoroTimer: React.FC<TimerProps> = ({ open, onClose }) => {
             });
         }
 
-        // Update stats and switch mode
         setStats(prevStats => {
             const timeAdded = MODES[mode].defaultTime;
             let newStats = { ...prevStats };
@@ -210,199 +200,165 @@ const PomodoroTimer: React.FC<TimerProps> = ({ open, onClose }) => {
     const { color, secondaryColor, bgGradient, glowColor, ringColor } = MODES[mode];
 
     return (
-        <AnimatePresence>
-            {open && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-all duration-300"
+        <div
+            className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            onClick={handleCloseWithReset}
+        >
+            <div
+                onClick={(e) => e.stopPropagation()}
+                className={`
+                    w-full max-w-xl rounded-2xl bg-gray-800 p-8 shadow-2xl transition-all duration-300 transform
+                    ${bgGradient} ${glowColor} relative
+                    ${open ? 'scale-100' : 'scale-90'}
+                `}
+            >
+                {/* Close Button */}
+                <button
                     onClick={handleCloseWithReset}
+                    className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
                 >
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                        onClick={(e) => e.stopPropagation()}
-                        className={`w-full max-w-xl rounded-2xl bg-gray-800 p-8 shadow-2xl transition-all duration-300 ${bgGradient} ${glowColor} relative`}
-                    >
-                        {/* Close Button */}
-                        <button
-                            onClick={handleCloseWithReset}
-                            className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors"
-                        >
-                            <MdClose size={24} />
-                        </button>
+                    &times; {/* HTML entity for 'x' */}
+                </button>
 
-                        {/* Title and Mode Tabs */}
-                        <div className="flex flex-col items-center justify-center mb-8">
-                            <h2 className="text-3xl font-bold text-white mb-4">Pomodoro Timer</h2>
-                            <div className="flex bg-gray-900/50 rounded-full p-1 border border-gray-700/50">
-                                {Object.entries(MODES).map(([key, value]) => (
-                                    <button
-                                        key={key}
-                                        onClick={() => handleModeChange(key as any)}
-                                        className={`px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 ${mode === key ? `${value.color} bg-gray-700/50` : 'text-gray-400 hover:text-white'}`}
-                                    >
-                                        {value.title}
-                                    </button>
-                                ))}
+                {/* Title and Mode Tabs */}
+                <div className="flex flex-col items-center justify-center mb-8">
+                    <h2 className="text-3xl font-bold text-white mb-4">Pomodoro Timer</h2>
+                    <div className="flex bg-gray-900/50 rounded-full p-1 border border-gray-700/50">
+                        {Object.entries(MODES).map(([key, value]) => (
+                            <button
+                                key={key}
+                                onClick={() => handleModeChange(key as any)}
+                                className={`px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 ${mode === key ? `${value.color} bg-gray-700/50` : 'text-gray-400 hover:text-white'}`}
+                            >
+                                {value.title}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Main Content (Timer/Stats/Settings) */}
+                <div className="relative flex flex-col items-center justify-center p-6">
+                    {showStats ? (
+                        <div className="w-full text-white text-center transition-all duration-300">
+                            <h3 className="text-2xl font-bold mb-4">Session Stats</h3>
+                            <div className="grid grid-cols-2 gap-4 text-left">
+                                <div className="p-4 bg-gray-700/50 rounded-lg">
+                                    <p className="text-sm text-gray-300">Total Work Time</p>
+                                    <p className="text-xl font-bold">{formatTime(stats.workTime)}</p>
+                                </div>
+                                <div className="p-4 bg-gray-700/50 rounded-lg">
+                                    <p className="text-sm text-gray-300">Total Break Time</p>
+                                    <p className="text-xl font-bold">{formatTime(stats.breakTime)}</p>
+                                </div>
+                                <div className="p-4 bg-gray-700/50 rounded-lg">
+                                    <p className="text-sm text-gray-300">Total Sessions</p>
+                                    <p className="text-xl font-bold">{stats.sessions}</p>
+                                </div>
+                                <div className="p-4 bg-gray-700/50 rounded-lg">
+                                    <p className="text-sm text-gray-300">Avg. Session Time</p>
+                                    <p className="text-xl font-bold">{stats.sessions > 0 ? formatTime(stats.totalTime / stats.sessions) : '00:00'}</p>
+                                </div>
+                            </div>
+                            <button onClick={resetStats} className="mt-6 px-4 py-2 rounded-full text-sm font-semibold bg-red-600 hover:bg-red-700 transition-colors">
+                                Reset Stats
+                            </button>
+                        </div>
+                    ) : showSettings ? (
+                        <div className="w-full text-white text-center transition-all duration-300">
+                            <h3 className="text-2xl font-bold mb-4">Set Custom Time</h3>
+                            <form onSubmit={handleCustomTime} className="flex flex-col items-center space-y-4">
+                                <label className="text-gray-300">Minutes (1-180):</label>
+                                <input
+                                    type="number"
+                                    name="minutes"
+                                    defaultValue={Math.floor(MODES[mode].defaultTime / 60)}
+                                    min="1"
+                                    max="180"
+                                    className="w-24 text-center rounded-lg bg-gray-700/50 text-white p-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <button type="submit" className="px-6 py-2 rounded-full font-semibold bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                                    Set Time
+                                </button>
+                            </form>
+                        </div>
+                    ) : (
+                        <div className="relative flex flex-col items-center justify-center transition-all duration-300">
+                            {/* Progress Circle SVG */}
+                            <svg className="w-64 h-64 transform -rotate-90">
+                                <circle
+                                    cx="128"
+                                    cy="128"
+                                    r="90"
+                                    className="stroke-gray-700/50 stroke-[10] fill-transparent"
+                                />
+                                <circle
+                                    cx="128"
+                                    cy="128"
+                                    r="90"
+                                    className={`stroke-[10] fill-transparent transition-all duration-500 ${ringColor}`}
+                                    style={{
+                                        strokeDasharray: 2 * Math.PI * 90,
+                                        strokeDashoffset: progressCircleOffset,
+                                    }}
+                                />
+                            </svg>
+                            <div className="absolute flex flex-col items-center justify-center inset-0">
+                                <span className={`text-6xl font-extrabold ${color} drop-shadow-lg`}>
+                                    {formatTime(timeLeft)}
+                                </span>
+                                {isSessionEnded && (
+                                    <span className={`mt-2 text-xl font-bold ${secondaryColor} animate-pulse`}>
+                                        Session Ended 🎉
+                                    </span>
+                                )}
                             </div>
                         </div>
+                    )}
+                </div>
 
-                        {/* Main Content (Timer/Stats/Settings) */}
-                        <div className="relative flex flex-col items-center justify-center p-6">
-                            {showStats ? (
-                                <motion.div
-                                    key="stats"
-                                    initial={{ opacity: 0, x: 50 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -50 }}
-                                    className="w-full text-white text-center"
+                {/* Controls & Action Buttons */}
+                <div className="mt-8 flex justify-center space-x-4">
+                    {!showStats && !showSettings && (
+                        <>
+                            {running ? (
+                                <button
+                                    onClick={handlePause}
+                                    className="flex items-center justify-center p-4 rounded-full bg-red-600 hover:bg-red-700 transition-colors text-white shadow-lg"
                                 >
-                                    <h3 className="text-2xl font-bold mb-4">Session Stats</h3>
-                                    <div className="grid grid-cols-2 gap-4 text-left">
-                                        <div className="p-4 bg-gray-700/50 rounded-lg">
-                                            <p className="text-sm text-gray-300">Total Work Time</p>
-                                            <p className="text-xl font-bold">{formatTime(stats.workTime)}</p>
-                                        </div>
-                                        <div className="p-4 bg-gray-700/50 rounded-lg">
-                                            <p className="text-sm text-gray-300">Total Break Time</p>
-                                            <p className="text-xl font-bold">{formatTime(stats.breakTime)}</p>
-                                        </div>
-                                        <div className="p-4 bg-gray-700/50 rounded-lg">
-                                            <p className="text-sm text-gray-300">Total Sessions</p>
-                                            <p className="text-xl font-bold">{stats.sessions}</p>
-                                        </div>
-                                        <div className="p-4 bg-gray-700/50 rounded-lg">
-                                            <p className="text-sm text-gray-300">Avg. Session Time</p>
-                                            <p className="text-xl font-bold">{stats.sessions > 0 ? formatTime(stats.totalTime / stats.sessions) : '00:00'}</p>
-                                        </div>
-                                    </div>
-                                    <button onClick={resetStats} className="mt-6 px-4 py-2 rounded-full text-sm font-semibold bg-red-600 hover:bg-red-700 transition-colors">
-                                        Reset Stats
-                                    </button>
-                                </motion.div>
-                            ) : showSettings ? (
-                                <motion.div
-                                    key="settings"
-                                    initial={{ opacity: 0, x: 50 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: -50 }}
-                                    className="w-full text-white text-center"
-                                >
-                                    <h3 className="text-2xl font-bold mb-4">Set Custom Time</h3>
-                                    <form onSubmit={handleCustomTime} className="flex flex-col items-center space-y-4">
-                                        <label className="text-gray-300">Minutes (1-180):</label>
-                                        <input
-                                            type="number"
-                                            name="minutes"
-                                            defaultValue={Math.floor(MODES[mode].defaultTime / 60)}
-                                            min="1"
-                                            max="180"
-                                            className="w-24 text-center rounded-lg bg-gray-700/50 text-white p-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                        <button type="submit" className="px-6 py-2 rounded-full font-semibold bg-indigo-600 hover:bg-indigo-700 transition-colors">
-                                            Set Time
-                                        </button>
-                                    </form>
-                                </motion.div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                                </button>
                             ) : (
-                                <motion.div
-                                    key="timer"
-                                    initial={{ opacity: 0, x: -50 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: 50 }}
-                                    className="relative flex flex-col items-center justify-center"
+                                <button
+                                    onClick={handleStart}
+                                    className="flex items-center justify-center p-4 rounded-full bg-emerald-600 hover:bg-emerald-700 transition-colors text-white shadow-lg"
                                 >
-                                    {/* Progress Circle SVG */}
-                                    <svg className="w-64 h-64 transform -rotate-90">
-                                        <circle
-                                            cx="128"
-                                            cy="128"
-                                            r="90"
-                                            className="stroke-gray-700/50 stroke-[10] fill-transparent"
-                                        />
-                                        <circle
-                                            cx="128"
-                                            cy="128"
-                                            r="90"
-                                            className={`stroke-[10] fill-transparent transition-all duration-500 ${ringColor}`}
-                                            style={{
-                                                strokeDasharray: 2 * Math.PI * 90,
-                                                strokeDashoffset: progressCircleOffset,
-                                            }}
-                                        />
-                                    </svg>
-                                    <div className="absolute flex flex-col items-center justify-center inset-0">
-                                        <span className={`text-6xl font-extrabold ${color} drop-shadow-lg`}>
-                                            {formatTime(timeLeft)}
-                                        </span>
-                                        {isSessionEnded && (
-                                            <span className={`mt-2 text-xl font-bold ${secondaryColor} animate-pulse`}>
-                                                Session Ended 🎉
-                                            </span>
-                                        )}
-                                    </div>
-                                </motion.div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+                                </button>
                             )}
-                        </div>
-
-                        {/* Controls & Action Buttons */}
-                        <div className="mt-8 flex justify-center space-x-4">
-                            {!showStats && !showSettings && (
-                                <>
-                                    {running ? (
-                                        <motion.button
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={handlePause}
-                                            className="flex items-center justify-center p-4 rounded-full bg-red-600 hover:bg-red-700 transition-colors text-white shadow-lg"
-                                        >
-                                            <MdPause size={24} />
-                                        </motion.button>
-                                    ) : (
-                                        <motion.button
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={handleStart}
-                                            className="flex items-center justify-center p-4 rounded-full bg-emerald-600 hover:bg-emerald-700 transition-colors text-white shadow-lg"
-                                        >
-                                            <MdPlayArrow size={24} />
-                                        </motion.button>
-                                    )}
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={handleReset}
-                                        className="flex items-center justify-center p-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors text-white shadow-lg"
-                                    >
-                                        <MdRefresh size={24} />
-                                    </motion.button>
-                                </>
-                            )}
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowSettings(!showSettings)}
-                                className={`flex items-center justify-center p-4 rounded-full transition-colors text-white shadow-lg ${showSettings ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+                            <button
+                                onClick={handleReset}
+                                className="flex items-center justify-center p-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors text-white shadow-lg"
                             >
-                                <MdSettings size={24} />
-                            </motion.button>
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowStats(!showStats)}
-                                className={`flex items-center justify-center p-4 rounded-full transition-colors text-white shadow-lg ${showStats ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                            >
-                                <MdBarChart size={24} />
-                            </motion.button>
-                        </div>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 5V2l5 5-5 5V8c-3.31 0-6 2.69-6 6S8.69 20 12 20s6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"></path></svg>
+                            </button>
+                        </>
+                    )}
+                    <button
+                        onClick={() => setShowSettings(!showSettings)}
+                        className={`flex items-center justify-center p-4 rounded-full transition-colors text-white shadow-lg ${showSettings ? 'bg-indigo-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.23l-2.49 1c-.52-.39-1.09-.73-1.71-1.02l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.62.29-1.19.63-1.71 1.02l-2.49-1c-.23-.09-.49 0-.61.23l-2 3.46c-.13.22-.08.49.12.64l2.11 1.65c-.04.32-.07.64-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.23l2.49-1c.52.39 1.09.73 1.71 1.02l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.62-.29 1.19-.63 1.71-1.02l2.49 1c.23.09.49 0 .61-.23l2-3.46c.12-.22.08-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+                    </button>
+                    <button
+                        onClick={() => setShowStats(!showStats)}
+                        className={`flex items-center justify-center p-4 rounded-full transition-colors text-white shadow-lg ${showStats ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M11 20H4V10h7v10zm6 0h-4V4h4v16zm-8-6H3v6h8v-6zm6-8h-4v14h4V6zm-8 4v6H3V10h8zm6-4h-4v14h4V6z"></path></svg>
+                    </button>
+                </div>
 
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+            </div>
+        </div>
     );
 };
 
