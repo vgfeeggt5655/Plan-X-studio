@@ -50,6 +50,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const [isClosing, setIsClosing] = useState<boolean>(false);
   const [initialTime, setInitialTime] = useState<number>(timeLeft);
   const [showStats, setShowStats] = useState<boolean>(false);
+  const [completedWorkSessions, setCompletedWorkSessions] = useState<number>(0);
   
   // Use useRef to store stats to avoid localStorage issues in artifacts
   const [stats, setStats] = useState<SessionStats>({
@@ -126,6 +127,21 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           newStats.workTime += initialTime;
           newStats.sessions += 1;
           newStats.totalTime += initialTime;
+          
+          // Auto-switch to appropriate break after work session
+          setTimeout(() => {
+            const newWorkSessions = completedWorkSessions + 1;
+            setCompletedWorkSessions(newWorkSessions);
+            
+            // Every 4th work session gets a long break
+            if (newWorkSessions % 4 === 0) {
+              setMode('longBreak');
+            } else {
+              setMode('shortBreak');
+            }
+            setSessionComplete(false);
+          }, 1000);
+          
         } else {
           newStats.breakTime += initialTime;
           newStats.totalTime += initialTime;
@@ -144,7 +160,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     }
     
     previousTimeRef.current = timeLeft;
-  }, [timeLeft, running, mode, initialTime, pause, getModeConfig]);
+  }, [timeLeft, running, mode, initialTime, pause, getModeConfig, completedWorkSessions, setMode]);
 
   // Handle session start tracking
   useEffect(() => {
@@ -212,6 +228,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
         sessions: 0,
         totalTime: 0
       });
+      setCompletedWorkSessions(0);
     }
   }, []);
 
@@ -248,7 +265,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
       />
 
       {/* Main Container */}
-      <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-slate-700/50 p-0 w-full max-w-lg mx-4 overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+      <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-slate-700/50 p-0 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
         
         {/* Close Button */}
         <button
@@ -509,6 +526,18 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   <span className="text-slate-400">Work Focus:</span>
                   <span className="text-white font-medium">{workPercentage.toFixed(1)}%</span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">Next Break Type:</span>
+                  <span className="text-white font-medium">
+                    {(completedWorkSessions + 1) % 4 === 0 ? '🛋️ Long Break' : '☕ Short Break'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">Sessions to Long Break:</span>
+                  <span className="text-white font-medium">
+                    {4 - ((completedWorkSessions) % 4)} sessions
+                  </span>
+                </div>
               </div>
 
               {/* Progress Bar */}
@@ -519,6 +548,27 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                     className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-1000"
                     style={{ width: `${workPercentage}%` }}
                   />
+                </div>
+              </div>
+
+              {/* Pomodoro Cycle Progress */}
+              <div className="mt-4 pt-4 border-t border-slate-700/40">
+                <div className="text-xs text-slate-400 mb-3">Current Pomodoro Cycle</div>
+                <div className="flex gap-2 justify-center">
+                  {[1, 2, 3, 4].map((session) => (
+                    <div key={session} className="flex flex-col items-center gap-1">
+                      <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all ${
+                        session <= (completedWorkSessions % 4 || (completedWorkSessions > 0 ? 4 : 0))
+                          ? 'bg-indigo-500 border-indigo-400 text-white' 
+                          : 'border-slate-600 text-slate-400'
+                      }`}>
+                        {session === 4 ? '🍅' : '🍅'}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {session < 4 ? 'Work' : 'Long'}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
