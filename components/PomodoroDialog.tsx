@@ -16,6 +16,7 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   const [longMin, setLongMin] = useState<number>(15);
   const [roundsBeforeLong, setRoundsBeforeLong] = useState<number>(4);
   const [autoStartNext, setAutoStartNext] = useState<boolean>(false);
+  const [showSettings, setShowSettings] = useState<boolean>(false); // New state for settings view
 
   // runtime state
   const [mode, setMode] = useState<Mode>("work");
@@ -61,7 +62,6 @@ export default function PomodoroDialog({ open, onClose }: Props) {
     tickRef.current = window.setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
-          // stop tick here and handle finish in next effect
           window.clearInterval(tickRef.current || undefined);
           tickRef.current = null;
           return 0;
@@ -78,14 +78,12 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   // when timeLeft hits zero
   useEffect(() => {
     if (timeLeft !== 0) return;
-    // play sound
     if (!audioRef.current) {
       audioRef.current = new Audio("/data/رنين-المنبه-لشاومي.mp3");
     }
     audioRef.current.currentTime = 0;
     audioRef.current.play().catch(() => {});
 
-    // change mode
     if (mode === "work") {
       setCompletedRounds((r) => r + 1);
       const nextIsLong = (completedRounds + 1) % roundsBeforeLong === 0;
@@ -98,14 +96,12 @@ export default function PomodoroDialog({ open, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft]);
 
-  // keep a stable display time when dialog opens
   useEffect(() => {
     if (!open) {
-      // pause on close
       setRunning(false);
+      setShowSettings(false); // Reset settings view on close
       return;
     }
-    // ensure time reflects mode
     if (mode === "work") setTimeLeft(workMin * 60);
     if (mode === "shortBreak") setTimeLeft(shortMin * 60);
     if (mode === "longBreak") setTimeLeft(longMin * 60);
@@ -115,7 +111,7 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   // keyboard shortcuts
   useEffect(() => {
     function handler(e: KeyboardEvent) {
-      if (!open) return;
+      if (!open || showSettings) return;
       if (e.code === "Space") {
         e.preventDefault();
         setRunning((r) => !r);
@@ -128,11 +124,10 @@ export default function PomodoroDialog({ open, onClose }: Props) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mode, workMin, shortMin, longMin]);
+  }, [open, showSettings, mode, workMin, shortMin, longMin]);
 
   function start() {
     if (timeLeft <= 0) {
-      // restart session length
       if (mode === "work") setTimeLeft(workMin * 60);
       if (mode === "shortBreak") setTimeLeft(shortMin * 60);
       if (mode === "longBreak") setTimeLeft(longMin * 60);
@@ -165,265 +160,102 @@ export default function PomodoroDialog({ open, onClose }: Props) {
   // CSS-in-JS Styles
   const styles = {
     overlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 50,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      padding: '1rem',
-      fontFamily: 'sans-serif',
-      MozOsxFontSmoothing: 'grayscale',
-      WebkitFontSmoothing: 'antialiased'
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.7)', padding: '1rem', fontFamily: 'sans-serif'
     },
     dialog: {
-      width: '100%',
-      maxWidth: '60rem',
-      borderRadius: '1.5rem',
-      backgroundColor: '#0A192F',
-      color: '#fff',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-      padding: '2rem',
-      border: '1px solid #1f2937'
+      width: '100%', maxWidth: '30rem', borderRadius: '1.5rem',
+      backgroundColor: '#0A192F', color: '#fff', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+      padding: '2rem', border: '1px solid #1f2937'
     },
     header: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingBottom: '1.5rem',
-      borderBottom: '1px solid #1f2937',
-      marginBottom: '1.5rem'
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      paddingBottom: '1.5rem', borderBottom: '1px solid #1f2937', marginBottom: '1.5rem'
     },
     title: {
-      fontSize: '1.875rem',
-      fontWeight: '800',
-      color: '#e5e7eb',
-      letterSpacing: '-0.025em'
+      fontSize: '1.5rem', fontWeight: '800', color: '#e5e7eb', letterSpacing: '-0.025em'
     },
-    closeButton: {
-      backgroundColor: 'transparent',
-      border: 'none',
-      color: '#9ca3af',
-      fontSize: '2rem',
-      cursor: 'pointer',
-      transition: 'color 0.2s',
-      outline: 'none',
+    headerButtons: {
+      display: 'flex', gap: '0.5rem'
     },
-    mainGrid: {
-      display: 'grid',
-      gridTemplateColumns: '1fr',
-      gap: '2.5rem',
-      alignItems: 'flex-start',
+    iconButton: {
+      backgroundColor: 'transparent', border: 'none', color: '#9ca3af',
+      fontSize: '1.5rem', cursor: 'pointer', transition: 'color 0.2s', outline: 'none'
     },
-    section: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2rem',
-      borderRadius: '1rem',
-      backgroundColor: '#15253F',
-      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
-      border: '1px solid #374151'
+    backButton: {
+      fontSize: '1rem', fontWeight: 'bold'
     },
-    modeButtonsContainer: {
-      display: 'flex',
-      gap: '0.75rem',
-      backgroundColor: '#0A192F',
-      padding: '0.5rem',
-      borderRadius: '9999px',
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-    },
-    button: {
-      padding: '0.5rem 1.25rem',
-      borderRadius: '9999px',
-      fontSize: '0.875rem',
-      fontWeight: '600',
-      transition: 'all 0.2s',
-      cursor: 'pointer',
-      border: 'none',
-      outline: 'none',
-    },
-    modeButtonActive: {
-      backgroundColor: '#20C5C3',
-      color: '#0A192F',
-      boxShadow: '0 10px 15px -3px rgba(32, 197, 195, 0.3), 0 4px 6px -2px rgba(32, 197, 195, 0.1)'
-    },
-    modeButtonInactive: {
-      color: '#9ca3af',
-      backgroundColor: 'transparent',
+    mainSection: {
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem'
     },
     timerCircleContainer: {
-      position: 'relative',
-      width: '16rem',
-      height: '16rem',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
+      position: 'relative', width: '16rem', height: '16rem',
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
     },
     timerSvg: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%'
+      position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'
     },
     timerText: {
-      position: 'relative',
-      textAlign: 'center',
-      color: '#fff'
+      position: 'relative', textAlign: 'center', color: '#fff'
     },
     timerTime: {
-      fontSize: '4rem',
-      fontWeight: '300',
-      lineHeight: '1'
+      fontSize: '4rem', fontWeight: '300', lineHeight: '1'
     },
     timerDescription: {
-      fontSize: '0.875rem',
-      color: '#9ca3af',
-      marginTop: '0.5rem'
+      fontSize: '0.875rem', color: '#9ca3af', marginTop: '0.5rem'
     },
     controlButtonsContainer: {
-      display: 'flex',
-      gap: '1rem',
-      marginTop: '1.5rem'
+      display: 'flex', gap: '1rem'
     },
     controlButton: {
-      padding: '0.75rem 2rem',
-      borderRadius: '9999px',
-      fontWeight: '700',
-      transition: 'all 0.2s',
-      cursor: 'pointer',
-      border: '1px solid #374151',
-      color: '#d1d5db',
-      backgroundColor: 'transparent',
-      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-      outline: 'none'
+      padding: '0.75rem 2rem', borderRadius: '9999px', fontWeight: '700',
+      transition: 'all 0.2s', cursor: 'pointer', border: '1px solid #374151',
+      color: '#d1d5db', backgroundColor: 'transparent', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
     },
     startButton: {
-      backgroundColor: '#059669',
-      color: '#0A192F',
-      border: 'none',
-      boxShadow: '0 10px 15px -3px rgba(5, 150, 105, 0.3), 0 4px 6px -2px rgba(5, 150, 105, 0.1)',
+      backgroundColor: '#059669', color: '#0A192F', border: 'none'
     },
     pauseButton: {
-      backgroundColor: '#f59e0b',
-      color: '#fff',
-      border: 'none',
-      boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.3), 0 4px 6px -2px rgba(245, 158, 11, 0.1)',
+      backgroundColor: '#f59e0b', color: '#fff', border: 'none'
     },
     settingsSection: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '2rem',
-      padding: '2rem',
-      borderRadius: '1rem',
-      backgroundColor: '#15253F',
-      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
-      border: '1px solid #374151'
+      display: 'flex', flexDirection: 'column', gap: '1.5rem',
+      padding: '1rem 0'
     },
     settingsTitle: {
-      fontSize: '1.25rem',
-      fontWeight: '700',
-      color: '#e5e7eb',
-      marginBottom: '1rem'
+      fontSize: '1.25rem', fontWeight: '700', color: '#e5e7eb'
     },
     settingItem: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     },
     settingLabel: {
-      fontSize: '0.875rem',
-      color: '#d1d5db'
+      fontSize: '0.875rem', color: '#d1d5db'
     },
     settingInput: {
-      width: '6rem',
-      padding: '0.25rem 0.75rem',
-      backgroundColor: '#0A192F',
-      color: '#20C5C3',
-      border: '1px solid #374151',
-      borderRadius: '0.5rem',
-      textAlign: 'right',
-      fontSize: '1.125rem',
-      fontFamily: 'monospace',
-      outline: 'none',
-    },
-    checkboxContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.75rem',
-      paddingTop: '0.5rem',
-    },
-    checkbox: {
-      height: '1.25rem',
-      width: '1.25rem',
-      color: '#20C5C3',
-      backgroundColor: '#0A192F',
-      border: '1px solid #374151',
-      borderRadius: '0.25rem',
-      outline: 'none',
-      cursor: 'pointer'
-    },
-    checkboxLabel: {
-      fontSize: '0.875rem',
-      color: '#d1d5db',
-      cursor: 'pointer',
-      userSelect: 'none',
+      width: '6rem', padding: '0.5rem', backgroundColor: '#15253F',
+      color: '#20C5C3', border: '1px solid #374151', borderRadius: '0.5rem',
+      textAlign: 'right', fontSize: '1rem', outline: 'none'
     },
     presetsContainer: {
-      display: 'flex',
-      gap: '0.75rem',
+      display: 'flex', gap: '0.75rem', marginTop: '0.5rem'
     },
     presetsButton: {
-      padding: '0.5rem 1rem',
-      borderRadius: '9999px',
-      border: '1px solid #374151',
-      color: '#9ca3af',
-      fontSize: '0.875rem',
-      cursor: 'pointer',
-      backgroundColor: 'transparent',
-      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-      outline: 'none'
+      padding: '0.5rem 1rem', borderRadius: '9999px', border: '1px solid #374151',
+      color: '#9ca3af', fontSize: '0.875rem', cursor: 'pointer',
+      backgroundColor: 'transparent', outline: 'none'
     },
-    shortcutsContainer: {
-      paddingTop: '0.5rem',
-      textAlign: 'center',
-      borderTop: '1px solid #1f2937',
-      padding: '1.5rem 0'
+    quickActions: {
+      marginTop: '1.5rem',
+      borderTop: '1px solid #1f2937', paddingTop: '1.5rem'
     },
-    shortcutTitle: {
-      fontSize: '0.875rem',
-      color: '#6b7280',
-      fontWeight: '500',
-      marginBottom: '0.5rem'
-    },
-    shortcutText: {
-      fontSize: '0.75rem',
-      color: '#9ca3af',
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '0.5rem'
-    },
-    shortcutKey: {
-      backgroundColor: '#374151',
-      padding: '0.25rem 0.625rem',
-      borderRadius: '0.375rem',
-      fontFamily: 'monospace',
-      color: '#e5e7eb',
-      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'
+    quickButton: {
+      backgroundColor: '#dc2626', color: '#fff', padding: '0.5rem 1rem',
+      borderRadius: '9999px', border: 'none', cursor: 'pointer', outline: 'none'
     },
     footer: {
-      marginTop: '2rem',
-      fontSize: '0.875rem',
-      color: '#6b7280',
-      textAlign: 'center',
-      borderTop: '1px solid #1f2937',
-      paddingTop: '1.5rem'
+      marginTop: '2rem', fontSize: '0.875rem', color: '#6b7280', textAlign: 'center',
+      borderTop: '1px solid #1f2937', paddingTop: '1.5rem'
     },
   };
 
@@ -431,59 +263,59 @@ export default function PomodoroDialog({ open, onClose }: Props) {
     <div style={styles.overlay}>
       <div style={styles.dialog}>
         <header style={styles.header}>
-          <h3 style={styles.title}>Pomodoro Timer</h3>
-          <button
-            onClick={onClose}
-            style={styles.closeButton}
-            aria-label="Close"
-          >
-            &times;
-          </button>
+          <h3 style={styles.title}>{showSettings ? "Settings" : "Pomodoro Timer"}</h3>
+          <div style={styles.headerButtons}>
+            {!showSettings ? (
+              <button
+                onClick={() => setShowSettings(true)}
+                style={styles.iconButton}
+                aria-label="Settings"
+              >
+                ⚙️
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{...styles.iconButton, ...styles.backButton}}
+              >
+                ← Back
+              </button>
+            )}
+            <button onClick={onClose} style={styles.iconButton} aria-label="Close">
+              &times;
+            </button>
+          </div>
         </header>
 
-        <main style={{...styles.mainGrid, '@media (min-width: 1024px)': {gridTemplateColumns: '1fr 1fr'}}}>
-          {/* Main Timer Section */}
-          <section style={styles.section}>
-            <div style={styles.modeButtonsContainer}>
+        {/* Conditional Rendering based on showSettings state */}
+        {!showSettings ? (
+          <main style={styles.mainSection}>
+            <div style={{ display: 'flex', gap: '0.75rem', backgroundColor: '#15253F', padding: '0.5rem', borderRadius: '9999px' }}>
               <button
                 onClick={() => { setMode("work"); reset(); }}
-                style={{
-                  ...styles.button,
-                  ...(mode === "work" ? styles.modeButtonActive : styles.modeButtonInactive)
-                }}
+                style={{ ...styles.controlButton, ...styles.button, backgroundColor: mode === "work" ? '#20C5C3' : 'transparent', color: mode === "work" ? '#0A192F' : '#9ca3af' }}
               >
                 Work
               </button>
               <button
                 onClick={() => { setMode("shortBreak"); reset(); }}
-                style={{
-                  ...styles.button,
-                  ...(mode === "shortBreak" ? styles.modeButtonActive : styles.modeButtonInactive)
-                }}
+                style={{ ...styles.controlButton, ...styles.button, backgroundColor: mode === "shortBreak" ? '#20C5C3' : 'transparent', color: mode === "shortBreak" ? '#0A192F' : '#9ca3af' }}
               >
-                Short Break
+                Short
               </button>
               <button
                 onClick={() => { setMode("longBreak"); reset(); }}
-                style={{
-                  ...styles.button,
-                  ...(mode === "longBreak" ? styles.modeButtonActive : styles.modeButtonInactive)
-                }}
+                style={{ ...styles.controlButton, ...styles.button, backgroundColor: mode === "longBreak" ? '#20C5C3' : 'transparent', color: mode === "longBreak" ? '#0A192F' : '#9ca3af' }}
               >
-                Long Break
+                Long
               </button>
             </div>
-
-            <div style={{...styles.timerCircleContainer, marginTop: '2rem'}}>
+            
+            <div style={styles.timerCircleContainer}>
               <svg style={styles.timerSvg} viewBox="0 0 120 120">
                 <circle cx="60" cy="60" r="54" strokeWidth="8" stroke="#1F2A40" fill="none"></circle>
                 <circle
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  stroke="#20C5C3"
+                  cx="60" cy="60" r="54" strokeWidth="8" strokeLinecap="round" stroke="#20C5C3"
                   style={{ strokeDasharray: 339.292, strokeDashoffset: 339.292 - progress * 339.292, transition: 'stroke-dashoffset 1s linear' }}
                   transform="rotate(-90 60 60)"
                 />
@@ -507,66 +339,31 @@ export default function PomodoroDialog({ open, onClose }: Props) {
             <p style={{...styles.timerDescription, marginTop: '1rem'}}>
               Completed Rounds: <span style={{fontWeight: '600', color: '#5eead4'}}>{completedRounds}</span>
             </p>
-          </section>
-
-          {/* Settings Section */}
-          <aside style={styles.settingsSection}>
+          </main>
+        ) : (
+          <main style={styles.settingsSection}>
             <div>
               <h4 style={styles.settingsTitle}>Timer Settings</h4>
               <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
                 <div style={styles.settingItem}>
                   <label htmlFor="workMin" style={styles.settingLabel}>Work Duration (minutes)</label>
-                  <input
-                    id="workMin"
-                    type="number"
-                    min={1}
-                    value={workMin}
-                    onChange={(e) => setWorkMin(Math.max(1, Number(e.target.value)))}
-                    style={styles.settingInput}
-                  />
+                  <input id="workMin" type="number" min={1} value={workMin} onChange={(e) => setWorkMin(Math.max(1, Number(e.target.value)))} style={styles.settingInput}/>
                 </div>
                 <div style={styles.settingItem}>
                   <label htmlFor="shortMin" style={styles.settingLabel}>Short Break (minutes)</label>
-                  <input
-                    id="shortMin"
-                    type="number"
-                    min={1}
-                    value={shortMin}
-                    onChange={(e) => setShortMin(Math.max(1, Number(e.target.value)))}
-                    style={styles.settingInput}
-                  />
+                  <input id="shortMin" type="number" min={1} value={shortMin} onChange={(e) => setShortMin(Math.max(1, Number(e.target.value)))} style={styles.settingInput}/>
                 </div>
                 <div style={styles.settingItem}>
                   <label htmlFor="longMin" style={styles.settingLabel}>Long Break (minutes)</label>
-                  <input
-                    id="longMin"
-                    type="number"
-                    min={1}
-                    value={longMin}
-                    onChange={(e) => setLongMin(Math.max(1, Number(e.target.value)))}
-                    style={styles.settingInput}
-                  />
+                  <input id="longMin" type="number" min={1} value={longMin} onChange={(e) => setLongMin(Math.max(1, Number(e.target.value)))} style={styles.settingInput}/>
                 </div>
                 <div style={styles.settingItem}>
                   <label htmlFor="roundsBeforeLong" style={styles.settingLabel}>Rounds before Long Break</label>
-                  <input
-                    id="roundsBeforeLong"
-                    type="number"
-                    min={1}
-                    value={roundsBeforeLong}
-                    onChange={(e) => setRoundsBeforeLong(Math.max(1, Number(e.target.value)))}
-                    style={styles.settingInput}
-                  />
+                  <input id="roundsBeforeLong" type="number" min={1} value={roundsBeforeLong} onChange={(e) => setRoundsBeforeLong(Math.max(1, Number(e.target.value)))} style={styles.settingInput}/>
                 </div>
-                <div style={styles.checkboxContainer}>
-                  <input
-                    id="autoStartNext"
-                    type="checkbox"
-                    checked={autoStartNext}
-                    onChange={(e) => setAutoStartNext(e.target.checked)}
-                    style={styles.checkbox}
-                  />
-                  <label htmlFor="autoStartNext" style={styles.checkboxLabel}>Auto start next round</label>
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', paddingTop: '0.5rem'}}>
+                  <input id="autoStartNext" type="checkbox" checked={autoStartNext} onChange={(e) => setAutoStartNext(e.target.checked)} style={{...styles.checkbox, accentColor: '#20C5C3'}} />
+                  <label htmlFor="autoStartNext" style={{...styles.settingLabel, cursor: 'pointer'}}>Auto start next round</label>
                 </div>
               </div>
             </div>
@@ -580,25 +377,12 @@ export default function PomodoroDialog({ open, onClose }: Props) {
               </div>
             </div>
 
-            <div>
+            <div style={styles.quickActions}>
               <h4 style={styles.settingsTitle}>Quick Actions</h4>
-              <button
-                onClick={() => { localStorage.removeItem(STORAGE_KEY); alert('Settings cleared!'); }}
-                style={{...styles.button, padding: '0.5rem 1rem', backgroundColor: '#dc2626', color: '#fff', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'}}
-              >
-                Clear Saved Settings
-              </button>
+              <button onClick={() => { localStorage.removeItem(STORAGE_KEY); alert('Settings cleared!'); }} style={styles.quickButton}>Clear Saved Settings</button>
             </div>
-
-            <div style={styles.shortcutsContainer}>
-              <div style={styles.shortcutTitle}>Keyboard Shortcuts</div>
-              <div style={styles.shortcutText}>
-                <span style={styles.shortcutKey}>Space</span>: Start/Pause
-                <span style={styles.shortcutKey}>R</span>: Reset Timer
-              </div>
-            </div>
-          </aside>
-        </main>
+          </main>
+        )}
 
         <footer style={styles.footer}>
           Designed with <span style={{color: '#ef4444'}}>&hearts;</span> for productivity.
