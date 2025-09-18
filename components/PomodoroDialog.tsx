@@ -60,77 +60,20 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const seconds = (timeLeft % 60).toString().padStart(2, '0');
 
   const getModeConfig = () => {
-    switch (mode) {
-      case 'work':
-        return {
-          title: 'Pomodoro',
-          color: '#6366F1',
-          secondaryColor: '#818CF8',
-          bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
-          glowColor: 'rgba(99, 102, 241, 0.5)',
-          description: 'Focus & Work',
-          buttonColor: 'bg-indigo-600',
-          buttonHover: 'hover:bg-indigo-700'
-        };
-      case 'shortBreak':
-        return {
-          title: 'Short Break',
-          color: '#10B981',
-          secondaryColor: '#34D399',
-          bgGradient: 'from-emerald-900/20 via-gray-900 to-gray-900',
-          glowColor: 'rgba(16, 185, 129, 0.5)',
-          description: 'Take a Break',
-          buttonColor: 'bg-emerald-600',
-          buttonHover: 'hover:bg-emerald-700'
-        };
-      case 'longBreak':
-        return {
-          title: 'Long Break',
-          color: '#8B5CF6',
-          secondaryColor: '#A78BFA',
-          bgGradient: 'from-purple-900/20 via-gray-900 to-gray-900',
-          glowColor: 'rgba(139, 92, 246, 0.5)',
-          description: 'Long Rest',
-          buttonColor: 'bg-purple-600',
-          buttonHover: 'hover:bg-purple-700'
-        };
-      default:
-        return {
-          title: 'Pomodoro',
-          color: '#6366F1',
-          secondaryColor: '#818CF8',
-          bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
-          glowColor: 'rgba(99, 102, 241, 0.5)',
-          description: 'Focus & Work',
-          buttonColor: 'bg-indigo-600',
-          buttonHover: 'hover:bg-indigo-700'
-        };
-    }
+    // Only return work mode config as break modes are removed.
+    return {
+      title: 'Pomodoro',
+      color: '#6366F1',
+      secondaryColor: '#818CF8',
+      bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
+      glowColor: 'rgba(99, 102, 241, 0.5)',
+      description: 'Focus & Work',
+      buttonColor: 'bg-indigo-600',
+      buttonHover: 'hover:bg-indigo-700'
+    };
   };
 
   const config = getModeConfig();
-
-  const handleModeChange = (newMode: 'work' | 'shortBreak' | 'longBreak') => {
-    if (running) return;
-
-    setMode(newMode);
-    setSessionComplete(false);
-
-    switch (newMode) {
-      case 'work':
-        setTimeLeft(25 * 60);
-        setInitialTime(25 * 60);
-        break;
-      case 'shortBreak':
-        setTimeLeft(5 * 60);
-        setInitialTime(5 * 60);
-        break;
-      case 'longBreak':
-        setTimeLeft(15 * 60);
-        setInitialTime(15 * 60);
-        break;
-    }
-  };
 
   const applyCustomTime = () => {
     const minutesNum = parseInt(customTime);
@@ -144,38 +87,11 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     }
   };
 
-  const radius = 90;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - progress);
-
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
       <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-lg" onClick={handleClose}></div>
 
       <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-gray-700/30 p-0 w-full max-w-md overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95' : 'scale-100'}`}>
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20">
-          <div className="flex bg-gray-700/30 rounded-2xl p-1 w-full max-w-sm">
-            {[
-              { key: 'work', label: 'Pomodoro' },
-              { key: 'shortBreak', label: 'Short Break' },
-              { key: 'longBreak', label: 'Long Break' }
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => handleModeChange(tab.key as any)}
-                disabled={running}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-all duration-300 relative rounded-xl ${
-                  mode === tab.key
-                    ? 'text-white bg-gray-600/40 shadow-md'
-                    : `text-gray-400 ${running ? 'opacity-50 cursor-not-allowed' : 'hover:text-white'}`
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="p-8 pt-24">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2" style={{ color: config.color }}>{config.title}</h2>
@@ -183,43 +99,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           </div>
 
           <div className="flex justify-center mb-8">
-            <div className="relative w-64 h-64">
-              {/* This is the new, fancy progress circle */}
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                <defs>
-                  <linearGradient id={`progress-gradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor={config.color} />
-                    <stop offset="100%" stopColor={config.secondaryColor} />
-                  </linearGradient>
-                </defs>
-                {/* The background circle */}
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  fill="none"
-                  stroke="#374151"
-                  strokeWidth="8"
-                />
-                {/* The progress circle */}
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="90"
-                  fill="none"
-                  stroke={`url(#progress-gradient-${mode})`}
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  className="transition-all duration-1000 ease-out"
-                  style={{
-                    filter: `drop-shadow(0 0 8px ${config.glowColor})`
-                  }}
-                />
-              </svg>
-
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="relative w-64 h-64 flex items-center justify-center bg-gray-700/30 rounded-full">
+              <div className="text-center">
                 <div className="text-5xl font-mono font-bold text-white mb-2">
                   {minutes}:{seconds}
                 </div>
@@ -228,7 +109,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 </div>
                 {running && (
                   <div className="text-xs px-3 py-1 rounded-full bg-gray-700/50 text-gray-300 border border-gray-600/30 uppercase tracking-widest mt-2">
-                    {mode === 'work' ? 'FOCUS TIME' : 'BREAK TIME'}
+                    FOCUS TIME
                   </div>
                 )}
                 {sessionComplete && (
@@ -275,7 +156,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
               onClick={() => {
                 reset();
                 setSessionComplete(false);
-                setInitialTime(mode === 'work' ? 25 * 60 : mode === 'shortBreak' ? 5 * 60 : 15 * 60);
+                setInitialTime(25 * 60);
               }}
               className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
             >
