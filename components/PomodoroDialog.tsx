@@ -31,22 +31,18 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const [isClosing, setIsClosing] = useState(false);
   const [initialTime, setInitialTime] = useState(timeLeft);
 
-  // FIX: Separate useEffect for handling time updates and session completion.
-  // The old logic was causing issues with state updates and auto-starting breaks.
   useEffect(() => {
     setInitialTime(timeLeft);
   }, [timeLeft]);
 
   useEffect(() => {
     if (timeLeft === 0 && running) {
-      // Pause the timer automatically when it hits 0
       pause();
       setSessionComplete(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, running, pause]); // Added 'pause' as a dependency
+  }, [timeLeft, running, pause]);
 
-  // Smooth closing effect
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -73,7 +69,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
           glowColor: 'rgba(99, 102, 241, 0.5)',
           description: 'Focus & Work',
-          ringColor: 'ring-indigo-500/30'
+          buttonColor: 'bg-indigo-600',
+          buttonHover: 'hover:bg-indigo-700'
         };
       case 'shortBreak':
         return {
@@ -83,7 +80,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           bgGradient: 'from-emerald-900/20 via-gray-900 to-gray-900',
           glowColor: 'rgba(16, 185, 129, 0.5)',
           description: 'Take a Break',
-          ringColor: 'ring-emerald-500/30'
+          buttonColor: 'bg-emerald-600',
+          buttonHover: 'hover:bg-emerald-700'
         };
       case 'longBreak':
         return {
@@ -93,7 +91,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           bgGradient: 'from-purple-900/20 via-gray-900 to-gray-900',
           glowColor: 'rgba(139, 92, 246, 0.5)',
           description: 'Long Rest',
-          ringColor: 'ring-purple-500/30'
+          buttonColor: 'bg-purple-600',
+          buttonHover: 'hover:bg-purple-700'
         };
       default:
         return {
@@ -103,7 +102,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           bgGradient: 'from-indigo-900/20 via-gray-900 to-gray-900',
           glowColor: 'rgba(99, 102, 241, 0.5)',
           description: 'Focus & Work',
-          ringColor: 'ring-indigo-500/30'
+          buttonColor: 'bg-indigo-600',
+          buttonHover: 'hover:bg-indigo-700'
         };
     }
   };
@@ -144,7 +144,6 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     }
   };
 
-  // Calculate progress circle
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
@@ -154,7 +153,6 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
       <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-lg" onClick={handleClose}></div>
 
       <div className={`relative z-10 bg-gradient-to-br ${config.bgGradient} rounded-3xl shadow-2xl border border-gray-700/30 p-0 w-full max-w-md overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95' : 'scale-100'}`}>
-        {/* FIX: Moved the tabs to a new, separate container to control its position */}
         <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20">
           <div className="flex bg-gray-700/30 rounded-2xl p-1 w-full max-w-sm">
             {[
@@ -178,8 +176,6 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           </div>
         </div>
 
-        {/* Main Content */}
-        {/* FIX: Added padding-top to create space for the new tabs position */}
         <div className="p-8 pt-24">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2" style={{ color: config.color }}>{config.title}</h2>
@@ -188,8 +184,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
           <div className="flex justify-center mb-8">
             <div className="relative w-64 h-64">
-              <div className="absolute inset-0 rounded-full border-8 border-gray-700/20"></div>
-
+              {/* This is the new, fancy progress circle */}
               <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 200 200">
                 <defs>
                   <linearGradient id={`progress-gradient-${mode}`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -197,6 +192,16 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                     <stop offset="100%" stopColor={config.secondaryColor} />
                   </linearGradient>
                 </defs>
+                {/* The background circle */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="90"
+                  fill="none"
+                  stroke="#374151"
+                  strokeWidth="8"
+                />
+                {/* The progress circle */}
                 <circle
                   cx="100"
                   cy="100"
@@ -239,7 +244,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
             {running ? (
               <button
                 onClick={pause}
-                className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2 min-w-[120px] justify-center"
+                className={`px-8 py-3 ${config.buttonColor} ${config.buttonHover} text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center gap-2 min-w-[120px] justify-center`}
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -290,7 +295,11 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   running ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700/60 hover:text-white'
                 }`}
               >
-                ⚙️ Custom Time
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.941 3.31 0 4.343 1.543a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.941 1.543 0 3.31-1.543 4.343a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.941-3.31 0-4.343-1.543a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.941-1.543 0-3.31 1.543-4.343a1.724 1.724 0 002.573-1.066z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Custom Time
               </button>
             ) : (
               <div className="bg-gray-800/70 p-4 rounded-2xl border border-gray-700/30 mx-auto max-w-xs">
@@ -303,7 +312,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                     }}
                     className="text-gray-400 hover:text-white"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
@@ -320,7 +329,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                   />
                   <button
                     onClick={applyCustomTime}
-                    className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all duration-200 shadow-lg flex items-center"
+                    className={`px-4 py-2 ${config.buttonColor} ${config.buttonHover} text-white rounded-xl font-medium transition-all duration-200 shadow-lg flex items-center`}
                   >
                     Set
                   </button>
