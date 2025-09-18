@@ -304,7 +304,6 @@ export default function TimetableDialog({
                             <span className="font-light">{event.location}</span>
                           </div>
                         )}
-                        {/* A new check for the 'instructors' property has been added here. */}
                         {event.instructors && event.instructors.length > 0 && (
                           <div className="flex items-center text-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
