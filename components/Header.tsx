@@ -30,9 +30,9 @@ const Header: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
-  // ------------------- Pomodoro Timer State -------------------
+  // ------------------- Pomodoro Timer -------------------
   const [pomodoroRunning, setPomodoroRunning] = useState(false);
-  const [pomodoroTimeLeft, setPomodoroTimeLeft] = useState(60 * 60); // ساعة افتراضية
+  const [pomodoroTimeLeft, setPomodoroTimeLeft] = useState(25*60);
   const [pomodoroMode, setPomodoroMode] = useState<'work'|'shortBreak'|'longBreak'>('work');
   const [pomodoroCount, setPomodoroCount] = useState(0);
 
@@ -40,16 +40,17 @@ const Header: React.FC = () => {
   const pausePomodoro = () => setPomodoroRunning(false);
   const resetPomodoro = () => {
     setPomodoroRunning(false);
-    setPomodoroTimeLeft(pomodoroMode === 'work' ? 60*60 : pomodoroMode === 'shortBreak' ? 5*60 : 15*60);
+    setPomodoroTimeLeft(pomodoroMode === 'work' ? 25*60 : pomodoroMode === 'shortBreak' ? 5*60 : 15*60);
   };
 
   useEffect(() => {
-    if (!pomodoroRunning) return;
-    const interval = setInterval(() => {
+    const interval = pomodoroRunning ? setInterval(() => {
       setPomodoroTimeLeft(prev => {
         if(prev <= 1){
+          // تشغيل الصوت
           new Audio('/data/رنين-المنبه-لشاومي.mp3').play().catch(()=>{});
 
+          // تغيير المود
           let nextMode = pomodoroMode;
           let nextCount = pomodoroCount;
 
@@ -61,15 +62,15 @@ const Header: React.FC = () => {
             nextMode = 'work';
           }
           setPomodoroMode(nextMode);
-          return nextMode === 'work' ? 60*60 : nextMode === 'shortBreak' ? 5*60 : 15*60;
+          return nextMode === 'work' ? 25*60 : nextMode === 'shortBreak' ? 5*60 : 15*60;
         }
         return prev-1;
       });
-    }, 1000);
+    },1000) : null;
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval!);
   }, [pomodoroRunning, pomodoroMode, pomodoroCount]);
-  // -------------------------------------------------------------
+  // ------------------------------------------------------
 
   const handleLogout = () => {
     logout();
@@ -139,10 +140,7 @@ const Header: React.FC = () => {
       <button onClick={() => setTimetableOpen(true)} className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}>Table</button>
 
       {/* Pomodoro */}
-      <button
-        onClick={() => setPomodoroOpen(true)}
-        className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}
-      >
+      <button onClick={() => setPomodoroOpen(true)} className={`${linkBaseClass} text-text-secondary hover:text-primary hover:bg-surface`}>
         Pomodoro
         {pomodoroRunning && (
           <span className="ml-2 text-sm font-mono">
