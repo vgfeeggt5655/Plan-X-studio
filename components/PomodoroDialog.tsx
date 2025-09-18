@@ -21,6 +21,7 @@ interface SessionStats {
   dailyGoal: number;
   streak: number;
   lastCompletedDate: string | null;
+  lastResetDate: string;
 }
 
 const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
@@ -50,26 +51,6 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     if (savedStats) {
       const parsedStats = JSON.parse(savedStats);
       
-      // التحقق من التتابع (streak)
-      if (parsedStats.lastCompletedDate) {
-        const lastDate = new Date(parsedStats.lastCompletedDate);
-        const todayDate = new Date();
-        const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        // إذا مر أكثر من يوم، نعيد ضبط الجلسات اليومية
-        if (diffDays > 1) {
-          parsedStats.dailySessions = 0;
-        }
-        
-        // إذا كان آخر تاريخ إكمال هو أمس، نزيد التتابع
-        if (diffDays === 1 && lastDate.getDate() === todayDate.getDate() - 1) {
-          parsedStats.streak += 1;
-        } else if (diffDays > 1) {
-          parsedStats.streak = 0; // كسر التتابع
-        }
-      }
-      
       // إذا كان اليوم مختلفاً، نعيد ضبط الجلسات اليومية
       if (parsedStats.lastResetDate !== today) {
         parsedStats.dailySessions = 0;
@@ -83,7 +64,8 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
         dailySessions: parsedStats.dailySessions || 0,
         dailyGoal: parsedStats.dailyGoal || 4,
         streak: parsedStats.streak || 0,
-        lastCompletedDate: parsedStats.lastCompletedDate || null
+        lastCompletedDate: parsedStats.lastCompletedDate || null,
+        lastResetDate: parsedStats.lastResetDate || today
       };
     }
     
@@ -94,29 +76,15 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
       dailySessions: 0,
       dailyGoal: 4,
       streak: 0,
-      lastCompletedDate: null
+      lastCompletedDate: null,
+      lastResetDate: today
     };
   });
 
-  // تحديث الإحصائيات في الوقت الفعلي
+  // حفظ الإحصائيات في localStorage عند تغييرها
   useEffect(() => {
-    if (running) {
-      const interval = setInterval(() => {
-        setStats(prev => {
-          const newStats = { ...prev };
-          if (mode === 'work') {
-            newStats.workTime += 1;
-          } else {
-            newStats.breakTime += 1;
-          }
-          localStorage.setItem('pomodoro-stats', JSON.stringify(newStats));
-          return newStats;
-        });
-      }, 1000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [running, mode]);
+    localStorage.setItem('pomodoro-stats', JSON.stringify(stats));
+  }, [stats]);
 
   useEffect(() => {
     setInitialTime(timeLeft);
@@ -124,35 +92,29 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
   useEffect(() => {
     if (timeLeft === 0 && running) {
+      // إيقاف المؤقت تلقائيًا عندما يصل إلى الصفر
       pause();
       setSessionComplete(true);
 
       if (mode === 'work') {
         setStats(prev => {
           const today = new Date().toDateString();
-          const newStats = {
+          return {
             ...prev,
+            workTime: prev.workTime + initialTime,
             sessions: prev.sessions + 1,
             dailySessions: prev.dailySessions + 1,
             lastCompletedDate: today
           };
-          
-          // زيادة التتابع إذا تم تحقيق الهدف اليومي
-          if (newStats.dailySessions >= newStats.dailyGoal) {
-            const lastDate = prev.lastCompletedDate ? new Date(prev.lastCompletedDate) : null;
-            const todayDate = new Date();
-            
-            if (!lastDate || lastDate.toDateString() !== today) {
-              newStats.streak = prev.streak + 1;
-            }
-          }
-          
-          localStorage.setItem('pomodoro-stats', JSON.stringify(newStats));
-          return newStats;
         });
+      } else {
+        setStats(prev => ({
+          ...prev,
+          breakTime: prev.breakTime + initialTime
+        }));
       }
     }
-  }, [timeLeft, running, mode, pause]);
+  }, [timeLeft, running, mode, initialTime, pause]);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -252,24 +214,23 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
     }
   };
 
-  // Calculate progress circle
+  // حساب دائرة التقدم
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progress);
 
-  // Format time for display
+  // تنسيق الوقت للعرض
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
     
     if (hrs > 0) {
       return `${hrs}h ${mins}m`;
     }
-    return `${mins}m ${secs}s`;
+    return `${mins}m`;
   };
 
-  // Calculate progress percentages
+  // حساب النسب المئوية للتقدم
   const dailyProgress = Math.min(stats.dailySessions / stats.dailyGoal, 1);
   const totalFocusTime = stats.workTime;
   const totalBreakTime = stats.breakTime;
@@ -305,7 +266,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* المحتوى الرئيسي */}
         <div className="p-8 pt-24">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2" style={{ color: config.color }}>{config.title}</h2>
@@ -323,6 +284,14 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                     <stop offset="100%" stopColor={config.secondaryColor} />
                   </linearGradient>
                 </defs>
+                <circle
+                  cx="100"
+                  cy="100"
+                  r="90"
+                  fill="none"
+                  stroke="#374151"
+                  strokeWidth="8"
+                />
                 <circle
                   cx="100"
                   cy="100"
@@ -498,7 +467,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 </div>
               </div>
 
-              {/* Daily Progress */}
+              {/* التقدم اليومي */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-400 text-sm">Daily Progress</span>
@@ -512,7 +481,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 </div>
               </div>
 
-              {/* Focus/Break Ratio */}
+              {/* نسبة التركيز إلى الراحة */}
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-400 text-sm">Focus/Break Ratio</span>
@@ -526,7 +495,7 @@ const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
                 </div>
               </div>
 
-              {/* Stats Summary */}
+              {/* ملخص الإحصائيات */}
               <div className="pt-4 border-t border-gray-700/30 text-xs text-gray-400">
                 <div className="flex justify-between items-center mb-1">
                   <span>Productivity Score:</span>
